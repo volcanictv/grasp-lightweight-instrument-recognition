@@ -30,20 +30,10 @@ from typing import Callable
 import numpy as np
 import torch
 from PIL import Image
-from pycocotools import mask as mask_utils
 from torch.utils.data import Dataset
 
 from surgical_ai.data import splits, statistics
-
-
-def _decode_instance_mask(segmentation: dict, height: int, width: int) -> np.ndarray:
-    rle = {
-        "size": segmentation["size"],
-        "counts": segmentation["counts"].encode("utf-8")
-        if isinstance(segmentation["counts"], str)
-        else segmentation["counts"],
-    }
-    return mask_utils.decode(rle)
+from surgical_ai.data.mask_utils import decode_instance_mask
 
 
 class GraspRegionDataset(Dataset):
@@ -113,7 +103,7 @@ class GraspRegionDataset(Dataset):
         x0, y0 = max(0, x), max(0, y)
         x1, y1 = min(width, x + w), min(height, y + h)
 
-        mask = _decode_instance_mask(segmentation, height, width)
+        mask = decode_instance_mask(segmentation)
         crop = frame[y0:y1, x0:x1] * mask[y0:y1, x0:x1, None]
 
         image = Image.fromarray(crop.astype(np.uint8))

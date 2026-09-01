@@ -16,6 +16,12 @@ No resize/normalize transform here: torchvision's detection models
 and ImageNet normalization internally from raw-pixel-space tensors and
 targets -- applying it here would double-normalize and desync the boxes
 from the image.
+
+Augmentation (`build_detection_transforms`) uses torchvision.transforms.v2,
+which jointly transforms images and `tv_tensors.BoundingBoxes` so a crop or
+flip moves the boxes along with the pixels -- doing this by hand (as the
+plain-tensor transforms in transforms.py do for classification) risks
+silently desyncing boxes from content.
 """
 
 from __future__ import annotations
@@ -27,8 +33,57 @@ from typing import Callable
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision import tv_tensors
+from torchvision.transforms import v2
 
 from surgical_ai.data import splits, statistics
+
+
+def build_detection_transforms(train: bool, augmentation: str = "none") -> Callable:
+    """`augmentation="strong"` is torchvision's own reference detection
+    recipe (RandomIoUCrop + RandomZoomOut + horizontal flip + color jitter) --
+    standard practice, not novel, per CLAUDE.md. Tried first (Milestone 8
+    follow-up) and found to make both mAP@50 and mAP@50:95 slightly *worse*
+    than no augmentation at all -- see docs/DECISIONS.md. `augmentation=
+    "default"` is the lighter fallback: just horizontal flip + color jitter,
+    matching what actually helped the classification tasks (transforms.py),
+    without the aggressive scale/crop jitter that regressed here -- also
+    found to slightly regress both mAPs on its own. `"none"` (the default,
+    matching the original Milestone 8 baseline's actual behavior, which
+    predates this function having an `augmentation` parameter at all --
+    keep this the fallback so old configs that don't set `data.augmentation`
+    stay reproducible) applies no transform beyond tensor conversion, same
+    as eval. All variants stay within this project's surgical-plausibility
+    constraints: no vertical flip, no rotation, no hue shift.
+    SanitizeBoundingBoxes (strong only, since only RandomIoUCrop can produce
+    a degenerate box) drops any box a crop reduces to zero/degenerate area,
+    and its matching label.
+    """
+    if not train or augmentation == "none":
+        return v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+
+    if augmentation == "default":
+        return v2.Compose(
+            [
+                v2.RandomHorizontalFlip(p=0.5),
+                v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+            ]
+        )
+    if augmentation == "strong":
+        return v2.Compose(
+            [
+                v2.RandomHorizontalFlip(p=0.5),
+                v2.RandomZoomOut(fill=0, side_range=(1.0, 3.0), p=0.5),
+                v2.RandomIoUCrop(),
+                v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.SanitizeBoundingBoxes(),
+            ]
+        )
+    raise ValueError(f"unknown augmentation '{augmentation}'. Valid: none, default, strong")
 
 
 class GraspDetectionDataset(Dataset):
@@ -65,6 +120,7 @@ class GraspDetectionDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, dict]:
         file_name, anns = self.samples[idx]
         image = Image.open(self.frames_root / file_name).convert("RGB")
+        width, height = image.size
 
         boxes, labels = [], []
         for a in anns:
@@ -74,18 +130,18 @@ class GraspDetectionDataset(Dataset):
             boxes.append([x, y, x + w, y + h])
             labels.append(self._id_to_index[a["category_id"]] + 1)  # 0 = background
 
+        boxes_tensor = torch.tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         target = {
-            "boxes": torch.tensor(boxes, dtype=torch.float32).reshape(-1, 4),
+            "boxes": tv_tensors.BoundingBoxes(
+                boxes_tensor, format="XYXY", canvas_size=(height, width)
+            ),
             "labels": torch.tensor(labels, dtype=torch.int64),
             "image_id": torch.tensor([idx]),
         }
 
-        if self.transform is not None:
-            image = self.transform(image)
-        else:
-            from torchvision.transforms.functional import to_tensor
-
-            image = to_tensor(image)
+        transform = self.transform or build_detection_transforms(train=False)
+        image, target = transform(image, target)
+        target["boxes"] = target["boxes"].as_subclass(torch.Tensor)
         return image, target
 
 

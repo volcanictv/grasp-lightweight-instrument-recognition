@@ -1,0 +1,28 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  augmentation: none # matches the original best baseline's recipe exactly;
+                      # copy-paste is the one new variable here, tested against
+                      # the same backbone the 0.829-0.831 baseline used (the
+                      # resnet50 backbone swap regressed mAP -- see
+                      # docs/DECISIONS.md -- so it is not used here).
+  copy_paste:
+    enabled: true # Ghiasi et al. 2021, src/surgical_ai/data/copy_paste.py.
+                   # Contingency per docs/DECISIONS.md: backbone/loss-only
+                   # experiments didn't close the gap to the ~88-93% box AP50
+                   # literature range, so this targets the two diagnosed
+                   # problems (Clip Applier imbalance, occlusion recall) directly.
+    paste_prob: 0.5
+    max_pastes: 2
+    rare_classes: [Clip Applier]
+    occlusion_bias: 0.7
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
