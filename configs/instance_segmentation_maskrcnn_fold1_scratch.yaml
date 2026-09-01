@@ -1,0 +1,22 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: true # ImageNet backbone init only -- no warm_start_checkpoint here, unlike
+                    # instance_segmentation_maskrcnn.yaml. Box and mask heads both train
+                    # from scratch together, the standard way Mask R-CNN is normally trained.
+                    # Exists to answer a question the warm-started result left open (see
+                    # report Limitations, 2026-09-01): does warm-starting from the box
+                    # detector actually help, or would end-to-end training from ImageNet
+                    # init reach comparable AP50_segm on its own? Same split as
+                    # instance_segmentation_maskrcnn.yaml (fold1, AP50_segm 0.8458 warm-started)
+                    # for a direct, one-variable comparison.
+data:
+  split: fold1
+  augmentation: none
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
