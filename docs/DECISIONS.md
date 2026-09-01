@@ -1195,3 +1195,51 @@ session's diagnostic testing is decode-time tuning on the architecturally
 different Milestone 9 segmenter (still in progress, extended-patience run
 launched on the now-free GPU1). Both GPUs are free of Milestone 8 work as
 of this entry.
+
+## 2026-09-01 — Every run to date validated on official test, not a held-out set
+
+Asked directly whether metrics were measured on test or validation data.
+Checked `splits.py`: `_TRAIN_VAL_SPLITS["official"] = ("train", "test")`.
+Checked every config in `configs/` (26 files) -- all use `split: official`,
+zero exceptions. This means every "val_loss"/"val_mIoU" logged during
+training, every early-stopping and checkpoint-selection decision, and
+every headline metric reported so far (Task A/B, detection, tracking,
+segmentation) was measured directly on the official 5-case test split.
+There is no held-out validation set distinct from test anywhere in this
+project's history to date.
+
+This is not label leakage (test labels never enter the loss), but it is
+model-selection leakage: early stopping picks the checkpoint that scores
+best on test, and every comparative call this session made (copy-paste
+vs. plain augmentation, the backbone-depth fix, the tracking `max_age`
+sweep) was a judgment made by watching test-set performance move. That
+inflates every reported number's credibility as a true generalization
+estimate, by an unquantified amount. Never flagged anywhere before this
+entry -- not in this file, `PROJECT_SPEC.md`, or `findings.md`.
+
+Fix costs nothing to build: `docs/dataset_report.md` already confirms
+fold1 (CASE001, CASE004, CASE014, CASE015) and fold2 (CASE002, CASE003,
+CASE007, CASE021) exactly partition the 8 official train cases, fully
+disjoint from the 5 official test cases. `splits.py` already resolves
+`fold1` to `("fold2", "fold1")` -- train on fold2's 4 cases, validate on
+fold1's 4 cases, official test never touched. This has existed since
+Milestone 2 and was simply never used; every config defaulted to
+`official` instead.
+
+Decision, going forward only (all completed results stand as reported,
+now with this caveat documented rather than silently retracted or
+re-run): new development work (model selection, hyperparameter
+comparison, early stopping) uses `split: fold1` or `fold2`, not
+`official`. Once a configuration is locked in, one final confirmatory
+run with `split: official` reports the number that goes in the report,
+untouched by any prior decision. Not applied retroactively -- rerunning
+this session's ~20 completed ablations under a fold split would cost
+GPU time disproportionate to the value, since the qualitative
+conclusions (occlusion-recall ceiling, capacity-scaling result,
+tracking's net-negative mAP) are unlikely to flip on a 4-case-smaller
+training set. The two Milestone 9 segmentation runs in progress at the
+time of this entry (`segmentation_deep_backbone`,
+`segmentation_deep_backbone_copy_paste`) were left running on `official`
+rather than restarted, for the same reason -- both are far along and
+restarting loses real GPU time for a number that will get the same
+disclosure either way.

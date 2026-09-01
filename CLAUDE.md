@@ -77,6 +77,17 @@ cross-validation.
 
 Using official splits also makes our numbers directly comparable to the paper.
 
+**`data.split: official` validates on the official test set. Do not use it for
+model selection.** Every config defaulted to `official` through 2026-09-01,
+which means every early-stopping decision, checkpoint choice, and comparative
+call made during that period was implicitly tuned to test-set performance
+(see `docs/DECISIONS.md`, 2026-09-01 entry). `official` resolves train/val to
+`(train, test)` -- that pair is for one final, locked-in confirmatory run
+only. For actual development (trying an architecture change, comparing
+augmentation variants, tuning a hyperparameter, deciding when to early-stop),
+use `data.split: fold1` or `fold2` instead -- both are real case-level splits
+carved from the 8 official train cases only, official test never touched.
+
 ## Task framing
 
 The spec's original "one instrument per frame" framing does not hold. GraSP

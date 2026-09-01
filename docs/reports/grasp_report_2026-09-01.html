@@ -189,6 +189,10 @@ hr.rule{ border:none; border-top:1px solid var(--border); margin:2.6rem 0; }
     <span class="lbl">TL;DR for anyone skimming</span>
     <p>The lightweight thesis is holding up well — our small detector beats a heavy ResNet-50 variant on <em>both</em> speed and accuracy, not a tradeoff. We're 5&ndash;9 points short of the published literature on the metric that matters, and we know why (occlusion handling), we've tried the obvious fixes, and the two big open threads (tracking-by-detection, a from-scratch segmentation architecture) are real, working, honestly reported, and not fully closed yet. Full story below, with the figures.</p>
   </div>
+  <div class="callout null" style="margin-top:1rem;">
+    <span class="lbl">Read this before citing any number below</span>
+    <p>Every result in this report through 2026-09-01 was early-stopped and checkpoint-selected against the <strong>official test split</strong>, not a held-out validation set &mdash; there was no validation set distinct from test anywhere in this project until this was caught. Not label leakage (test labels never entered any loss), but real model-selection leakage: every comparative call this session made (augmentation choice, the backbone-depth fix, the tracking <code>max_age</code> sweep) was a judgment made by watching test-set performance move, which optimistically biases every headline number by an unquantified amount. Fix, going forward only: development uses <code>fold1</code>/<code>fold2</code> (real splits carved from the 8 train cases, official test untouched), with one final confirmatory run on <code>official</code> once a configuration is locked in. Full writeup: <code>docs/DECISIONS.md</code>, 2026-09-01 entry. Not applied retroactively to the ~20 completed ablations below &mdash; see &sect;7.</p>
+  </div>
 </header>
 
 <section id="milestones">
@@ -265,8 +269,11 @@ hr.rule{ border:none; border-top:1px solid var(--border); margin:2.6rem 0; }
   <h3><span class="num">4.4</span>Evaluation</h3>
   <p>Task A: per-class AP, mean AP, macro-F1. Task B: accuracy, macro-F1, per-class PRF, confusion matrix. Detection: mAP@0.5IoU, mAP@[0.5:0.95], per-class AP50 via <code>pycocotools.COCOeval</code>.</p>
   <div class="callout limit">
-    <span class="lbl">Occlusion-stratified recall</span>
-    <p>Each ground-truth instance is bucketed by the maximum fraction of its box area covered by another co-occurring instrument's box (isolated: 0%, light: &le;50%, heavy: &gt;50%), then recall is measured per bucket at a fixed 0.5/0.5 score/IoU threshold &mdash; distinct from the full mAP curve, which needs a much lower score threshold to be a valid precision-recall curve at all.</p>
+    <span class="lbl">Occlusion-stratified recall &mdash; how it's actually computed</span>
+    <p><strong>Step 1, per ground-truth instance:</strong> <code>frac = max over every other box j in the frame of intersection_area(box_i, box_j) / area(box_i)</code> &mdash; the largest fraction of this instance's own box that any single other instrument's box covers. This is a bbox-overlap proxy, not measured pixel occlusion (two boxes can overlap without either instrument actually hiding the other).</p>
+    <p><strong>Step 2, bucket by that fraction:</strong> <code>frac == 0</code> &rarr; isolated; <code>0 &lt; frac &le; 0.5</code> &rarr; light; <code>frac &gt; 0.5</code> &rarr; heavy.</p>
+    <p><strong>Step 3, recall per bucket at a fixed operating point:</strong> predictions filtered to score &ge; 0.5; a ground-truth instance counts as recalled if any same-class prediction has box IoU &ge; 0.5 against it. Recall = hits / count, computed separately within each bucket.</p>
+    <p>Implementation: <code>compute_occlusion_fractions</code> and <code>evaluate_occlusion_stratified_recall</code>, <code>src/surgical_ai/evaluation/detection.py</code>. Deliberately a <strong>fixed-threshold diagnostic</strong> (0.5 score, 0.5 IoU, both fixed) &mdash; distinct from the full mAP@50 curve, which sweeps score threshold to build a precision-recall curve. That distinction is exactly what caused the tracking-by-detection false start in &sect;5.6: a change can improve this fixed-threshold recall while making full mAP worse.</p>
   </div>
   <p>Segmentation additionally reports Dice, mIoU, AP50_segm, and mcIoU for literature comparability. Instance decoding follows Kurmann et al.'s "mask then classify": foreground pixels group by nearest predicted centroid, then each mask is classified by majority vote from the semantic head.</p>
 
@@ -437,6 +444,7 @@ hr.rule{ border:none; border-top:1px solid var(--border); margin:2.6rem 0; }
 <section id="limits">
   <h2><span class="num">&sect;7</span> Limitations</h2>
   <ul>
+    <li><strong>Every result through 2026-09-01 was model-selected against the official test split, not a held-out validation set</strong> &mdash; see the callout at the top of this report and <code>docs/DECISIONS.md</code> (2026-09-01). Fixed going forward (<code>fold1</code>/<code>fold2</code> for development), not applied retroactively.</li>
     <li>Task B's result uses ground-truth instance masks; it measures classification accuracy given known localization, not an end-to-end pipeline's accuracy.</li>
     <li>Rare classes (Clip Applier: 102 total instances; Laparoscopic Grasper: 275) have limited statistical power.</li>
     <li>Only 13 total surgical cases exist (8 train / 5 test); expect real case-to-case variance not captured by a single split.</li>
