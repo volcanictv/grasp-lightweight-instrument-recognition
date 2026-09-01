@@ -3,12 +3,15 @@ model:
   name: maskrcnn_mobilenet_v3
   pretrained: false # ImageNet backbone init is moot -- warm_start_checkpoint below
                      # overwrites backbone/RPN/box-head with the already-trained detector.
-  warm_start_checkpoint: experiments/detection_weighted_loss_20260901-001115/best.pt
-    # fasterrcnn_mobilenet_v3, AP50_box 0.831 (docs/DECISIONS.md) -- same backbone
-    # and RPN anchor config as maskrcnn_mobilenet_v3 by construction (verified:
-    # load_state_dict(strict=False) leaves only the 12 new mask-head tensors
-    # missing, zero unexpected/mismatched keys). Warm-starts box localization
-    # instead of learning it from scratch; only the mask head starts untrained.
+  warm_start_checkpoint: experiments/detection_weighted_loss_fold1_20260901-163443/best.pt
+    # fasterrcnn_mobilenet_v3 trained on split: fold1 (train=fold2, val=fold1),
+    # mAP@50 0.874 -- NOT the original official-split detection_weighted_loss
+    # checkpoint (docs/DECISIONS.md, 2026-09-01: warm-starting from that one
+    # leaked fold1 into the box components' own training data, caught via an
+    # impossible val_mAP50=0.9946 after one epoch). This checkpoint's
+    # backbone/RPN/box-head never saw fold1 during their own training, so
+    # fold1 is genuinely held out here. Same verified-clean warm-start
+    # property (strict=False leaves only the 12 mask-head tensors missing).
 data:
   split: fold1 # real held-out split, not official test -- see CLAUDE.md's Splits section
                # and docs/DECISIONS.md (2026-09-01 test-as-validation entry).
