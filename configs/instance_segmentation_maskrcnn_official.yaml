@@ -1,0 +1,22 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: false # ImageNet backbone init is moot -- warm_start_checkpoint below
+                     # overwrites backbone/RPN/box-head with the already-trained detector.
+  warm_start_checkpoint: experiments/detection_weighted_loss_20260901-001115/best.pt
+    # fasterrcnn_mobilenet_v3 trained on split: official (train=official train, val=official
+    # test), AP50_box 0.831. Valid warm start for an official-split confirmatory run: this
+    # checkpoint's backbone/RPN/box-head were fit via gradient descent only on official train,
+    # official test was used solely for early-stopping selection (already-disclosed, milder
+    # leakage than the fold1 case in docs/DECISIONS.md, not gradient-descent reuse of test data).
+data:
+  split: official # the one final, locked-in confirmatory run per CLAUDE.md's Splits section --
+                   # not for model selection, reported here as the headline number.
+  augmentation: none
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
