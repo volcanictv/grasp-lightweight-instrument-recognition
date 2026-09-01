@@ -1,0 +1,21 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: fold2 # train=fold1, val=fold2 -- complementary to detection_weighted_loss_fold1.yaml.
+               # Exists to warm-start a second instance_segmentation_maskrcnn run validated on
+               # fold2, giving a real 2-fold cross-validated AP50_segm estimate instead of one
+               # split's number. Same leakage reasoning as the fold1 config (docs/DECISIONS.md,
+               # 2026-09-01): warm-starting from the official-split detector would leak fold2
+               # cases (already seen via gradient descent) into this "held-out" split.
+  augmentation: none
+loss:
+  class_weights: true
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
