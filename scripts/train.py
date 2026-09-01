@@ -1,0 +1,441 @@
+"""Train a Task A (multilabel_frame), Task B (region_classification), or
+detection model from a config -- `config["task"]` selects which.
+
+Usage:
+    python scripts/train.py configs/baseline_frozen.yaml [--data-root PATH] [--device cuda:0]
+
+Every run writes experiments/<run_id>/manifest.json, best.pt, metrics.json,
+and figures/. No hyperparameters as CLI flags, per CLAUDE.md — only paths and
+device change between invocations without editing the config.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import logging
+import os
+import platform
+import random
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+
+import numpy as np
+import torch
+import yaml
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from surgical_ai.data import splits  # noqa: E402
+from surgical_ai.data.dataset import GraspMultiLabelDataset  # noqa: E402
+from surgical_ai.data.detection_dataset import GraspDetectionDataset, collate_fn  # noqa: E402
+from surgical_ai.data.region_dataset import GraspRegionDataset  # noqa: E402
+from surgical_ai.data.transforms import build_transforms  # noqa: E402
+from surgical_ai.evaluation.detection import dataset_to_coco_gt  # noqa: E402
+from surgical_ai.models import build_model  # noqa: E402
+from surgical_ai.models.detectors.registry import build_detector  # noqa: E402
+from surgical_ai.training.losses import (  # noqa: E402
+    build_loss,
+    compute_class_weights,
+    compute_pos_weight,
+)
+from surgical_ai.training.samplers import build_sampler  # noqa: E402
+from surgical_ai.training.trainer import (  # noqa: E402
+    count_parameters,
+    evaluate,
+    evaluate_region,
+    fit,
+    fit_detection,
+)
+from surgical_ai.utils import visualization as viz  # noqa: E402
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("config", type=Path)
+    parser.add_argument(
+        "--data-root",
+        type=Path,
+        default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSp")),
+    )
+    parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--experiments-dir", type=Path, default=REPO_ROOT / "experiments")
+    parser.add_argument("--num-workers", type=int, default=4)
+    return parser.parse_args()
+
+
+def build_optimizer(model: torch.nn.Module, training_config: dict) -> torch.optim.Optimizer:
+    """Single LR by default. If training.backbone_lr is set (PROJECT_SPEC.md
+    Sec.6's discriminative-LR recommendation for fine-tuning), splits params
+    into a backbone group and a head group using `model.head` -- every
+    registry builder in models/classifiers/ sets this to the replaced
+    classification head submodule, so this is backbone-agnostic rather than
+    matching architecture-specific attribute names.
+    """
+    lr = training_config["lr"]
+    backbone_lr = training_config.get("backbone_lr")
+    if backbone_lr is None:
+        return torch.optim.Adam((p for p in model.parameters() if p.requires_grad), lr=lr)
+
+    head_param_ids = {id(p) for p in model.head.parameters()}
+    head_params = [p for p in model.parameters() if p.requires_grad and id(p) in head_param_ids]
+    backbone_params = [
+        p for p in model.parameters() if p.requires_grad and id(p) not in head_param_ids
+    ]
+    return torch.optim.Adam(
+        [
+            {"params": backbone_params, "lr": backbone_lr},
+            {"params": head_params, "lr": lr},
+        ]
+    )
+
+
+def set_seed(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def sha256_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git_info() -> dict:
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, stderr=subprocess.DEVNULL, text=True
+        ).strip()
+        dirty = bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=REPO_ROOT, stderr=subprocess.DEVNULL, text=True
+            ).strip()
+        )
+        return {"commit": commit, "dirty": dirty}
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return {"commit": None, "dirty": None, "note": "not a git repository"}
+
+
+def gpu_info(device: torch.device) -> dict:
+    if device.type != "cuda":
+        return {"device": "cpu"}
+    return {
+        "name": torch.cuda.get_device_name(device),
+        "driver_capability": torch.cuda.get_device_capability(device),
+        "torch_cuda_build": torch.version.cuda,
+    }
+
+
+def _setup_multilabel_task(config: dict, args: argparse.Namespace, device: torch.device):
+    train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    image_size = config["data"]["image_size"]
+    augmentation = config["data"].get("augmentation", "default")
+
+    train_ds = GraspMultiLabelDataset(
+        args.data_root, train_split,
+        transform=build_transforms(image_size, train=True, augmentation=augmentation),
+    )
+    val_ds = GraspMultiLabelDataset(
+        args.data_root, val_split, transform=build_transforms(image_size, train=False)
+    )
+    class_names = train_ds.class_names_ordered()
+
+    sampling = config["data"].get("sampling", "none")
+    sampler = build_sampler(sampling, train_ds.samples)
+    train_loader = torch.utils.data.DataLoader(
+        train_ds, batch_size=config["training"]["batch_size"],
+        shuffle=(sampler is None), sampler=sampler, num_workers=args.num_workers,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_ds, batch_size=config["training"]["batch_size"], shuffle=False,
+        num_workers=args.num_workers,
+    )
+
+    label_counts = torch.zeros(len(class_names))
+    for _, label in train_ds.samples:
+        label_counts += label
+
+    pos_weight = None
+    if config["loss"].get("class_weights", False):
+        pos_weight = compute_pos_weight(label_counts, len(train_ds)).to(device)
+    loss_fn = build_loss(config["loss"], pos_weight=pos_weight)
+
+    return train_loader, val_loader, class_names, loss_fn, evaluate
+
+
+def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.device):
+    train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    image_size = config["data"]["image_size"]
+    augmentation = config["data"].get("augmentation", "default")
+
+    train_ds = GraspRegionDataset(
+        args.data_root, train_split,
+        transform=build_transforms(image_size, train=True, augmentation=augmentation),
+    )
+    val_ds = GraspRegionDataset(
+        args.data_root, val_split, transform=build_transforms(image_size, train=False)
+    )
+    class_names = train_ds.class_names_ordered()
+
+    train_loader = torch.utils.data.DataLoader(
+        train_ds, batch_size=config["training"]["batch_size"], shuffle=True,
+        num_workers=args.num_workers,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_ds, batch_size=config["training"]["batch_size"], shuffle=False,
+        num_workers=args.num_workers,
+    )
+
+    label_counts = torch.zeros(len(class_names))
+    for _, _, _, label_idx in train_ds.instances:
+        label_counts[label_idx] += 1
+
+    class_weight = None
+    if config["loss"].get("class_weights", False):
+        class_weight = compute_class_weights(label_counts).to(device)
+    loss_fn = build_loss(config["loss"], class_weight=class_weight)
+
+    return train_loader, val_loader, class_names, loss_fn, evaluate_region
+
+
+def build_detection_optimizer(
+    model: torch.nn.Module, training_config: dict
+) -> torch.optim.Optimizer:
+    """Defaults to Adam (this project's convention everywhere else). SGD is
+    the standard torchvision detection-recipe optimizer (momentum 0.9,
+    weight_decay 5e-4 -- torchvision's own reference training script
+    defaults) -- available via `training.optimizer: sgd` as a one-variable
+    ablation against the Adam default, per the open question flagged in
+    docs/DECISIONS.md.
+    """
+    params = (p for p in model.parameters() if p.requires_grad)
+    opt_name = training_config.get("optimizer", "adam")
+    if opt_name == "adam":
+        return torch.optim.Adam(params, lr=training_config["lr"])
+    if opt_name == "sgd":
+        return torch.optim.SGD(
+            params, lr=training_config["lr"], momentum=0.9, weight_decay=5e-4
+        )
+    raise ValueError(f"unknown training.optimizer '{opt_name}'. Valid: adam, sgd")
+
+
+def run_detection_training(config: dict, args: argparse.Namespace, device: torch.device) -> None:
+    """Self-contained detection training path -- kept separate from the
+    classification tasks' shared code below rather than threaded through
+    it, since a detector's model interface (dict-of-losses in train mode,
+    no external loss_fn, mAP-based checkpoint selection, no confusion
+    matrix) diverges enough that forcing it through the same branches would
+    obscure both paths rather than clarify either.
+    """
+    train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+
+    train_ds = GraspDetectionDataset(args.data_root, train_split, transform=None)
+    val_ds = GraspDetectionDataset(args.data_root, val_split, transform=None)
+    class_names = train_ds.class_names_ordered()
+    coco_gt_val = dataset_to_coco_gt(val_ds)
+
+    train_loader = torch.utils.data.DataLoader(
+        train_ds, batch_size=config["training"]["batch_size"], shuffle=True,
+        num_workers=args.num_workers, collate_fn=collate_fn,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_ds, batch_size=config["training"]["batch_size"], shuffle=False,
+        num_workers=args.num_workers, collate_fn=collate_fn,
+    )
+
+    model = build_detector(
+        config["model"]["name"], num_classes=len(class_names),
+        pretrained=config["model"]["pretrained"],
+    ).to(device)
+    trainable, total = count_parameters(model)
+    optimizer = build_detection_optimizer(model, config["training"])
+
+    run_id = f"{args.config.stem}_{time.strftime('%Y%m%d-%H%M%S')}"
+    run_dir = args.experiments_dir / run_id
+    figures_dir = run_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = run_dir / "best.pt"
+
+    start = time.time()
+    history, best_metrics = fit_detection(
+        model, train_loader, val_loader, optimizer, class_names, device,
+        epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
+        coco_gt_val=coco_gt_val,
+    )
+    duration_sec = time.time() - start
+
+    viz.plot_curve(history.train_loss, "train loss", "Train loss", figures_dir / "loss_curve.png")
+    viz.plot_training_curves(
+        history.val_map50, history.val_map50_95, "mAP", "Val mAP@50 vs. mAP@50:95",
+        figures_dir / "map_curve.png",
+    )
+
+    split_paths = {
+        train_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[train_split],
+        val_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[val_split],
+    }
+    manifest = {
+        "run_id": run_id,
+        "config": config,
+        "config_path": str(args.config),
+        "git": git_info(),
+        "seed": config["training"]["seed"],
+        "split_files": {
+            name: {"path": str(path), "sha256": sha256_of(path)}
+            for name, path in split_paths.items()
+        },
+        "package_versions": {
+            "python": platform.python_version(),
+            "torch": torch.__version__,
+            "torchvision": __import__("torchvision").__version__,
+        },
+        "gpu": gpu_info(device),
+        "trainable_params": trainable,
+        "total_params": total,
+        "wall_clock_seconds": duration_sec,
+        "best_checkpoint": str(checkpoint_path),
+        "final_metrics": {
+            "map50": best_metrics.map50,
+            "map50_95": best_metrics.map50_95,
+            "per_class_ap50": best_metrics.per_class_ap50,
+        },
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
+    (run_dir / "metrics_table.md").write_text(best_metrics.to_markdown())
+
+    print(f"run_id: {run_id}")
+    print(f"trainable/total params: {trainable}/{total} ({100*trainable/total:.1f}%)")
+    print(f"wall clock: {duration_sec:.1f}s")
+    print(best_metrics.to_markdown())
+    print(f"manifest: {run_dir / 'manifest.json'}")
+
+
+def main() -> None:
+    args = parse_args()
+    config = yaml.safe_load(args.config.read_text())
+    set_seed(config["training"]["seed"])
+    device = torch.device(args.device)
+
+    task = config["task"]
+    if task == "detection":
+        run_detection_training(config, args, device)
+        return
+    elif task == "multilabel_frame":
+        train_loader, val_loader, class_names, loss_fn, evaluate_fn = _setup_multilabel_task(
+            config, args, device
+        )
+    elif task == "region_classification":
+        train_loader, val_loader, class_names, loss_fn, evaluate_fn = _setup_region_task(
+            config, args, device
+        )
+    else:
+        raise ValueError(
+            f"unknown task '{task}'. Valid: multilabel_frame, region_classification, detection"
+        )
+
+    model = build_model(
+        config["model"]["name"], num_classes=len(class_names),
+        pretrained=config["model"]["pretrained"], freeze_backbone=config["model"]["freeze_backbone"],
+    )
+    trainable, total = count_parameters(model)
+
+    optimizer = build_optimizer(model, config["training"])
+
+    run_id = f"{args.config.stem}_{time.strftime('%Y%m%d-%H%M%S')}"
+    run_dir = args.experiments_dir / run_id
+    figures_dir = run_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = run_dir / "best.pt"
+
+    start = time.time()
+    history, best_metrics = fit(
+        model, train_loader, val_loader, loss_fn, optimizer, class_names, device,
+        epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
+        evaluate_fn=evaluate_fn,
+    )
+    duration_sec = time.time() - start
+
+    # Re-evaluate the best checkpoint (fit() keeps history from every epoch,
+    # but best_metrics is already the metrics at the best epoch).
+    viz.plot_training_curves(
+        history.train_loss, history.val_loss, f"{config['loss']['type']} loss", "Train/val loss",
+        figures_dir / "loss_curve.png",
+    )
+    viz.plot_training_curves(
+        history.train_macro_f1, history.val_macro_f1, "macro F1", "Train/val macro-F1",
+        figures_dir / "f1_curve.png",
+    )
+    viz.plot_prf_bars(
+        best_metrics.per_class_precision, best_metrics.per_class_recall,
+        best_metrics.per_class_f1, figures_dir / "per_class_prf.png",
+    )
+
+    if task == "multilabel_frame":
+        viz.plot_confusion_matrices(
+            best_metrics.confusion_matrices, figures_dir / "confusion_matrices.png"
+        )
+        final_metrics = {
+            "mean_ap": best_metrics.mean_ap,
+            "macro_f1": best_metrics.macro_f1,
+            "per_class_ap": best_metrics.per_class_ap,
+            "per_class_f1": best_metrics.per_class_f1,
+            "per_class_precision": best_metrics.per_class_precision,
+            "per_class_recall": best_metrics.per_class_recall,
+        }
+    else:
+        viz.plot_multiclass_confusion_matrix(
+            best_metrics.confusion_matrix, class_names, figures_dir / "confusion_matrix.png"
+        )
+        final_metrics = {
+            "accuracy": best_metrics.accuracy,
+            "macro_f1": best_metrics.macro_f1,
+            "per_class_f1": best_metrics.per_class_f1,
+            "per_class_precision": best_metrics.per_class_precision,
+            "per_class_recall": best_metrics.per_class_recall,
+        }
+
+    train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    split_paths = {
+        train_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[train_split],
+        val_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[val_split],
+    }
+    manifest = {
+        "run_id": run_id,
+        "config": config,
+        "config_path": str(args.config),
+        "git": git_info(),
+        "seed": config["training"]["seed"],
+        "split_files": {
+            name: {"path": str(path), "sha256": sha256_of(path)}
+            for name, path in split_paths.items()
+        },
+        "package_versions": {
+            "python": platform.python_version(),
+            "torch": torch.__version__,
+            "torchvision": __import__("torchvision").__version__,
+        },
+        "gpu": gpu_info(device),
+        "trainable_params": trainable,
+        "total_params": total,
+        "wall_clock_seconds": duration_sec,
+        "best_checkpoint": str(checkpoint_path),
+        "final_metrics": final_metrics,
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
+    (run_dir / "metrics_table.md").write_text(best_metrics.to_markdown())
+
+    print(f"run_id: {run_id}")
+    print(f"trainable/total params: {trainable}/{total} ({100*trainable/total:.1f}%)")
+    print(f"wall clock: {duration_sec:.1f}s")
+    print(best_metrics.to_markdown())
+    print(f"manifest: {run_dir / 'manifest.json'}")
+
+
+if __name__ == "__main__":
+    main()

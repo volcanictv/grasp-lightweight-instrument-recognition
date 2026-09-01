@@ -1,0 +1,12 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+training:
+  batch_size: 4
+  epochs: 20
+  optimizer: sgd # adam | sgd
+  lr: 0.005
+  seed: 42
