@@ -26,6 +26,7 @@ This file is the rules. Read the others when the situation calls for it.
 | `docs/DECISIONS.md` | Before reversing or re-litigating a past choice. Append-dated, newest last. |
 | `docs/imbalance_notes.md` | Working on class imbalance. Literature and fit-for-budget notes. |
 | `docs/findings.md` | Writing up or citing results. Consolidated, report-ready results and analysis across all milestones, numbers sourced from `experiments/*/manifest.json`. |
+| `docs/detection_literature_notes.md` | Working on detection/occlusion (Milestone 8-9). What the field has already tried for occluded/overlapping-instrument detection, before trying something new. |
 
 If a rule here and the spec disagree, this file wins and the spec gets fixed.
 

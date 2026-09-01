@@ -2,7 +2,7 @@
 
 Consolidated results for the research report. This pulls every number
 directly from `experiments/*/manifest.json` and `experiments/*/benchmark.json`
-(not from memory) as of 2026-08-31. For methodology detail and reasoning
+(not from memory) as of 2026-09-01. For methodology detail and reasoning
 behind specific choices, see `README.md` (narrative per milestone),
 `docs/DECISIONS.md` (dated decision log), and `docs/imbalance_notes.md`
 (literature). This file is the summary meant to be read on its own.
@@ -198,6 +198,378 @@ Task A's.
 
 ---
 
+## Milestone 8: Detection (Faster R-CNN)
+
+Boxes come directly from the short-term JSON's per-instance `bbox` field,
+no new annotation. One sample per annotated frame, all instances in that
+frame as one target set (unlike Task B's one-sample-per-instance). Metrics
+via `pycocotools.COCOeval` directly, the same family (AP50_box) every
+third-party GraSP paper reports (see comparison table below).
+
+### Baseline
+
+MobileNetV3-Large-FPN (torchvision's `fasterrcnn_mobilenet_v3_large_fpn`,
+18.9M params), Adam, `lr=0.0001`, batch size 4, no augmentation.
+
+| variant | mAP@50 | mAP@50:95 | wall clock |
+|---|---|---|---|
+| **Adam (chosen default)** | **0.8295** | 0.6155 | 2564s |
+| SGD (torchvision's own reference-recipe optimizer) | 0.8230 | 0.6035 | 2748s |
+
+Adam slightly ahead on both metrics; kept as the default for every
+Milestone 8 variant below unless noted.
+
+Baseline per-class AP@50 (Adam): Bipolar Forceps 0.923, Prograsp Forceps
+0.687, Large Needle Driver 0.959, Monopolar Curved Scissors 0.969, Suction
+Instrument 0.753, Clip Applier 0.834, **Laparoscopic Grasper 0.682**
+(weakest class).
+
+### Augmentation ablation -- negative result
+
+Both of torchvision's standard detection-augmentation recipes made mAP
+*worse*, not better, on this dataset -- tried in order of increasing
+strength, both regressed:
+
+| variant | mAP@50 | mAP@50:95 | heavy-occlusion recall |
+|---|---|---|---|
+| baseline (no augmentation) | 0.8295 | 0.6155 | -- |
+| light (flip + color jitter only) | 0.8040 | 0.5980 | 0.606 |
+| strong (+ RandomZoomOut + RandomIoUCrop) | 0.8157 | 0.5801 | 0.645 |
+
+Consistent with this project's literature review
+(`docs/detection_literature_notes.md`): COCO-style geometric/photometric
+augmentation isn't validated for small, visually homogeneous surgical
+datasets, and the augmentation techniques that *do* help in the surgical
+detection literature are synthesis-based (see copy-paste, below), not
+generic crop/color jitter.
+
+### Soft-NMS -- null result
+
+Gaussian soft-NMS (Bodla et al. 2017) applied as pure post-processing on
+the baseline's raw predictions (hard-NMS disabled to get candidate boxes):
+mAP@50 0.826 vs. 0.829 baseline -- no improvement, occlusion recall
+unchanged. Confirms hard-NMS suppression of a correctly-detected-but-
+overlapping box is *not* the mechanism behind the occlusion recall gap
+(see below); ruling this out was the reason the occlusion investigation
+moved to a proposal/representation-quality explanation instead, and
+eventually to Milestone 9's architecture change.
+
+### Class-weighted loss -- small aggregate move, real per-class win
+
+Balanced weight on the box classifier's cross-entropy (same formula
+Task B uses), monkeypatching `torchvision.models.detection.roi_heads.
+fastrcnn_loss`:
+
+| variant | mAP@50 | mAP@50:95 | Laparoscopic Grasper AP@50 | Clip Applier AP@50 |
+|---|---|---|---|---|
+| baseline | 0.8295 | 0.6155 | 0.682 | 0.834 |
+| **weighted loss** | **0.8307** | 0.5955 | **0.737** | 0.824 |
+
+Aggregate mAP barely moves (+0.0012), but Laparoscopic Grasper -- the
+weakest class in every Milestone 8 variant -- gains +5.5 AP50 points. The
+aggregate number hides a real, targeted improvement; weighted loss
+redistributes attention toward the specific class that needs it rather
+than lifting everything uniformly. Occlusion-stratified recall (heavy:
+0.617) is statistically unchanged from the other variants -- confirms
+again that occlusion is a separate axis from class imbalance.
+
+### Occlusion-stratified recall -- the throughline finding
+
+A proxy metric built specifically because COCO's small/medium/large-area
+AP breakdown is meaningless here (this dataset has almost no small-object
+instances -- see below): bucket each ground-truth instance by how much of
+its own bbox area is covered by another co-occurring instrument's bbox
+(`isolated` = 0%, `light` <=50%, `heavy` >50%), then measure recall at a
+fixed score/IoU threshold (0.5/0.5) per bucket.
+
+| variant | isolated | light | heavy |
+|---|---|---|---|
+| augmented (strong) | 0.881 | 0.913 | 0.645 |
+| light augmentation | 0.895 | 0.909 | 0.606 |
+| weighted loss | 0.902 | 0.918 | 0.617 |
+| ResNet-50 (heavy backbone) | 0.894 | 0.923 | 0.666 |
+| ResNet-50 + weighted loss | 0.885 | 0.926 | 0.634 |
+| copy-paste augmentation | 0.899 | 0.920 | 0.645 |
+
+**Every single Milestone 8 variant tried lands in the same 0.606-0.666
+heavy-occlusion recall band**, regardless of backbone size (18.9M vs.
+41.1M params), loss weighting, generic augmentation, or occlusion-targeted
+augmentation -- a ~25-30 point recall drop from the isolated-instance rate
+that nothing in the Faster R-CNN family closed. This consistency, not any
+single number, is the finding: it points to a structural limitation in
+Faster R-CNN's box-proposal + NMS pipeline itself (confirmed not to be
+NMS suppression specifically, via the soft-NMS null result above), not
+something fixable by tuning within that architecture family. This is the
+motivation for Milestone 9's anchor-free, NMS-free centroid/offset
+segmenter (below).
+
+### Backbone/capacity scaling -- negative result, closes that branch
+
+Per the user's explicit decision rule (get within ~3% of the literature's
+comparable range or trade efficiency for accuracy via more capacity), a
+ResNet-50-FPN backbone (41.1M params, more than 2x the baseline) was
+tried alone and combined with weighted loss:
+
+| variant | params | mAP@50 | mAP@50:95 | wall clock |
+|---|---|---|---|---|
+| baseline (MobileNetV3) | 18.9M | 0.8295 | 0.6155 | 2564s |
+| **weighted loss (MobileNetV3)** | 18.9M | **0.8307** | 0.5955 | -- |
+| ResNet-50 alone | 41.1M | 0.808 | 0.576 | 8474s |
+| ResNet-50 + weighted loss | 41.1M | 0.800 | 0.587 | 13233s |
+
+More capacity never beat the lightweight baseline -- both ResNet-50
+variants underperform it, and the combined variant underperforms
+ResNet-50 alone, so combining levers didn't help either. On a dataset
+this size (8 train cases), a heavier backbone overfits rather than
+generalizing better. This closes the "trade efficiency for accuracy via
+bigger model" branch of the decision rule: capacity is not the lever that
+works here, and (per the occlusion table above) it does not touch the
+occlusion gap either.
+
+### Copy-paste augmentation -- best aggregate result, occlusion gap unchanged
+
+Ghiasi et al. 2021's "Simple Copy-Paste" applied to GraSP's own
+per-instance masks (no synthetic data): pastes real Clip Applier crops
+onto other training frames, biased 70% of the time to land on top of an
+existing box (deliberately increasing occlusion exposure), targeting both
+the class-imbalance and occlusion problems in one augmentation.
+
+mAP@50 = 0.826, mAP@50:95 = 0.590 (18.9M params, MobileNetV3 backbone) --
+matches the baseline within noise, the best-performing Milestone 8
+follow-up. Clip Applier AP@50 lands at 0.780, respectably mid-pack rather
+than the weakest class.
+
+**But occlusion-stratified recall (heavy: 0.645) sits in exactly the same
+band as every other variant.** This is a meaningful negative result on
+*mechanism*: deliberately increasing occlusion exposure during training
+does not teach Faster R-CNN to separate overlapping boxes better, because
+the failure is in the architecture's proposal/NMS pipeline, not its
+exposure to occluded examples. This result is the strongest evidence in
+the project that closing the occlusion gap requires an architecture
+change, not another Milestone 8 data or loss intervention -- see
+Milestone 9, below.
+
+### Latency (Titan Xp, real measurements)
+
+`scripts/benchmark.py`'s "model" mode didn't support detection models
+(different calling convention -- a list of tensors, not a batched
+tensor); extended it with a `detection` mode (`evaluation/benchmarking.py
+::benchmark_detection_gpu_latency`) rather than leave this unmeasured.
+FLOPs/MACs and ONNX export are still not attempted for detection --
+both are unreliable for two-stage detectors with a dynamic-length
+RPN/ROI-heads pipeline, and an honestly-missing number is better than a
+wrong one.
+
+Single-image GPU latency, native 800x1280 resolution, median over 200
+warm runs:
+
+| variant | params | median latency | p95 latency | peak VRAM |
+|---|---|---|---|---|
+| **MobileNetV3 (baseline/weighted-loss/copy-paste, identical architecture)** | 18.9M | **~22ms** | ~22ms | ~309MB |
+| ResNet-50 (heavy) | 41.1M | **67.7ms** | 70.0ms | 588MB |
+
+**The lightweight model is ~3.1x faster while also scoring higher
+accuracy** (copy-paste's 0.826 vs. ResNet-50's 0.808/0.800) -- this is the
+clearest efficiency-thesis data point in the detection results: more
+capacity was both slower and less accurate here, not a
+speed/accuracy trade at all. At ~22ms/frame there is still headroom under
+a real-time budget (33ms at 30fps) for something cheap on top (motivates
+Milestone 9's planned tracking-by-detection component).
+
+Milestone 9's segmenter (2.1M params, 384x384 input -- not the same
+resolution as detection's native 800x1280, so not a direct apples-to-
+apples comparison, only a rough sense of scale) measured **3.96ms median
+latency**, 55.4MB peak VRAM -- consistent with being a much smaller model,
+though its accuracy is not yet competitive (see above), so this is not
+yet a usable efficiency-vs-accuracy comparison point on its own.
+
+### Tracking-by-detection -- real improvement on the diagnostic metric, still short on the headline one
+
+Motivated by the latency headroom above: with ~22ms/frame against a 33ms
+(30fps) real-time budget, there is room for a cheap post-processing step.
+Annotated GraSP frames within a case are ~35 frames apart (median) --
+too sparse for frame-to-frame tracking directly -- but the raw frame
+directories contain every intermediate frame at native (~1fps) sampling
+(e.g. CASE001 has 10,972 sequential files against 329 annotated ones),
+checked directly rather than assumed before building anything.
+
+Built an IOU-Tracker (Bochinski et al. 2017 -- greedy box-IoU association,
+no motion model or appearance features) with two additions, both found
+necessary by testing, not assumed upfront: (1) track survival through up
+to `max_age` consecutive missed frames (the same "max age" idea
+SORT/DeepSORT use), so a track can survive momentary occlusion instead of
+ending the instant one frame is missed; (2) boundary-exit detection -- a
+track tracks a coarse velocity (box-center delta between real matches),
+and if it's near a frame edge and moving further outward when a gap
+starts, the gap is treated as the instrument genuinely leaving the frame
+and the track is dropped immediately rather than coasting.
+
+**First check -- occlusion-stratified recall** (fixed 0.5 score
+threshold, the same threshold this metric uses everywhere else in this
+report): isolated 0.899->0.912-0.913, light 0.920->0.923-0.930, **heavy
+0.645->0.648-0.683** depending on configuration -- a real improvement,
+and (in the best case found) the first technique all session to move
+heavy-occlusion recall outside the 0.606-0.666 band every other
+Milestone 8 variant landed in. Verified this was a genuinely causal,
+real-time-valid result and not a look-ahead artifact (a non-causal window
+produced identical numbers, traced to the implementation reading out
+tracker state before any future frames are processed -- not a real leak,
+but worth confirming empirically rather than assuming).
+
+**Second, more demanding check -- full COCO-style mAP@50** (needs a low
+score threshold for a real precision-recall curve, unlike the fixed-
+threshold recall table above): tracking-augmented predictions scored
+*worse* than raw per-frame detections in the first version of this
+result -- 0.7899 tracked vs. 0.8264 raw, a ~3.7 point drop. Root cause:
+two distinct failure modes let a stale, wrong box get reported as a
+confident-looking false positive -- (a) tracks born from low-confidence
+(likely noise) detections coasting forward, and (b) tracks from real,
+confidently-detected instruments that had *actually left the frame or
+moved far* (not momentarily occluded) still coasting on their last known,
+now-wrong box. Fixed with `min_confidence_to_coast` (only let a track
+coast if its last real detection was confident) and the boundary-exit
+check above; the boundary-exit check did almost all of the recovery,
+confirming (b) was the dominant failure mode, not (a).
+
+| configuration | mAP@50 | gap to raw (0.8264) | heavy-occlusion recall |
+|---|---|---|---|
+| tracking, no fixes | 0.7899 | -4.65 | 0.645-0.683 (noisy) |
+| + confidence-gating only | 0.7914 | -4.50 | 0.652 |
+| + boundary-exit, max_age=3 | 0.8034 | -2.30 | 0.648 |
+| + boundary-exit, max_age=2 | 0.8075 | -1.89 | 0.648 |
+| **+ boundary-exit, max_age=1** | **0.8130** | **-1.34** | 0.652 |
+
+A hyperparameter sweep on `max_age` (how many frames a track may coast)
+showed a clean monotonic trend -- shorter coasting window, less
+staleness, less precision loss -- with `max_age=1` the best found and
+close to the practical floor (anything shorter disables occlusion
+tolerance entirely).
+
+**Tried and rejected: occlusion-corridor detection.** A geometric
+positive signal for occlusion (extrapolate a missing track's position; if
+it overlaps another instrument actually detected this frame, treat the
+gap as corroborated occlusion and grant a longer coasting lifetime instead
+of the normal short one) was tested in three forms -- a modest extension,
+a generous one, and a version requiring the evidence to keep holding up
+every frame rather than just once. **All three consistently underperformed
+plain `max_age=1` with no corridor mechanism at all** (0.8048-0.8089 vs.
+0.8130). Not noise -- consistent across extension length and
+evidence-checking strategy. Most likely explanation: GraSP frames
+routinely contain 2-3 co-occurring instruments (94.7% of frames), so
+"another instrument's box is nearby" is true almost constantly in this
+dataset regardless of whether real occlusion is happening -- a plausible
+signal in principle, too weakly discriminating here in practice.
+
+**Honest bottom line**: after two real, diagnosed-and-fixed bugs and a
+hyperparameter sweep, tracking-by-detection's best configuration found so
+far is **still net negative on mAP@50**, 1.34 points below the raw
+detector, despite a real and validated recall benefit at the fixed-
+threshold diagnostic level. This is near-zero added inference cost in the
+way that matters for a real-time pipeline (past frames need to have
+already been processed once, not re-processed at request time), and the
+mechanism is sound and worth keeping in the toolkit, but it has not yet
+cleared the bar of improving the actual literature-comparable headline
+number. Reported as a validated, partially-negative research direction,
+not a finished win -- see `docs/DECISIONS.md` for the full, dated
+progression of this result.
+
+### Against the literature target
+
+Per `docs/detection_literature_notes.md` and the third-party comparison
+table below, the comparable published range is ~88-93% (TAPIS's
+mAP@0.5IoU_segm 89.85%; LACOSTE's AP50_segm 90.34-91.71% for two TAPIS
+variants). The best Milestone 8 box-AP50 achieved is 0.831 (weighted
+loss) -- roughly 5-9 points short, and no Milestone 8 lever (augmentation,
+loss weighting, backbone capacity, or occlusion-targeted augmentation)
+closed that gap. Some of the gap is not apples-to-apples (Milestone 8 is
+box-only, single-frame, no temporal/stereo context, vs. TAPIS/LACOSTE's
+segmentation-based, some using temporal or stereo information), but the
+occlusion-stratified recall finding above suggests a real, fixable
+architectural gap remains beyond that framing difference.
+
+## Milestone 9: Instance segmentation (in progress, not a final number)
+
+Anchor-free, NMS-free instance segmentation, built specifically to attack
+the occlusion mechanism Milestone 8 could not fix by tuning within the
+Faster R-CNN family. Not a reproduction of one paper: a semantic
+segmentation head plus a centroid-heatmap + offset-regression head for
+instance separation, the heatmap+offset half following Kurmann et al.
+2021's "mask then classify" framing, structurally close to Cheng et al.
+2020's Panoptic-DeepLab. Backbone is the same MobileNetV3-Large-FPN family
+used throughout this project (2.1M total params for the full model --
+lighter than either detection variant above).
+
+**First run** (`segmentation_baseline`, patience 10): semantic head
+result is reasonable for a first pass -- mIoU 0.308, mean Dice 0.448, 32
+min wall clock. But the instance-level metrics (AP50_segm, occlusion
+recall) were badly broken (AP50_segm 0.0017) due to a diagnosed decode-
+time bug, not a broken model: the heatmap-peak NMS kernel/threshold were
+copied from COCO-scale CenterNet defaults, which found 14-41 spurious
+peaks per image against 1-4 real instances on this project's coarser
+output grid and still-converging heatmap head. Fixed
+(`score_threshold=0.3`, `nms_kernel=7`, tuned against real predictions);
+AP50_segm on the same checkpoint improved ~38x (0.0017 -> ~0.10) with the
+corrected decode settings alone, confirming the representation was never
+the problem.
+
+**After the decode fix, two further runs** (`segmentation_extended_patience`,
+patience 30; `segmentation_cosine_lr`, patience 40 with a cosine LR decay
+to remove periodic heatmap-loss spikes seen in the first) converged to the
+**same plateau**: mIoU 0.319-0.321, mean Dice 0.460, AP50_segm 0.098-0.111,
+occlusion-stratified recall isolated 0.32-0.33 / light 0.40 / heavy
+0.07-0.11. Training is stable and converged (flat loss curves, no more
+instability once the LR schedule was added) -- three independent runs
+landing in the same place means this is a real capacity/architecture
+ceiling for a 2.1M-param, single-stride-4-feature-map model, not an
+undertraining artifact fixable by more epochs.
+
+**Honest comparison to Faster R-CNN, not spun either way**: this
+architecture does **not yet** outperform Faster R-CNN's occlusion
+handling. Absolute recall is far lower across every bucket (isolated 0.32
+vs. Faster R-CNN's ~0.88-0.90), and the *relative* occlusion penalty is
+currently larger, not smaller: heavy/isolated ratio ~0.23-0.31 here vs.
+~0.72 for copy-paste's Faster R-CNN -- the opposite of what an NMS-free
+architecture was hypothesized to achieve.
+
+**A fourth run ported copy-paste augmentation to this pipeline**
+(`segmentation_copy_paste`, same Clip Applier pasting as detection's best
+lever, updating the dense heatmap/offset/semantic targets instead of a
+box+label list) to test whether the plateau was a training-distribution
+problem. Result: mIoU 0.309 (flat), but **AP50_segm = 0.1216 -- the best
+of all four runs**, with a modest absolute recall improvement in every
+occlusion bucket (isolated 0.339, light 0.411, heavy 0.087) -- a small,
+real gain, not a null result, but still inside the same 0.23-0.31
+relative-occlusion-penalty band. Four independent runs across three
+different single-variable interventions (patience, LR schedule, and now
+copy-paste) converging to the same plateau is much more consistent with a
+**capacity or training-maturity ceiling** than a training-distribution
+problem -- unlike detection, where copy-paste alone closed most of the
+gap, this architecture's bottleneck looks structural to its current size
+(2.1M params, first-ever training runs), not to what it's trained on.
+
+The architecture is correctly implemented and validated end-to-end (one
+real instance-decoding bug caught and fixed during this process, see
+`docs/DECISIONS.md`), but confirming whether removing NMS actually helps
+occlusion here needs more model capacity or a training budget beyond what
+this project has invested so far -- not a finished result, and not yet
+evidence either for or against the underlying hypothesis. Given this,
+effort moved to tracking-by-detection on the detector instead (see above)
+as the nearer-term path to an actual occlusion-robustness improvement.
+
+Also not yet done, per CLAUDE.md's latency-benchmarking requirement: no
+ONNX-CPU latency, FLOPs, or model-size benchmark exists yet for either the
+Milestone 8 detectors or the Milestone 9 segmenter -- Titan Xp GPU latency
+is now measured for both (`scripts/benchmark.py`'s `detection` mode, added
+this round, plus a direct call to the classifiers' latency helper for the
+segmenter), but FLOPs/ONNX remain unattempted for detection specifically
+because thop/ONNX export are unreliable for two-stage detectors, not
+because it was overlooked. Given the user's stated priority is
+specifically inference latency, this is flagged here as an explicit gap
+to close before any final efficiency-vs-accuracy claim is made, not
+filled in with assumed or estimated numbers.
+
+---
+
 ## Comparison to the dataset authors' own benchmark (TAPIS)
 
 TAPIS (the GraSP paper's model) reports a single aggregate
@@ -218,11 +590,17 @@ for two independent reasons:
    unfair comparison in this project's favor.
 
 A legitimate, apples-to-apples comparison requires this project's own
-detection/segmentation stage (Milestones 8-9, not yet started) evaluated
-under the same mAP@IoU protocol. Until then, the honest framing is: Task
-B's result shows the *classification* component of the problem is close to
-solved by a lightweight model; it says nothing yet about whether this
-project's full pipeline would match TAPIS's end-to-end number.
+detection/segmentation stage evaluated under the same mAP@IoU protocol.
+Milestone 8 (detection, box-AP50 only) is done -- best result 0.831,
+roughly 5-9 points short of TAPIS/LACOSTE's comparable range, with the
+gap's likely mechanism (occlusion, not capacity or imbalance) diagnosed in
+detail above. Milestone 9 (instance segmentation, the metric family that's
+actually comparable to TAPIS's mAP@0.5IoU_segm) is in progress as of this
+writing -- see above. Until Milestone 9 produces a trusted number, the
+honest framing stays: Task B's result shows the *classification* component
+of the problem is close to solved by a lightweight model; it says nothing
+yet about whether this project's full pipeline would match TAPIS's
+end-to-end number.
 
 ## Checked against the wider published literature (web search, 2026-08-31)
 
@@ -298,13 +676,68 @@ a completed survey.
    yet — different metric, different evaluation setting (oracle
    localization here vs. their end-to-end pipeline). That comparison
    requires this project's own detection/segmentation stage.
+7. **Milestone 8 (detection) reached mAP@50 = 0.831 (weighted loss),
+   ~5-9 points short of the literature's ~88-93% comparable range** — not
+   closed by augmentation (regressed it), soft-NMS (null), or backbone
+   capacity (regressed it; more capacity overfits on 8 train cases).
+   Occlusion-stratified recall diagnosis is the throughline: every variant
+   tried, regardless of backbone/loss/data changes, loses ~25-30 recall
+   points on heavily-occluded instances (0.606-0.666 vs. ~0.89-0.90
+   isolated) — including copy-paste augmentation, which specifically
+   targeted occlusion exposure and still didn't move that number. This
+   points to a structural limitation in Faster R-CNN's box-proposal + NMS
+   pipeline, not a data or capacity problem, and motivates Milestone 9's
+   architecture change.
+8. **Milestone 9 (anchor-free, NMS-free instance segmentation) converged
+   to a stable plateau (mIoU ~0.31-0.32, AP50_segm ~0.10-0.12) across four
+   independent runs (including copy-paste augmentation, which gave a
+   small real AP50_segm gain but didn't break the plateau), and does not
+   yet outperform Faster R-CNN's occlusion handling** — its relative
+   occlusion penalty (heavy/isolated recall ratio ~0.23-0.31) is currently
+   *worse* than Faster R-CNN's (~0.72), the opposite of the hypothesis it
+   was built to test. One real instance-decoding bug was diagnosed and
+   fixed along the way (see above). Four runs across three different
+   single-variable interventions landing in the same place points to a
+   capacity/maturity ceiling, not a training-distribution problem — a
+   validated foundation for further work, not evidence for or against the
+   underlying architecture hypothesis yet.
+9. **Tracking-by-detection improves the occlusion-recall diagnostic but
+   is still net negative on mAP@50, even after fixing two real bugs and a
+   hyperparameter sweep** — a near-zero-cost IOU-Tracker (Bochinski et al.
+   2017) run across raw, densely-sampled frames (not the sparse annotated
+   subset) improves heavy-occlusion recall (0.645 -> up to 0.683 at a
+   fixed threshold), the first technique all session to move that number
+   outside the flat 0.606-0.666 band. But naively coasting through every
+   detection gap measurably hurt the full mAP@50 curve (0.7899 vs. raw's
+   0.8264) until two failure modes were found and fixed — low-confidence
+   tracks coasting, and (the dominant one) confidently-tracked instruments
+   coasting on a stale box after actually leaving the frame, not being
+   occluded. Best configuration found (confidence-gating + boundary-exit
+   detection + `max_age=1`) reaches mAP@50 = 0.8130, still 1.34 points
+   below raw. A real, validated, well-diagnosed research direction — not
+   yet a net win on the metric that matters most.
 
 ## What's not done yet
 
-Milestones 8 (detection, boxes free from the instance masks), 9
-(segmentation integration), and 10 (inference optimization, final Pareto
-analysis) have not been started. Milestone 8 is the prerequisite for a
-legitimate end-to-end comparison against TAPIS's published number.
+Milestone 8 (detection) is done. Tracking-by-detection (its planned
+post-processing addition) is built, debugged, and tuned, but is not yet a
+net win on mAP@50 (best found: -1.34 points vs. raw) -- either further
+tuning (a per-instance occlusion signal instead of a purely geometric one)
+or accepting it as a validated-but-not-adopted direction is the open
+question. Milestone 9 (segmentation architecture) is
+built, debugged, and has reached a training plateau documented above
+across four runs (including copy-paste), but has not yet been pushed past
+that plateau — a model-capacity increase is the untried next lever, not
+another training-recipe or data change. Milestone 10 (inference
+optimization, final Pareto analysis) has not been started.
+Titan Xp GPU latency for the detection models and a rough latency number
+for the Milestone 9 segmenter are now measured (see the Latency section
+above, `scripts/benchmark.py detection` mode). Still not done: ONNX-CPU
+latency and FLOPs/MACs for detection (deliberately skipped -- unreliable
+for two-stage detectors, see above) and any latency benchmarking at all
+for the Milestone 9 segmenter's actual working input resolution alongside
+a competitive accuracy number, since accuracy isn't there yet to pair it
+with.
 
 ## Reproducibility
 
