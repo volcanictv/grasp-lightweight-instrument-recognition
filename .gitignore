@@ -1,0 +1,23 @@
+# Dataset -- not redistributed via git, tens of GB. GRASP_DATA_ROOT points
+# here; never hardcoded in scripts (see CLAUDE.md).
+GraSp/
+GraSP/
+GraSP_cache/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Experiment outputs: git-ignored except manifests (CLAUDE.md repo layout).
+# Manifests alone fully describe a run (config, git commit, seed, checksums,
+# metrics) and are cheap; checkpoints, ONNX exports, and figures are not.
+# `**` (not `*`) is required to reach nested files like figures/*.png.
+experiments/*/**
+!experiments/*/manifest.json
+
+# Local tooling / session state, not project source.
+.claude/
+.vscode/
+.idea/
