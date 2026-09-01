@@ -1,0 +1,25 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: false # ImageNet backbone init is moot -- warm_start_checkpoint below
+                     # overwrites backbone/RPN/box-head with the already-trained detector.
+  warm_start_checkpoint: experiments/detection_weighted_loss_20260901-001115/best.pt
+    # fasterrcnn_mobilenet_v3, AP50_box 0.831 (docs/DECISIONS.md) -- same backbone
+    # and RPN anchor config as maskrcnn_mobilenet_v3 by construction (verified:
+    # load_state_dict(strict=False) leaves only the 12 new mask-head tensors
+    # missing, zero unexpected/mismatched keys). Warm-starts box localization
+    # instead of learning it from scratch; only the mask head starts untrained.
+data:
+  split: fold1 # real held-out split, not official test -- see CLAUDE.md's Splits section
+               # and docs/DECISIONS.md (2026-09-01 test-as-validation entry).
+  augmentation: none # matches the warm-start source's own recipe exactly, one variable
+                      # (the mask head) at a time.
+training:
+  batch_size: 4 # matches the source detector's working config; Mask R-CNN's mask head
+                # adds VRAM cost on top of the same backbone -- reduce if this OOMs on
+                # the Titan Xp's 12GB.
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

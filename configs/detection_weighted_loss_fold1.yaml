@@ -1,0 +1,22 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: fold1 # train=fold2, val=fold1 -- NOT official. This checkpoint exists specifically
+               # to warm-start instance_segmentation_maskrcnn.yaml's val split (also fold1);
+               # warm-starting from the official-split detector would mean the box/RPN/backbone
+               # weights already saw fold1 cases via gradient descent during their own training,
+               # making fold1 a leaked, not held-out, validation set for anything built on top
+               # (caught 2026-09-01 after the first Mask R-CNN run scored an implausible 0.9946
+               # val_mAP50 -- see docs/DECISIONS.md).
+  augmentation: none # matches detection_weighted_loss.yaml exactly, one variable (the split) changed
+loss:
+  class_weights: true
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

@@ -16,14 +16,19 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import numpy as np
 import torch
 from PIL import Image
 from torchvision.transforms import v2
 
+from surgical_ai.data.transforms import IMAGENET_MEAN, IMAGENET_STD
+from surgical_ai.evaluation.segmentation import decode_instances
 from surgical_ai.inference.tracking import IOUTracker
 
 _FRAME_NUM_RE = re.compile(r"(\d+)\.jpg$")
 _TO_TENSOR = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+_SEGM_MEAN = torch.tensor(IMAGENET_MEAN).view(3, 1, 1)
+_SEGM_STD = torch.tensor(IMAGENET_STD).view(3, 1, 1)
 
 
 def parse_case_and_frame_number(file_name: str) -> tuple[str, int]:
@@ -119,5 +124,90 @@ def run_window_and_track(
         if n == target_frame_number:
             direct_at_target = detections
             tracked_at_target = state
+
+    return direct_at_target, tracked_at_target
+
+
+@torch.no_grad()
+def run_window_and_track_segm(
+    model: torch.nn.Module,
+    device: torch.device,
+    window: list[tuple[int, Path]],
+    target_frame_number: int,
+    image_size: int = 384,
+    output_stride: int = 4,
+    score_threshold: float = 0.3,
+    iou_threshold: float = 0.3,
+    max_age: int = 3,
+    min_confidence_to_coast: float = 0.5,
+    boundary_margin_frac: float = 0.05,
+    occlusion_corridor_iou_threshold: float = 0.0,
+    occluded_max_age: int = 5,
+    require_continuous_occlusion_evidence: bool = False,
+) -> tuple[list[tuple[np.ndarray, int, float]], list[tuple[np.ndarray, int, float]]]:
+    """Segmentation analog of `run_window_and_track`: same windowed-raw-
+    frames idea, but the per-frame detections come from `decode_instances`
+    on the centroid/offset segmenter's output instead of a box detector,
+    and each instance is reduced to its mask's bounding box purely so the
+    existing box-IoU `IOUTracker` can associate it frame to frame -- the
+    tracker itself is untouched and doesn't know it's looking at masks.
+
+    A tracked (coasting) instance has no new mask for the current frame by
+    construction, so its last real mask is carried forward unchanged
+    (spatially stale, exactly analogous to the box tracker carrying
+    forward a stale box) rather than fabricating one. Matched instances
+    use their real current-frame mask. This only affects instance-level
+    metrics (AP50_segm, occlusion-stratified recall) -- the semantic head's
+    per-pixel mIoU is decoded independently per frame and is not touched by
+    tracking at all.
+    """
+    model.eval()
+    out_hw = image_size // output_stride
+    tracker = IOUTracker(
+        iou_threshold=iou_threshold, max_age=max_age, min_confidence_to_coast=min_confidence_to_coast,
+        frame_width=out_hw, frame_height=out_hw, boundary_margin_frac=boundary_margin_frac,
+        occlusion_corridor_iou_threshold=occlusion_corridor_iou_threshold, occluded_max_age=occluded_max_age,
+        require_continuous_occlusion_evidence=require_continuous_occlusion_evidence,
+    )
+    last_real_mask: dict[int, np.ndarray] = {}
+    direct_at_target: list[tuple[np.ndarray, int, float]] = []
+    tracked_at_target: list[tuple[np.ndarray, int, float]] = []
+
+    for n, path in window:
+        image = Image.open(path).convert("RGB").resize((image_size, image_size), Image.BILINEAR)
+        image_tensor = torch.from_numpy(np.array(image, dtype=np.float32) / 255.0).permute(2, 0, 1)
+        image_tensor = ((image_tensor - _SEGM_MEAN) / _SEGM_STD).unsqueeze(0).to(device)
+
+        outputs = model(image_tensor)
+        heatmap = torch.sigmoid(outputs["heatmap"])[0].cpu().numpy()
+        offset = outputs["offset"][0].cpu().numpy()
+        semantic = outputs["semantic"][0].argmax(dim=0).cpu().numpy()
+        instances = decode_instances(heatmap, offset, semantic, score_threshold=score_threshold)
+
+        detections = []
+        for mask, label, score in instances:
+            ys, xs = np.nonzero(mask)
+            if len(ys) == 0:
+                continue
+            box = [float(xs.min()), float(ys.min()), float(xs.max() + 1), float(ys.max() + 1)]
+            detections.append({"box": box, "label": label, "score": score, "mask": mask})
+
+        # object identity, not value equality: the tracker copies these exact
+        # list references into new/updated Track.box, so this lookup survives
+        # the call to tracker.step below.
+        box_id_to_mask = {id(d["box"]): d["mask"] for d in detections}
+        state = tracker.step([{"box": d["box"], "label": d["label"], "score": d["score"]} for d in detections])
+
+        for r in state:
+            if r["matched"]:
+                last_real_mask[r["track_id"]] = box_id_to_mask[id(r["box"])]
+
+        if n == target_frame_number:
+            direct_at_target = [(d["mask"], d["label"], d["score"]) for d in detections]
+            tracked_at_target = [
+                (last_real_mask[r["track_id"]], r["label"], r["score"])
+                for r in state
+                if r["track_id"] in last_real_mask
+            ]
 
     return direct_at_target, tracked_at_target

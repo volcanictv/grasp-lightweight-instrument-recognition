@@ -1243,3 +1243,79 @@ time of this entry (`segmentation_deep_backbone`,
 rather than restarted, for the same reason -- both are far along and
 restarting loses real GPU time for a number that will get the same
 disclosure either way.
+
+## 2026-09-01 -- Milestone 9 follow-up: Mask R-CNN, and a second, worse leakage bug caught before it produced a real number
+
+Both finished segmentation runs (`segmentation_deep_backbone`,
+`segmentation_deep_backbone_copy_paste`) landed at mIoU 0.637/0.654 --
+nowhere near the 3-point-of-benchmark bar the user actually needs
+(AP50_segm vs. TAPIS's mAP@0.5IoU_segm 89.85, our number 0.380 -- a
+52-point gap). Tried attaching Milestone 8's `IOUTracker` to the
+centroid/offset segmenter's decoded instances first (windowed raw-frame
+tracking, same mechanism as `evaluate_tracking.py`, new
+`run_window_and_track_segm` in `inference/pipeline.py` +
+`scripts/evaluate_tracking_segm.py`): heavy-occlusion recall improved
+0.185 -> 0.199 (~+7.6% relative) at the cost of AP50_segm dropping
+0.380 -> 0.351 (coasted/stale masks becoming false positives) -- same
+net-negative-on-the-headline-metric pattern as Milestone 8's tracking
+result. Confirmed but not pursued further: tracking only ever changes
+which instances get reported, it cannot touch the semantic head's
+per-pixel mIoU, so it was never going to move the number that matters
+here regardless of tuning.
+
+**Real fix attempted**: the centroid/offset architecture is structurally
+weak at AP50_segm specifically (coarse 96x96 instance separation from
+heatmap peaks, not proposal-based) -- every literature entry with a high
+AP50_segm/mAP@IoU_segm number (TAPIS included) uses proposal-based
+instance segmentation (Mask R-CNN family). Milestone 8's box detector is
+already close on the comparable metric (AP50_box 0.831, 5-9pts off
+literature), so the plan: build `maskrcnn_mobilenet_v3`
+(`models/detectors/mask_rcnn.py`), warm-start its backbone/RPN/box-head
+from the trained `fasterrcnn_mobilenet_v3` checkpoint
+(`detection_weighted_loss`, strict=False; verified directly --
+only the 12 new mask-head tensors come back missing, zero unexpected/
+mismatched keys), and train only the new mask head on the instance masks
+already available. `GraspDetectionDataset` gained an `include_masks` flag
+(native-resolution masks, `tv_tensors.Mask`-wrapped for transform
+compatibility) rather than a parallel dataset class. `fit_detection`/
+`train_one_epoch_detection` needed zero changes -- Mask R-CNN's train-mode
+loss dict just adds `loss_mask` to the same `sum(loss_dict.values())`
+already used there.
+
+**First launch, on `fold1`, produced an impossible number**: val_mAP50 =
+0.9946 after epoch 1 (vs. the 0.831 warm-start baseline -- fine-tuning
+should perturb that number, not send it to near-ceiling in one epoch).
+Root cause, caught before treating it as a real result: `fold1`'s val
+split is 4 of the *same 8 official-train cases* the warm-start source
+checkpoint's backbone/RPN/box-head were fit to via actual gradient
+descent (that checkpoint was trained under `split: official`, i.e. on
+fold1+fold2 combined). Evaluating on fold1 after warm-starting from it
+measures memorization of frames the box components have literally
+already seen weight updates from -- a strictly worse leakage than the
+test-as-validation issue above (that one was *selection* bias from
+early-stopping/checkpoint-choice; this one is direct training-set
+reuse). Not something `data.split: fold1`'s existing definition was ever
+meant to protect against -- it assumes whatever it's evaluating hasn't
+already been fit to fold1 by some *other*, earlier training run, an
+assumption a warm-start breaks.
+
+**Fix**: retrained the box detector from scratch scoped to the same
+fold boundary the Mask R-CNN will use (`configs/
+detection_weighted_loss_fold1.yaml`, `split: fold1` -- i.e. trained on
+fold2 only, same recipe as `detection_weighted_loss.yaml` otherwise,
+one variable changed). Warm-starting the Mask R-CNN from *that*
+checkpoint instead makes fold1 genuinely held out for every component,
+box and mask alike. Killed the contaminated run immediately (single
+epoch, ~2.5 min GPU time lost) rather than let it finish and report a
+number that would need this same caveat attached anyway. In progress as
+of this entry -- final AP50_segm/occlusion-recall numbers to follow once
+both the fold-scoped detector and the re-warm-started Mask R-CNN finish.
+
+**Expectation set going in, not walked back after the fact**: even a
+successful Mask R-CNN result is very unlikely to land within 3 points of
+TAPIS's 89.85 -- that figure comes from the dataset authors' own heavy,
+purpose-built transformer architecture. Mask R-CNN is the right
+*architecture family* for this metric (matches how the literature
+actually gets these numbers), and warm-starting is the right way to
+spend the GPU budget on it, but it is not a guarantee of closing a
+49-52 point gap.

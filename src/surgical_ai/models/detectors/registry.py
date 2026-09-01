@@ -36,3 +36,4 @@ def build_detector(name: str, num_classes: int, pretrained: bool) -> nn.Module:
 
 
 from surgical_ai.models.detectors import faster_rcnn  # noqa: E402,F401
+from surgical_ai.models.detectors import mask_rcnn  # noqa: E402,F401

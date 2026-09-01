@@ -36,7 +36,10 @@ from torch.utils.data import Dataset
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 
+import numpy as np
+
 from surgical_ai.data import splits, statistics
+from surgical_ai.data.mask_utils import decode_instance_mask
 
 
 def build_detection_transforms(train: bool, augmentation: str = "none") -> Callable:
@@ -87,10 +90,13 @@ def build_detection_transforms(train: bool, augmentation: str = "none") -> Calla
 
 
 class GraspDetectionDataset(Dataset):
-    def __init__(self, data_root: Path, split: str, transform: Callable | None = None):
+    def __init__(
+        self, data_root: Path, split: str, transform: Callable | None = None, include_masks: bool = False,
+    ):
         doc = splits.load_short_term(data_root, split)
         self.frames_root = Path(data_root) / "frames-001" / "frames"
         self.transform = transform
+        self.include_masks = include_masks
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -122,13 +128,15 @@ class GraspDetectionDataset(Dataset):
         image = Image.open(self.frames_root / file_name).convert("RGB")
         width, height = image.size
 
-        boxes, labels = [], []
+        boxes, labels, masks = [], [], []
         for a in anns:
             x, y, w, h = a["bbox"]
             if w <= 0 or h <= 0:
                 continue
             boxes.append([x, y, x + w, y + h])
             labels.append(self._id_to_index[a["category_id"]] + 1)  # 0 = background
+            if self.include_masks:
+                masks.append(decode_instance_mask(a["segmentation"]))
 
         boxes_tensor = torch.tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         target = {
@@ -138,10 +146,15 @@ class GraspDetectionDataset(Dataset):
             "labels": torch.tensor(labels, dtype=torch.int64),
             "image_id": torch.tensor([idx]),
         }
+        if self.include_masks:
+            masks_array = np.stack(masks).astype(np.uint8) if masks else np.zeros((0, height, width), dtype=np.uint8)
+            target["masks"] = tv_tensors.Mask(torch.from_numpy(masks_array))
 
         transform = self.transform or build_detection_transforms(train=False)
         image, target = transform(image, target)
         target["boxes"] = target["boxes"].as_subclass(torch.Tensor)
+        if self.include_masks:
+            target["masks"] = target["masks"].as_subclass(torch.Tensor)
         return image, target
 
 
