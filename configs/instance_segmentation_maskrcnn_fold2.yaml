@@ -1,0 +1,20 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: false # ImageNet backbone init is moot -- warm_start_checkpoint below
+                     # overwrites backbone/RPN/box-head with the already-trained detector.
+  warm_start_checkpoint: experiments/detection_weighted_loss_fold2_20260901-163854/best.pt
+    # fasterrcnn_mobilenet_v3 trained on split: fold2 (train=fold1, val=fold2), mAP@50 0.856 --
+    # complementary to instance_segmentation_maskrcnn.yaml's fold1 warm start, giving a real
+    # 2-fold cross-validated AP50_segm estimate. Same verified-clean warm-start property.
+data:
+  split: fold2 # matches the warm-start source's own split exactly -- val (fold2) was never
+               # seen by this checkpoint's backbone/RPN/box-head during their own training.
+  augmentation: none
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
