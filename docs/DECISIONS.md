@@ -1319,3 +1319,36 @@ purpose-built transformer architecture. Mask R-CNN is the right
 actually gets these numbers), and warm-starting is the right way to
 spend the GPU budget on it, but it is not a guarantee of closing a
 49-52 point gap.
+
+## 2026-09-01 -- Mask R-CNN fold1 result: the architecture-family bet paid off far more than expected
+
+Finished (early-stopped at epoch 12, best box mAP@50=0.8790 at epoch 2 --
+the box head barely needed to move, exactly as expected from a clean
+warm start). Instance-level result, on the previously-uncontaminated
+`fold1` validation set: **AP50_segm = 0.8458**, occlusion-stratified
+recall isolated 0.934 / light 0.955 / **heavy 0.713**. Per-class AP@50:
+Monopolar Curved Scissors 0.977, Large Needle Driver 0.967, Bipolar
+Forceps 0.937, Clip Applier 0.893, Suction Instrument 0.887, Prograsp
+Forceps 0.781, Laparoscopic Grasper 0.711 (weakest, consistent with
+every other task in this project).
+
+This is not an incremental improvement over the centroid/offset
+segmenter -- it is a different regime entirely. AP50_segm 0.380 -> 0.846
+(run_id `instance_segmentation_maskrcnn_20260901-171545`) closes the
+52-point gap to TAPIS's 89.85 down to **~5.3 points**, the same ballpark
+as the box detector's own 5-9 point gap, not the "very unlikely to get
+within a few points" expectation explicitly set before this run
+finished. Heavy-occlusion recall alone (0.185 -> 0.713) is a bigger jump
+than anything else attempted this session, including the tracker,
+combined. The diagnosis in the prior entry (dense heatmap-based instance
+separation is structurally weaker than proposal-based instance
+segmentation for this exact metric) is confirmed directly, not just
+inferred: same dataset, same instrument classes, same warm-start box
+detector's underlying accuracy level, and the only thing that changed
+is predicting a mask per proposed box instead of clustering pixels
+around a heatmap peak.
+
+Caveat pending fold2: this is one fold's result. `instance_segmentation_
+maskrcnn_fold2` (the complementary cross-validation run, trained on
+fold1 validated on fold2) is still training as of this entry. Treat
+0.8458 as strong but not yet cross-validated until that finishes.
