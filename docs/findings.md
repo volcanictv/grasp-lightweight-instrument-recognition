@@ -595,12 +595,50 @@ Milestone 8 (detection, box-AP50 only) is done -- best result 0.831,
 roughly 5-9 points short of TAPIS/LACOSTE's comparable range, with the
 gap's likely mechanism (occlusion, not capacity or imbalance) diagnosed in
 detail above. Milestone 9 (instance segmentation, the metric family that's
-actually comparable to TAPIS's mAP@0.5IoU_segm) is in progress as of this
-writing -- see above. Until Milestone 9 produces a trusted number, the
-honest framing stays: Task B's result shows the *classification* component
-of the problem is close to solved by a lightweight model; it says nothing
-yet about whether this project's full pipeline would match TAPIS's
-end-to-end number.
+actually comparable to TAPIS's mAP@0.5IoU_segm) is **now done** -- see the
+update immediately below, which supersedes the "in progress" framing
+above (kept as-is for the historical record of how the architecture was
+diagnosed and fixed).
+
+## Milestone 9 update, 2026-09-01: Mask R-CNN closes almost the entire AP50_segm gap
+
+Everything above this point (the centroid/offset architecture, its
+capacity bug, the deep-backbone fix reaching mIoU 0.654) is real and
+stands as reported, but is no longer the final Milestone 9 number.
+Diagnosis: AP50_segm (0.380 even after the deep-backbone fix) stayed
+severely short of TAPIS's 89.85 because dense heatmap-based instance
+separation is the wrong *architecture family* for a metric that scores
+precise per-instance mask boundaries -- every published high-AP50_segm
+result, TAPIS included, uses proposal-based instance segmentation
+(Mask R-CNN) instead. Full mechanism and the leakage bug caught and
+fixed along the way: `docs/DECISIONS.md`, 2026-09-01 entries.
+
+Built `maskrcnn_mobilenet_v3`, warm-started from the already-trained
+Milestone 8 box detector (only the new mask head starts untrained),
+trained and cross-validated on both official folds:
+
+| Split | AP50_segm | Occlusion recall (isolated / light / heavy) | Box mAP@50 |
+|---|---|---|---|
+| fold1 | 0.8458 | 0.934 / 0.955 / 0.713 | 0.879 |
+| fold2 | 0.8433 | 0.902 / 0.948 / 0.682 | 0.864 |
+| **average** | **0.8446** | **0.918 / 0.952 / 0.698** | 0.872 |
+
+Two independent folds, disjoint training cases, independently-trained
+warm-start detectors, landing within 0.3 points of each other -- a real,
+cross-validated result. Average AP50_segm (0.8446) vs. TAPIS's 89.85 is
+a **~5.4 point gap**, down from 52 points, now in the same range as the
+box detector's own 5-9 point gap. Average heavy-occlusion recall (0.698)
+vs. the centroid/offset architecture's 0.185 is a 3.8x improvement --
+larger than every other occlusion intervention this session combined
+(tracking, copy-paste, weighted loss, backbone scaling on detection).
+
+This confirms the diagnosis directly rather than just plausibly: same
+dataset, same classes, same underlying box-detector accuracy level: the
+only thing that changed between 0.380 and 0.8446 is predicting a mask
+per proposed box instead of clustering pixels around a heatmap peak.
+Milestone 9 is now at the same evidentiary standard as Milestone 8: a
+real, cross-validated, literature-comparable number with a small,
+understood remaining gap -- not a diagnosed-but-open problem.
 
 ## Checked against the wider published literature (web search, 2026-08-31)
 

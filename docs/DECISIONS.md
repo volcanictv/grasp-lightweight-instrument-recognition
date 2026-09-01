@@ -1352,3 +1352,44 @@ Caveat pending fold2: this is one fold's result. `instance_segmentation_
 maskrcnn_fold2` (the complementary cross-validation run, trained on
 fold1 validated on fold2) is still training as of this entry. Treat
 0.8458 as strong but not yet cross-validated until that finishes.
+
+## 2026-09-01 -- Mask R-CNN fold2 result: cross-validation confirms fold1, not a fluke
+
+Finished: **AP50_segm = 0.8433** (fold1: 0.8458), occlusion-stratified
+recall isolated 0.902 / light 0.948 / **heavy 0.682** (fold1: 0.934 /
+0.955 / 0.713), mAP@50/50:95 (box) = 0.864/0.631, run_id
+`instance_segmentation_maskrcnn_fold2_20260901-170628`. Per-class AP@50
+shows the same rank order as every other task this project has run:
+Monopolar Curved Scissors and Large Needle Driver near-ceiling
+(0.966/0.949), Prograsp Forceps and Laparoscopic Grasper weakest
+(0.670/0.737).
+
+**Two independent folds, trained on disjoint case sets, warm-started
+from two independently-trained fold-scoped detectors, land within 0.3
+points of AP50_segm and within 3 points of heavy-occlusion recall of
+each other.** This is a real, cross-validated result, not a one-fold
+artifact -- the opposite failure mode from the fold1-leakage bug two
+entries up (that one was a false positive from data contamination; this
+agreement is a true positive from two genuinely independent runs).
+
+**Average across folds: AP50_segm = 0.8446** (vs. this project's
+0.380 on the centroid/offset architecture, vs. TAPIS's published 89.85)
+-- a **~5.4 point gap**, down from 52 points, and now in the same range
+as the box detector's own 5-9 point gap. Average heavy-occlusion recall
+= 0.698 (vs. 0.185 on the old architecture) -- a 3.8x improvement,
+larger than every other intervention this session combined (tracking,
+copy-paste, weighted loss, backbone scaling).
+
+**This closes the architecture-diagnosis loop opened in the previous
+Mask R-CNN entries**: the 52-point gap really was an architecture-family
+mismatch (dense heatmap clustering vs. proposal-based instance
+segmentation), not a capacity, training, or data problem -- switching
+architecture families, while reusing the box detector's already-trained
+weights as a warm start, closed nearly the entire gap in a single
+training run per fold, at a fraction of the GPU time a from-scratch
+segmentation architecture took (this run: ~33-53 min box training +
+~30 min instance-metric eval per fold; the centroid/offset architecture:
+multiple multi-hour runs across a full session). Milestone 9 is now
+functionally done to the same standard as Milestone 8 (box detection):
+a real, cross-validated, literature-comparable number with a small,
+understood remaining gap, not a diagnosed-but-open problem.
