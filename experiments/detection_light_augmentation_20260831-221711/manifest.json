@@ -1,0 +1,77 @@
+{
+  "run_id": "detection_light_augmentation_20260831-221711",
+  "config": {
+    "task": "detection",
+    "model": {
+      "name": "fasterrcnn_mobilenet_v3",
+      "pretrained": true
+    },
+    "data": {
+      "split": "official",
+      "augmentation": "default"
+    },
+    "training": {
+      "batch_size": 4,
+      "epochs": 100,
+      "patience": 10,
+      "optimizer": "adam",
+      "lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/detection_light_augmentation.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 18902083,
+  "total_params": 18960979,
+  "wall_clock_seconds": 3129.0923280715942,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_light_augmentation_20260831-221711/best.pt",
+  "final_metrics": {
+    "map50": 0.8039770079860734,
+    "map50_95": 0.5979598341621237,
+    "per_class_ap50": {
+      "Bipolar Forceps": 0.9186943811001673,
+      "Prograsp Forceps": 0.6655867467927081,
+      "Large Needle Driver": 0.9542604093026759,
+      "Monopolar Curved Scissors": 0.9767637794604529,
+      "Suction Instrument": 0.7347593057752909,
+      "Clip Applier": 0.7467867323022862,
+      "Laparoscopic Grasper": 0.6309877011689323
+    },
+    "occlusion_stratified_recall": {
+      "n_isolated": 1577,
+      "n_light": 997,
+      "n_heavy": 287,
+      "recall_isolated": 0.8953709575142677,
+      "recall_light": 0.9087261785356068,
+      "recall_heavy": 0.6062717770034843
+    }
+  }
+}

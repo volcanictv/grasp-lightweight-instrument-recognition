@@ -1,0 +1,80 @@
+{
+  "run_id": "detection_resnet50_weighted_loss_20260901-005514",
+  "config": {
+    "task": "detection",
+    "model": {
+      "name": "fasterrcnn_resnet50",
+      "pretrained": true
+    },
+    "data": {
+      "split": "official",
+      "augmentation": "none"
+    },
+    "loss": {
+      "class_weights": true
+    },
+    "training": {
+      "batch_size": 4,
+      "epochs": 100,
+      "patience": 10,
+      "optimizer": "adam",
+      "lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/detection_resnet50_weighted_loss.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 41107511,
+  "total_params": 41329911,
+  "wall_clock_seconds": 13233.18753194809,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_resnet50_weighted_loss_20260901-005514/best.pt",
+  "final_metrics": {
+    "map50": 0.7998137610067924,
+    "map50_95": 0.5873069619361226,
+    "per_class_ap50": {
+      "Bipolar Forceps": 0.9092333316807706,
+      "Prograsp Forceps": 0.6446856242582064,
+      "Large Needle Driver": 0.9231072774993054,
+      "Monopolar Curved Scissors": 0.9669195100060509,
+      "Suction Instrument": 0.7200845986186055,
+      "Clip Applier": 0.7904282138536612,
+      "Laparoscopic Grasper": 0.6442377711309462
+    },
+    "occlusion_stratified_recall": {
+      "n_isolated": 1577,
+      "n_light": 997,
+      "n_heavy": 287,
+      "recall_isolated": 0.8845909955611921,
+      "recall_light": 0.925777331995988,
+      "recall_heavy": 0.6341463414634146
+    }
+  }
+}

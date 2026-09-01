@@ -1,0 +1,101 @@
+{
+  "run_id": "segmentation_extended_patience_20260901-042842",
+  "config": {
+    "task": "segmentation",
+    "model": {
+      "name": "centroid_offset_mobilenet_v3",
+      "pretrained": true
+    },
+    "data": {
+      "split": "official",
+      "image_size": 384,
+      "output_stride": 4
+    },
+    "loss": {
+      "offset_weight": 0.1,
+      "semantic_weight": 1.0
+    },
+    "training": {
+      "batch_size": 8,
+      "epochs": 150,
+      "patience": 30,
+      "optimizer": "adam",
+      "lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/segmentation_extended_patience.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 2102401,
+  "total_params": 2102401,
+  "wall_clock_seconds": 4422.549483060837,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/segmentation_extended_patience_20260901-042842/best.pt",
+  "final_metrics": {
+    "miou": 0.3194326049027581,
+    "mean_dice": 0.45970384582523477,
+    "per_class_iou": {
+      "Bipolar Forceps": 0.4418075932355247,
+      "Prograsp Forceps": 0.1591598056614203,
+      "Large Needle Driver": 0.3114538037387367,
+      "Monopolar Curved Scissors": 0.6791387856921084,
+      "Suction Instrument": 0.2887242893079693,
+      "Clip Applier": 0.22544503705756044,
+      "Laparoscopic Grasper": 0.1302989196259871
+    },
+    "per_class_dice": {
+      "Bipolar Forceps": 0.6128523602016483,
+      "Prograsp Forceps": 0.27461236127076233,
+      "Large Needle Driver": 0.47497487574603653,
+      "Monopolar Curved Scissors": 0.8089132256118788,
+      "Suction Instrument": 0.44807767138929466,
+      "Clip Applier": 0.3679398589738155,
+      "Laparoscopic Grasper": 0.23055656758320653
+    },
+    "ap50_segm": 0.11047477532490588,
+    "per_class_ap50_segm": {
+      "Bipolar Forceps": 0.11071668908031916,
+      "Prograsp Forceps": 0.04638237343004077,
+      "Large Needle Driver": 0.15932469776761438,
+      "Monopolar Curved Scissors": 0.27970223101021946,
+      "Suction Instrument": 0.0317224431427334,
+      "Clip Applier": 0.11012145748987853,
+      "Laparoscopic Grasper": 0.03535353535353535
+    },
+    "occlusion_stratified_recall": {
+      "n_isolated": 1577,
+      "n_light": 997,
+      "n_heavy": 287,
+      "recall_isolated": 0.33417882054533926,
+      "recall_light": 0.399197592778335,
+      "recall_heavy": 0.10452961672473868
+    }
+  }
+}

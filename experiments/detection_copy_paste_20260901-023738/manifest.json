@@ -1,0 +1,86 @@
+{
+  "run_id": "detection_copy_paste_20260901-023738",
+  "config": {
+    "task": "detection",
+    "model": {
+      "name": "fasterrcnn_mobilenet_v3",
+      "pretrained": true
+    },
+    "data": {
+      "split": "official",
+      "augmentation": "none",
+      "copy_paste": {
+        "enabled": true,
+        "paste_prob": 0.5,
+        "max_pastes": 2,
+        "rare_classes": [
+          "Clip Applier"
+        ],
+        "occlusion_bias": 0.7
+      }
+    },
+    "training": {
+      "batch_size": 4,
+      "epochs": 100,
+      "patience": 10,
+      "optimizer": "adam",
+      "lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/detection_copy_paste.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 18902083,
+  "total_params": 18960979,
+  "wall_clock_seconds": 2957.9303648471832,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_copy_paste_20260901-023738/best.pt",
+  "final_metrics": {
+    "map50": 0.8263802898029328,
+    "map50_95": 0.5897277320512341,
+    "per_class_ap50": {
+      "Bipolar Forceps": 0.9402248857660139,
+      "Prograsp Forceps": 0.7136011042715509,
+      "Large Needle Driver": 0.946681746745903,
+      "Monopolar Curved Scissors": 0.9680794376578589,
+      "Suction Instrument": 0.7407184045678815,
+      "Clip Applier": 0.7796691161526424,
+      "Laparoscopic Grasper": 0.695687333458679
+    },
+    "occlusion_stratified_recall": {
+      "n_isolated": 1577,
+      "n_light": 997,
+      "n_heavy": 287,
+      "recall_isolated": 0.8985415345592898,
+      "recall_light": 0.9197592778335005,
+      "recall_heavy": 0.6445993031358885
+    }
+  }
+}
