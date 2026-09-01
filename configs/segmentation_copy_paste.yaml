@@ -1,0 +1,31 @@
+task: segmentation
+model:
+  name: centroid_offset_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  image_size: 384
+  output_stride: 4
+  copy_paste:
+    enabled: true # Ghiasi et al. 2021, src/surgical_ai/data/segmentation_copy_paste.py.
+                   # Ported from detection (configs/detection_copy_paste.yaml), which was
+                   # the single most effective Milestone 8 lever -- not yet tried on the
+                   # segmentation pipeline (three prior runs converged to a plateau
+                   # without ever increasing occlusion exposure or Clip Applier
+                   # representation during training, see docs/DECISIONS.md).
+    paste_prob: 0.5
+    max_pastes: 2
+    rare_classes: [Clip Applier]
+    occlusion_bias: 0.7
+loss:
+  offset_weight: 0.1
+  semantic_weight: 1.0
+training:
+  batch_size: 8
+  epochs: 200 # ceiling, not a target
+  patience: 30
+  optimizer: adam
+  lr: 0.0001
+  lr_schedule: cosine # matches segmentation_cosine_lr.yaml, the best-converged
+                       # variant so far -- copy-paste is the one new variable here.
+  seed: 42

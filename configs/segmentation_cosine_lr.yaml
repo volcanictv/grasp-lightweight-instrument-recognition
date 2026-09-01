@@ -1,0 +1,24 @@
+task: segmentation
+model:
+  name: centroid_offset_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  image_size: 384
+  output_stride: 4
+loss:
+  offset_weight: 0.1 # CenterNet convention: down-weight regression vs. the heatmap head.
+  semantic_weight: 1.0
+training:
+  batch_size: 8
+  epochs: 200 # ceiling, not a target -- T_max for the cosine schedule too
+  patience: 40 # segmentation_extended_patience.yaml (patience 30) still hit
+               # periodic heatmap-loss spikes late in training (epoch 65, 73,
+               # 120) consistent with a fixed LR destabilizing Adam once the
+               # loss is already small -- testing cosine decay as the fix,
+               # one variable at a time, with more patience since a decaying
+               # LR changes the optimization landscape late in training.
+  optimizer: adam
+  lr: 0.0001
+  lr_schedule: cosine
+  seed: 42

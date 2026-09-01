@@ -1,0 +1,29 @@
+task: segmentation
+model:
+  name: centroid_offset_mobilenet_v3_deep # see configs/segmentation_deep_backbone.yaml
+  pretrained: true
+data:
+  split: official
+  image_size: 384
+  output_stride: 4
+  copy_paste:
+    enabled: true # combining the two independently-validated levers: the
+                   # deep-backbone capacity fix (segmentation_deep_backbone.yaml)
+                   # and copy-paste augmentation (segmentation_copy_paste.yaml,
+                   # which gave a small real gain even on the capacity-limited
+                   # shallow backbone) -- testing whether the gains compound.
+    paste_prob: 0.5
+    max_pastes: 2
+    rare_classes: [Clip Applier]
+    occlusion_bias: 0.7
+loss:
+  offset_weight: 0.1
+  semantic_weight: 1.0
+training:
+  batch_size: 8
+  epochs: 200
+  patience: 40
+  optimizer: adam
+  lr: 0.0001
+  lr_schedule: cosine
+  seed: 42
