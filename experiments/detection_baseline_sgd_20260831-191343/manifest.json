@@ -1,0 +1,67 @@
+{
+  "run_id": "detection_baseline_sgd_20260831-191343",
+  "config": {
+    "task": "detection",
+    "model": {
+      "name": "fasterrcnn_mobilenet_v3",
+      "pretrained": true
+    },
+    "data": {
+      "split": "official"
+    },
+    "training": {
+      "batch_size": 4,
+      "epochs": 20,
+      "optimizer": "sgd",
+      "lr": 0.005,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/detection_baseline_sgd.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 18902083,
+  "total_params": 18960979,
+  "wall_clock_seconds": 2747.914692401886,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_baseline_sgd_20260831-191343/best.pt",
+  "final_metrics": {
+    "map50": 0.8229536134549456,
+    "map50_95": 0.603520206079526,
+    "per_class_ap50": {
+      "Bipolar Forceps": 0.9251314929195477,
+      "Prograsp Forceps": 0.6950564052297561,
+      "Large Needle Driver": 0.9617271988460977,
+      "Monopolar Curved Scissors": 0.9692776556675059,
+      "Suction Instrument": 0.7124288137999588,
+      "Clip Applier": 0.7908623719514807,
+      "Laparoscopic Grasper": 0.7061913557702718
+    }
+  }
+}
