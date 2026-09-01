@@ -18,6 +18,8 @@ from surgical_ai.evaluation.classification import (
     evaluate_region_classification,
 )
 from surgical_ai.evaluation.detection import DetectionMetrics, evaluate_detection
+from surgical_ai.evaluation.segmentation import SemanticSegmentationMetrics, evaluate_semantic_segmentation
+from surgical_ai.training.segmentation_losses import compute_segmentation_loss
 
 logger = logging.getLogger(__name__)
 
@@ -194,9 +196,11 @@ def train_one_epoch_detection(
 
 
 @torch.no_grad()
-def run_detection_eval(
-    model: nn.Module, loader: DataLoader, coco_gt, class_names: list[str], device: torch.device,
-) -> DetectionMetrics:
+def collect_detections(model: nn.Module, loader: DataLoader, device: torch.device) -> list[dict]:
+    """Raw COCO-format predictions, shared by run_detection_eval (aggregate
+    mAP) and the occlusion-stratified recall analysis (evaluation/detection.py)
+    -- both need the same per-instance predictions, just scored differently.
+    """
     model.eval()
     predictions = []
     for images, targets in loader:
@@ -217,6 +221,13 @@ def run_detection_eval(
                         "score": float(score),
                     }
                 )
+    return predictions
+
+
+def run_detection_eval(
+    model: nn.Module, loader: DataLoader, coco_gt, class_names: list[str], device: torch.device,
+) -> DetectionMetrics:
+    predictions = collect_detections(model, loader, device)
     return evaluate_detection(coco_gt, predictions, class_names)
 
 
@@ -230,7 +241,15 @@ def fit_detection(
     epochs: int,
     checkpoint_path: Path,
     coco_gt_val,
+    patience: int | None = None,
 ) -> tuple[DetectionHistory, DetectionMetrics]:
+    """`epochs` is now a ceiling, not a target -- with `patience` set, training
+    stops once val mAP@50 hasn't improved for that many consecutive epochs,
+    since training time is no longer a constrained resource for this project
+    (only inference-time efficiency is) and a flat epoch count was picked
+    somewhat arbitrarily before that was clarified (see docs/DECISIONS.md).
+    `patience=None` disables early stopping and always runs the full ceiling.
+    """
     trainable, total = count_parameters(model)
     logger.info(
         "trainable params: %d / %d (%.1f%%)", trainable, total, 100 * trainable / total
@@ -240,6 +259,7 @@ def fit_detection(
     history = DetectionHistory()
     best_map50 = -1.0
     best_metrics: DetectionMetrics | None = None
+    epochs_since_improvement = 0
 
     for epoch in range(1, epochs + 1):
         train_loss = train_one_epoch_detection(model, train_loader, optimizer, device)
@@ -256,7 +276,152 @@ def fit_detection(
         if val_metrics.map50 > best_map50:
             best_map50 = val_metrics.map50
             best_metrics = val_metrics
+            epochs_since_improvement = 0
             checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
             torch.save(model.state_dict(), checkpoint_path)
+        else:
+            epochs_since_improvement += 1
+            if patience is not None and epochs_since_improvement >= patience:
+                logger.info(
+                    "early stopping: no val mAP@50 improvement in %d epochs (best=%.4f at epoch %d)",
+                    patience, best_map50, epoch - epochs_since_improvement,
+                )
+                break
+
+    return history, best_metrics
+
+
+@dataclass
+class SegmentationHistory:
+    train_loss: list[float] = field(default_factory=list)
+    train_heatmap_loss: list[float] = field(default_factory=list)
+    train_offset_loss: list[float] = field(default_factory=list)
+    train_semantic_loss: list[float] = field(default_factory=list)
+    val_miou: list[float] = field(default_factory=list)
+
+
+def train_one_epoch_segmentation(
+    model: nn.Module,
+    loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    offset_weight: float,
+    semantic_weight: float,
+) -> dict[str, float]:
+    model.train()
+    totals = {"total": 0.0, "heatmap": 0.0, "offset": 0.0, "semantic": 0.0}
+    n = 0
+    for images, targets in loader:
+        images = images.to(device)
+        targets = {
+            k: (v.to(device) if torch.is_tensor(v) else v)
+            for k, v in targets.items()
+            if k not in ("instance_masks", "instance_labels")
+        }
+        optimizer.zero_grad()
+        predictions = model(images)
+        loss_dict = compute_segmentation_loss(
+            predictions, targets, offset_weight=offset_weight, semantic_weight=semantic_weight
+        )
+        loss_dict["total"].backward()
+        optimizer.step()
+
+        batch_size = images.shape[0]
+        for k in totals:
+            totals[k] += loss_dict[k].item() * batch_size
+        n += batch_size
+    return {k: v / n for k, v in totals.items()}
+
+
+@torch.no_grad()
+def run_segmentation_eval(
+    model: nn.Module, loader: DataLoader, class_names: list[str], device: torch.device,
+) -> SemanticSegmentationMetrics:
+    """Cheap, per-epoch checkpoint-selection metric -- semantic mIoU only.
+    The more expensive instance-level metrics (AP50_segm, occlusion-
+    stratified recall, both needing per-image instance decoding) are
+    computed once at the end on the best checkpoint, same convention
+    `run_detection_training` already uses for its occlusion analysis
+    (scripts/train.py).
+    """
+    model.eval()
+    pred_semantic_list, gt_semantic_list = [], []
+    for images, targets in loader:
+        images = images.to(device)
+        semantic_pred = model(images)["semantic"].argmax(dim=1).cpu().numpy()
+        for p, g in zip(semantic_pred, targets["semantic"].numpy()):
+            pred_semantic_list.append(p)
+            gt_semantic_list.append(g)
+    return evaluate_semantic_segmentation(pred_semantic_list, gt_semantic_list, class_names)
+
+
+def fit_segmentation(
+    model: nn.Module,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    class_names: list[str],
+    device: torch.device,
+    epochs: int,
+    checkpoint_path: Path,
+    patience: int | None = None,
+    offset_weight: float = 0.1,
+    semantic_weight: float = 1.0,
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+) -> tuple[SegmentationHistory, SemanticSegmentationMetrics]:
+    """Mirrors `fit_detection`'s epochs-as-ceiling / patience-based early
+    stopping convention (docs/DECISIONS.md: training time is not a
+    constrained resource here, only inference latency is).
+
+    `scheduler` (optional, stepped once per epoch) exists because the
+    first two Milestone 9 runs (fixed `lr=0.0001`) showed periodic
+    heatmap-loss spikes late in training (e.g. epoch 65, 73, 120 in
+    `segmentation_extended_patience` all jump ~0.5 then recover within 1-2
+    epochs) consistent with Adam occasionally destabilizing once the loss
+    is already small -- a decaying LR is the standard fix, not something
+    derived here.
+    """
+    trainable, total = count_parameters(model)
+    logger.info("trainable params: %d / %d (%.1f%%)", trainable, total, 100 * trainable / total)
+
+    model.to(device)
+    history = SegmentationHistory()
+    best_miou = -1.0
+    best_metrics: SemanticSegmentationMetrics | None = None
+    epochs_since_improvement = 0
+
+    for epoch in range(1, epochs + 1):
+        train_losses = train_one_epoch_segmentation(
+            model, train_loader, optimizer, device, offset_weight, semantic_weight
+        )
+        if scheduler is not None:
+            scheduler.step()
+        val_metrics = run_segmentation_eval(model, val_loader, class_names, device)
+
+        history.train_loss.append(train_losses["total"])
+        history.train_heatmap_loss.append(train_losses["heatmap"])
+        history.train_offset_loss.append(train_losses["offset"])
+        history.train_semantic_loss.append(train_losses["semantic"])
+        history.val_miou.append(val_metrics.miou)
+        logger.info(
+            "epoch %d/%d train_loss=%.4f (heatmap=%.4f offset=%.4f semantic=%.4f) val_mIoU=%.4f",
+            epoch, epochs, train_losses["total"], train_losses["heatmap"],
+            train_losses["offset"], train_losses["semantic"], val_metrics.miou,
+        )
+
+        if val_metrics.miou > best_miou:
+            best_miou = val_metrics.miou
+            best_metrics = val_metrics
+            epochs_since_improvement = 0
+            checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(model.state_dict(), checkpoint_path)
+        else:
+            epochs_since_improvement += 1
+            if patience is not None and epochs_since_improvement >= patience:
+                logger.info(
+                    "early stopping: no val mIoU improvement in %d epochs (best=%.4f at epoch %d)",
+                    patience, best_miou, epoch - epochs_since_improvement,
+                )
+                break
 
     return history, best_metrics

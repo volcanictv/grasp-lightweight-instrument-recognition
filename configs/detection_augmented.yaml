@@ -1,0 +1,17 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  augmentation: strong # pinned explicitly: this run predates "none"/"default"/"strong"
+                        # being distinct choices -- it used the single hardcoded
+                        # recipe that later became "strong". Regressed both mAPs
+                        # vs. the unaugmented baseline (docs/DECISIONS.md).
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target -- training time is no longer constrained (docs/DECISIONS.md)
+  patience: 10 # stop if val mAP@50 hasn't improved in this many epochs
+  optimizer: adam # adam | sgd -- Adam narrowly won Milestone 8's ablation
+  lr: 0.0001
+  seed: 42

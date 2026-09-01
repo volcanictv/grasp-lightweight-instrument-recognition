@@ -1,0 +1,19 @@
+task: detection
+model:
+  name: fasterrcnn_resnet50
+  pretrained: true
+data:
+  split: official
+  augmentation: none # matches the original best baseline's recipe exactly;
+                      # backbone + weighted loss are the two variables combined here,
+                      # each individually tested first (detection_resnet50_heavy.yaml,
+                      # detection_weighted_loss.yaml) per one-variable-per-run discipline.
+loss:
+  class_weights: true
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

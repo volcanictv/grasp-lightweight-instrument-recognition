@@ -1,0 +1,14 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  augmentation: default # default (flip + color jitter) | strong (+ zoom-out/IoU-crop, regressed both mAPs)
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

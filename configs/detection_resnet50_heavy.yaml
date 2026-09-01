@@ -1,0 +1,15 @@
+task: detection
+model:
+  name: fasterrcnn_resnet50
+  pretrained: true
+data:
+  split: official
+  augmentation: none # matches the original best baseline's recipe exactly;
+                      # backbone is the one variable being tested here.
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

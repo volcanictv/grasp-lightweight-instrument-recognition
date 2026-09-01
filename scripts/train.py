@@ -1,5 +1,6 @@
-"""Train a Task A (multilabel_frame), Task B (region_classification), or
-detection model from a config -- `config["task"]` selects which.
+"""Train a Task A (multilabel_frame), Task B (region_classification),
+detection, or segmentation model from a config -- `config["task"]` selects
+which.
 
 Usage:
     python scripts/train.py configs/baseline_frozen.yaml [--data-root PATH] [--device cuda:0]
@@ -34,24 +35,50 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from surgical_ai.data import splits  # noqa: E402
 from surgical_ai.data.dataset import GraspMultiLabelDataset  # noqa: E402
-from surgical_ai.data.detection_dataset import GraspDetectionDataset, collate_fn  # noqa: E402
+from surgical_ai.data.copy_paste import CopyPasteDetectionDataset  # noqa: E402
+from surgical_ai.data.detection_dataset import (  # noqa: E402
+    GraspDetectionDataset,
+    build_detection_transforms,
+    collate_fn,
+)
 from surgical_ai.data.region_dataset import GraspRegionDataset  # noqa: E402
+from surgical_ai.data.segmentation_copy_paste import SegmentationCopyPasteDataset  # noqa: E402
+from surgical_ai.data.segmentation_dataset import (  # noqa: E402
+    GraspSegmentationDataset,
+)
+from surgical_ai.data.segmentation_dataset import collate_fn as segmentation_collate_fn  # noqa: E402
+from surgical_ai.data.segmentation_targets import downsample_mask_nearest  # noqa: E402
 from surgical_ai.data.transforms import build_transforms  # noqa: E402
-from surgical_ai.evaluation.detection import dataset_to_coco_gt  # noqa: E402
+from surgical_ai.evaluation.detection import (  # noqa: E402
+    compute_occlusion_fractions,
+    dataset_to_coco_gt,
+    evaluate_occlusion_stratified_recall,
+)
+from surgical_ai.evaluation.segmentation import (  # noqa: E402
+    decode_instances,
+    evaluate_instance_ap50,
+    evaluate_occlusion_stratified_recall_segm,
+)
 from surgical_ai.models import build_model  # noqa: E402
 from surgical_ai.models.detectors.registry import build_detector  # noqa: E402
+from surgical_ai.models.detectors.weighted_loss import (  # noqa: E402
+    apply_class_weighted_detection_loss,
+)
+from surgical_ai.models.segmenters.registry import build_segmenter  # noqa: E402
 from surgical_ai.training.losses import (  # noqa: E402
     build_loss,
-    compute_class_weights,
+    compute_class_weights,  # also used for detection's box-classification loss
     compute_pos_weight,
 )
 from surgical_ai.training.samplers import build_sampler  # noqa: E402
 from surgical_ai.training.trainer import (  # noqa: E402
+    collect_detections,
     count_parameters,
     evaluate,
     evaluate_region,
     fit,
     fit_detection,
+    fit_segmentation,
 )
 from surgical_ai.utils import visualization as viz  # noqa: E402
 
@@ -235,17 +262,49 @@ def run_detection_training(config: dict, args: argparse.Namespace, device: torch
     """
     train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
 
-    train_ds = GraspDetectionDataset(args.data_root, train_split, transform=None)
-    val_ds = GraspDetectionDataset(args.data_root, val_split, transform=None)
+    # "none" default matches the original Milestone 8 baseline's actual
+    # behavior (predates this parameter existing) -- keeps old configs that
+    # don't set data.augmentation reproducible. See data/detection_dataset.py.
+    augmentation = config["data"].get("augmentation", "none")
+    train_ds = GraspDetectionDataset(
+        args.data_root, train_split,
+        transform=build_detection_transforms(train=True, augmentation=augmentation),
+    )
+    val_ds = GraspDetectionDataset(
+        args.data_root, val_split, transform=build_detection_transforms(train=False)
+    )
     class_names = train_ds.class_names_ordered()
     coco_gt_val = dataset_to_coco_gt(val_ds)
 
-    train_loader = torch.utils.data.DataLoader(
-        train_ds, batch_size=config["training"]["batch_size"], shuffle=True,
-        num_workers=args.num_workers, collate_fn=collate_fn,
-    )
     val_loader = torch.utils.data.DataLoader(
         val_ds, batch_size=config["training"]["batch_size"], shuffle=False,
+        num_workers=args.num_workers, collate_fn=collate_fn,
+    )
+
+    if config.get("loss", {}).get("class_weights", False):
+        label_counts = torch.zeros(len(class_names))
+        for _file_name, anns in train_ds.samples:
+            for a in anns:
+                label_counts[train_ds._id_to_index[a["category_id"]]] += 1
+        # index 0 = background, weight 1.0 (not part of the imbalance this
+        # is fixing); foreground classes get the same balanced formula
+        # Task B's classifier uses (training/losses.py::compute_class_weights).
+        class_weight = torch.cat([torch.tensor([1.0]), compute_class_weights(label_counts)])
+        apply_class_weighted_detection_loss(class_weight.to(device))
+
+    copy_paste_cfg = config["data"].get("copy_paste", {})
+    train_loader_ds = train_ds
+    if copy_paste_cfg.get("enabled", False):
+        train_loader_ds = CopyPasteDetectionDataset(
+            train_ds,
+            paste_prob=copy_paste_cfg.get("paste_prob", 0.5),
+            max_pastes=copy_paste_cfg.get("max_pastes", 2),
+            rare_classes=copy_paste_cfg.get("rare_classes"),
+            occlusion_bias=copy_paste_cfg.get("occlusion_bias", 0.7),
+            seed=config["training"]["seed"],
+        )
+    train_loader = torch.utils.data.DataLoader(
+        train_loader_ds, batch_size=config["training"]["batch_size"], shuffle=True,
         num_workers=args.num_workers, collate_fn=collate_fn,
     )
 
@@ -266,15 +325,27 @@ def run_detection_training(config: dict, args: argparse.Namespace, device: torch
     history, best_metrics = fit_detection(
         model, train_loader, val_loader, optimizer, class_names, device,
         epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
-        coco_gt_val=coco_gt_val,
+        coco_gt_val=coco_gt_val, patience=config["training"].get("patience"),
     )
     duration_sec = time.time() - start
+
+    # Reload the best epoch's weights -- `model` in memory is whatever the
+    # last epoch trained to, which isn't necessarily the checkpointed best
+    # one, and the occlusion analysis below needs the actual best model.
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
 
     viz.plot_curve(history.train_loss, "train loss", "Train loss", figures_dir / "loss_curve.png")
     viz.plot_training_curves(
         history.val_map50, history.val_map50_95, "mAP", "Val mAP@50 vs. mAP@50:95",
         figures_dir / "map_curve.png",
     )
+
+    occlusion_fractions = compute_occlusion_fractions(val_ds)
+    val_predictions = collect_detections(model, val_loader, device)
+    occlusion_recall = evaluate_occlusion_stratified_recall(
+        val_ds, val_predictions, occlusion_fractions
+    )
+    print(occlusion_recall.to_markdown())
 
     split_paths = {
         train_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[train_split],
@@ -304,10 +375,173 @@ def run_detection_training(config: dict, args: argparse.Namespace, device: torch
             "map50": best_metrics.map50,
             "map50_95": best_metrics.map50_95,
             "per_class_ap50": best_metrics.per_class_ap50,
+            "occlusion_stratified_recall": {
+                "n_isolated": occlusion_recall.n_isolated,
+                "n_light": occlusion_recall.n_light,
+                "n_heavy": occlusion_recall.n_heavy,
+                "recall_isolated": occlusion_recall.recall_isolated,
+                "recall_light": occlusion_recall.recall_light,
+                "recall_heavy": occlusion_recall.recall_heavy,
+            },
         },
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
-    (run_dir / "metrics_table.md").write_text(best_metrics.to_markdown())
+    (run_dir / "metrics_table.md").write_text(
+        best_metrics.to_markdown() + "\n\n" + occlusion_recall.to_markdown()
+    )
+
+    print(f"run_id: {run_id}")
+    print(f"trainable/total params: {trainable}/{total} ({100*trainable/total:.1f}%)")
+    print(f"wall clock: {duration_sec:.1f}s")
+    print(best_metrics.to_markdown())
+    print(f"manifest: {run_dir / 'manifest.json'}")
+
+
+def run_segmentation_training(config: dict, args: argparse.Namespace, device: torch.device) -> None:
+    """Milestone 9's centroid/offset segmenter. Self-contained for the same
+    reason `run_detection_training` is: a different model interface (dict
+    of three per-pixel heads, no external loss_fn for the classification
+    tasks' shared code below) and different checkpoint-selection metric
+    (val mIoU, not macro-F1 or mAP).
+    """
+    train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    image_size = config["data"].get("image_size", 384)
+    output_stride = config["data"].get("output_stride", 4)
+
+    train_ds = GraspSegmentationDataset(args.data_root, train_split, image_size=image_size, output_stride=output_stride)
+    val_ds = GraspSegmentationDataset(args.data_root, val_split, image_size=image_size, output_stride=output_stride)
+    class_names = train_ds.class_names_ordered()
+
+    copy_paste_cfg = config["data"].get("copy_paste", {})
+    train_loader_ds = train_ds
+    if copy_paste_cfg.get("enabled", False):
+        train_loader_ds = SegmentationCopyPasteDataset(
+            train_ds,
+            paste_prob=copy_paste_cfg.get("paste_prob", 0.5),
+            max_pastes=copy_paste_cfg.get("max_pastes", 2),
+            rare_classes=copy_paste_cfg.get("rare_classes"),
+            occlusion_bias=copy_paste_cfg.get("occlusion_bias", 0.7),
+            seed=config["training"]["seed"],
+        )
+
+    train_loader = torch.utils.data.DataLoader(
+        train_loader_ds, batch_size=config["training"]["batch_size"], shuffle=True,
+        num_workers=args.num_workers, collate_fn=segmentation_collate_fn,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_ds, batch_size=config["training"]["batch_size"], shuffle=False,
+        num_workers=args.num_workers, collate_fn=segmentation_collate_fn,
+    )
+
+    model = build_segmenter(
+        config["model"]["name"], num_classes=len(class_names), pretrained=config["model"]["pretrained"],
+    ).to(device)
+    trainable, total = count_parameters(model)
+    optimizer = build_detection_optimizer(model, config["training"])
+
+    run_id = f"{args.config.stem}_{time.strftime('%Y%m%d-%H%M%S')}"
+    run_dir = args.experiments_dir / run_id
+    figures_dir = run_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = run_dir / "best.pt"
+
+    loss_cfg = config.get("loss", {})
+    scheduler = None
+    if config["training"].get("lr_schedule") == "cosine":
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["training"]["epochs"])
+
+    start = time.time()
+    history, best_metrics = fit_segmentation(
+        model, train_loader, val_loader, optimizer, class_names, device,
+        epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
+        patience=config["training"].get("patience"),
+        offset_weight=loss_cfg.get("offset_weight", 0.1),
+        semantic_weight=loss_cfg.get("semantic_weight", 1.0),
+        scheduler=scheduler,
+    )
+    duration_sec = time.time() - start
+
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.eval()
+
+    viz.plot_curve(history.train_loss, "train loss", "Train loss", figures_dir / "loss_curve.png")
+    viz.plot_curve(history.val_miou, "val mIoU", "Val mIoU", figures_dir / "miou_curve.png")
+
+    # instance-level metrics (AP50_segm, occlusion-stratified recall) are
+    # only computed once, on the best checkpoint -- same convention
+    # run_detection_training uses for its occlusion analysis, since these
+    # need per-image instance decoding and aren't cheap to run every epoch.
+    out_hw = image_size // output_stride
+    all_pred_instances: list[list] = []
+    all_gt_instances: list[list] = []
+    with torch.no_grad():
+        for images, targets in val_loader:
+            images = images.to(device)
+            outputs = model(images)
+            heatmaps = torch.sigmoid(outputs["heatmap"]).cpu().numpy()
+            offsets = outputs["offset"].cpu().numpy()
+            semantics = outputs["semantic"].argmax(dim=1).cpu().numpy()
+            for i in range(images.shape[0]):
+                all_pred_instances.append(decode_instances(heatmaps[i], offsets[i], semantics[i]))
+                gts = []
+                for m, lbl in zip(targets["instance_masks"][i].numpy(), targets["instance_labels"][i].tolist()):
+                    small = downsample_mask_nearest(m.astype(bool), output_stride, out_hw, out_hw)
+                    gts.append((small, lbl))
+                all_gt_instances.append(gts)
+
+    ap50 = evaluate_instance_ap50(all_pred_instances, all_gt_instances, class_names)
+    occlusion_fractions = compute_occlusion_fractions(val_ds)
+    occlusion_recall = evaluate_occlusion_stratified_recall_segm(
+        val_ds, all_pred_instances, occlusion_fractions, output_stride, score_threshold=0.3
+    )
+    print(occlusion_recall.to_markdown())
+    print(f"AP50_segm: {ap50['map50']:.4f}")
+
+    split_paths = {
+        train_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[train_split],
+        val_split: splits.annotations_dir(args.data_root) / splits.SHORT_TERM_SPLITS[val_split],
+    }
+    manifest = {
+        "run_id": run_id,
+        "config": config,
+        "config_path": str(args.config),
+        "git": git_info(),
+        "seed": config["training"]["seed"],
+        "split_files": {
+            name: {"path": str(path), "sha256": sha256_of(path)}
+            for name, path in split_paths.items()
+        },
+        "package_versions": {
+            "python": platform.python_version(),
+            "torch": torch.__version__,
+            "torchvision": __import__("torchvision").__version__,
+        },
+        "gpu": gpu_info(device),
+        "trainable_params": trainable,
+        "total_params": total,
+        "wall_clock_seconds": duration_sec,
+        "best_checkpoint": str(checkpoint_path),
+        "final_metrics": {
+            "miou": best_metrics.miou,
+            "mean_dice": best_metrics.mean_dice,
+            "per_class_iou": best_metrics.per_class_iou,
+            "per_class_dice": best_metrics.per_class_dice,
+            "ap50_segm": ap50["map50"],
+            "per_class_ap50_segm": ap50["per_class_ap50"],
+            "occlusion_stratified_recall": {
+                "n_isolated": occlusion_recall.n_isolated,
+                "n_light": occlusion_recall.n_light,
+                "n_heavy": occlusion_recall.n_heavy,
+                "recall_isolated": occlusion_recall.recall_isolated,
+                "recall_light": occlusion_recall.recall_light,
+                "recall_heavy": occlusion_recall.recall_heavy,
+            },
+        },
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
+    (run_dir / "metrics_table.md").write_text(
+        best_metrics.to_markdown() + "\n\n" + occlusion_recall.to_markdown() + f"\n\nAP50_segm: {ap50['map50']:.4f}"
+    )
 
     print(f"run_id: {run_id}")
     print(f"trainable/total params: {trainable}/{total} ({100*trainable/total:.1f}%)")
@@ -326,6 +560,9 @@ def main() -> None:
     if task == "detection":
         run_detection_training(config, args, device)
         return
+    elif task == "segmentation":
+        run_segmentation_training(config, args, device)
+        return
     elif task == "multilabel_frame":
         train_loader, val_loader, class_names, loss_fn, evaluate_fn = _setup_multilabel_task(
             config, args, device
@@ -336,7 +573,8 @@ def main() -> None:
         )
     else:
         raise ValueError(
-            f"unknown task '{task}'. Valid: multilabel_frame, region_classification, detection"
+            f"unknown task '{task}'. Valid: multilabel_frame, region_classification, "
+            "detection, segmentation"
         )
 
     model = build_model(

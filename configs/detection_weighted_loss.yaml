@@ -1,0 +1,18 @@
+task: detection
+model:
+  name: fasterrcnn_mobilenet_v3
+  pretrained: true
+data:
+  split: official
+  augmentation: none # matches the original best baseline's recipe exactly;
+                      # both "default" and "strong" regressed mAP (docs/DECISIONS.md).
+                      # Testing weighted loss as the one new variable here.
+loss:
+  class_weights: true # balanced weight on the box classifier's cross-entropy, not just Task A/B
+training:
+  batch_size: 4
+  epochs: 100 # ceiling, not a target
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
