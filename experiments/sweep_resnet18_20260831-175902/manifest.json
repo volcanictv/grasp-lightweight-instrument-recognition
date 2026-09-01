@@ -1,0 +1,102 @@
+{
+  "run_id": "sweep_resnet18_20260831-175902",
+  "config": {
+    "task": "multilabel_frame",
+    "model": {
+      "name": "resnet18",
+      "pretrained": true,
+      "freeze_backbone": false
+    },
+    "data": {
+      "split": "official",
+      "image_size": 224,
+      "sampling": "none",
+      "augmentation": "strong"
+    },
+    "loss": {
+      "type": "bce",
+      "class_weights": true
+    },
+    "training": {
+      "batch_size": 32,
+      "epochs": 20,
+      "lr": 0.001,
+      "backbone_lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs/sweep_resnet18.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "train": {
+      "path": "GraSP_cache/annotations/grasp_short-term_train.json",
+      "sha256": "954a4aa0bda362b3aa9ae898edf0843ea67c0be925e93c0e002975cc1c916536"
+    },
+    "test": {
+      "path": "GraSP_cache/annotations/grasp_short-term_test.json",
+      "sha256": "aef72c5d029aadfe2e3a67cdeeb671848dadb9c43bc8c10b357139d213a4d2d4"
+    }
+  },
+  "package_versions": {
+    "python": "3.11.16",
+    "torch": "2.8.0+cu126",
+    "torchvision": "0.23.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA TITAN Xp",
+    "driver_capability": [
+      6,
+      1
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 11180103,
+  "total_params": 11180103,
+  "wall_clock_seconds": 205.46205401420593,
+  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/sweep_resnet18_20260831-175902/best.pt",
+  "final_metrics": {
+    "mean_ap": 0.7979009252960705,
+    "macro_f1": 0.7400115841204459,
+    "per_class_ap": {
+      "Bipolar Forceps": 0.9656401518792381,
+      "Prograsp Forceps": 0.7285175491797738,
+      "Large Needle Driver": 0.9707424909749135,
+      "Monopolar Curved Scissors": 0.989939661649776,
+      "Suction Instrument": 0.6453254320989262,
+      "Clip Applier": 0.8306663430345832,
+      "Laparoscopic Grasper": 0.45447484825528334
+    },
+    "per_class_f1": {
+      "Bipolar Forceps": 0.9044117647058824,
+      "Prograsp Forceps": 0.6279761904761905,
+      "Large Needle Driver": 0.915929203539823,
+      "Monopolar Curved Scissors": 0.9633933759442185,
+      "Suction Instrument": 0.5591397849462365,
+      "Clip Applier": 0.7692307692307693,
+      "Laparoscopic Grasper": 0.44
+    },
+    "per_class_precision": {
+      "Bipolar Forceps": 0.8934624697336562,
+      "Prograsp Forceps": 0.6169590643274854,
+      "Large Needle Driver": 0.9672897196261683,
+      "Monopolar Curved Scissors": 0.9452679589509693,
+      "Suction Instrument": 0.6265060240963856,
+      "Clip Applier": 0.75,
+      "Laparoscopic Grasper": 0.4782608695652174
+    },
+    "per_class_recall": {
+      "Bipolar Forceps": 0.9156327543424317,
+      "Prograsp Forceps": 0.6393939393939394,
+      "Large Needle Driver": 0.8697478991596639,
+      "Monopolar Curved Scissors": 0.9822274881516587,
+      "Suction Instrument": 0.5048543689320388,
+      "Clip Applier": 0.7894736842105263,
+      "Laparoscopic Grasper": 0.4074074074074074
+    }
+  }
+}

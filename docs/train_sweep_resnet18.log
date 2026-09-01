@@ -1,0 +1,35 @@
+2026-08-31 17:59:02,666 trainable params: 11180103 / 11180103 (100.0%)
+2026-08-31 17:59:13,102 epoch 1/20 train_loss=0.7002 val_loss=0.5599 train_macro_f1=0.6427 val_macro_f1=0.6238
+2026-08-31 17:59:23,376 epoch 2/20 train_loss=0.4865 val_loss=0.5246 train_macro_f1=0.7249 val_macro_f1=0.6753
+2026-08-31 17:59:33,555 epoch 3/20 train_loss=0.3864 val_loss=0.5671 train_macro_f1=0.7934 val_macro_f1=0.7004
+2026-08-31 17:59:43,904 epoch 4/20 train_loss=0.3148 val_loss=0.5321 train_macro_f1=0.7929 val_macro_f1=0.6793
+2026-08-31 17:59:54,219 epoch 5/20 train_loss=0.2813 val_loss=0.5873 train_macro_f1=0.8200 val_macro_f1=0.6991
+2026-08-31 18:00:04,300 epoch 6/20 train_loss=0.2292 val_loss=0.6443 train_macro_f1=0.8947 val_macro_f1=0.7290
+2026-08-31 18:00:14,718 epoch 7/20 train_loss=0.2086 val_loss=0.6718 train_macro_f1=0.8867 val_macro_f1=0.7039
+2026-08-31 18:00:24,997 epoch 8/20 train_loss=0.2147 val_loss=0.5787 train_macro_f1=0.8633 val_macro_f1=0.7223
+2026-08-31 18:00:35,225 epoch 9/20 train_loss=0.1756 val_loss=0.6452 train_macro_f1=0.8701 val_macro_f1=0.6965
+2026-08-31 18:00:45,401 epoch 10/20 train_loss=0.1455 val_loss=0.7428 train_macro_f1=0.9418 val_macro_f1=0.7218
+2026-08-31 18:00:55,585 epoch 11/20 train_loss=0.1216 val_loss=0.7316 train_macro_f1=0.9197 val_macro_f1=0.7171
+2026-08-31 18:01:05,870 epoch 12/20 train_loss=0.1072 val_loss=0.7786 train_macro_f1=0.9508 val_macro_f1=0.7287
+2026-08-31 18:01:15,988 epoch 13/20 train_loss=0.0974 val_loss=0.8348 train_macro_f1=0.9582 val_macro_f1=0.7295
+2026-08-31 18:01:26,538 epoch 14/20 train_loss=0.0886 val_loss=0.8367 train_macro_f1=0.9711 val_macro_f1=0.7350
+2026-08-31 18:01:36,901 epoch 15/20 train_loss=0.0781 val_loss=0.6552 train_macro_f1=0.9279 val_macro_f1=0.7111
+2026-08-31 18:01:47,074 epoch 16/20 train_loss=0.0861 val_loss=1.1637 train_macro_f1=0.9710 val_macro_f1=0.7057
+2026-08-31 18:01:57,313 epoch 17/20 train_loss=0.0713 val_loss=0.8861 train_macro_f1=0.9684 val_macro_f1=0.7373
+2026-08-31 18:02:07,563 epoch 18/20 train_loss=0.0646 val_loss=0.7816 train_macro_f1=0.9753 val_macro_f1=0.7400
+2026-08-31 18:02:17,927 epoch 19/20 train_loss=0.0552 val_loss=1.1361 train_macro_f1=0.9805 val_macro_f1=0.7084
+2026-08-31 18:02:28,128 epoch 20/20 train_loss=0.0524 val_loss=1.0939 train_macro_f1=0.9862 val_macro_f1=0.7271
+run_id: sweep_resnet18_20260831-175902
+trainable/total params: 11180103/11180103 (100.0%)
+wall clock: 205.5s
+| class | AP | precision | recall | F1 |
+|---|---|---|---|---|
+| Bipolar Forceps | 0.966 | 0.893 | 0.916 | 0.904 |
+| Prograsp Forceps | 0.729 | 0.617 | 0.639 | 0.628 |
+| Large Needle Driver | 0.971 | 0.967 | 0.870 | 0.916 |
+| Monopolar Curved Scissors | 0.990 | 0.945 | 0.982 | 0.963 |
+| Suction Instrument | 0.645 | 0.627 | 0.505 | 0.559 |
+| Clip Applier | 0.831 | 0.750 | 0.789 | 0.769 |
+| Laparoscopic Grasper | 0.454 | 0.478 | 0.407 | 0.440 |
+| **mean/macro** | 0.798 | | | 0.740 |
+manifest: /home/yzx/Desktop/Classification Surgurical Tools/experiments/sweep_resnet18_20260831-175902/manifest.json

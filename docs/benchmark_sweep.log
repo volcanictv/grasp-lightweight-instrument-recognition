@@ -1,0 +1,24 @@
+=== configs/sweep_mobilenet_v3_large.yaml ===
+params: 4210999/4210999 trainable/total, 233.6M MACs
+model file size: 16.25 MB
+GPU (NVIDIA TITAN Xp) latency: median=4.85ms p95=5.08ms, peak VRAM=31.9MB, batch throughput=2098.6 img/s @ bs=32
+ONNX CPU latency: median=3.24ms p95=3.36ms
+results written to experiments/sweep_mobilenet_v3_large_20260831-174946/benchmark.json
+=== configs/sweep_efficientnet_b0.yaml ===
+params: 4016515/4016515 trainable/total, 413.9M MACs
+model file size: 15.59 MB
+GPU (NVIDIA TITAN Xp) latency: median=6.31ms p95=6.44ms, peak VRAM=34.4MB, batch throughput=1252.3 img/s @ bs=32
+ONNX CPU latency: median=5.95ms p95=6.08ms
+results written to experiments/sweep_efficientnet_b0_20260831-175341/benchmark.json
+=== configs/sweep_resnet18.yaml ===
+params: 11180103/11180103 trainable/total, 1823.5M MACs
+model file size: 42.72 MB
+GPU (NVIDIA TITAN Xp) latency: median=1.95ms p95=2.10ms, peak VRAM=77.9MB, batch throughput=2374.3 img/s @ bs=32
+ONNX CPU latency: median=9.49ms p95=9.61ms
+results written to experiments/sweep_resnet18_20260831-175902/benchmark.json
+=== configs/sweep_resnet50_heavy.yaml ===
+params: 23522375/23522375 trainable/total, 4131.7M MACs
+model file size: 90.02 MB
+GPU (NVIDIA TITAN Xp) latency: median=4.98ms p95=5.14ms, peak VRAM=126.0MB, batch throughput=707.7 img/s @ bs=32
+ONNX CPU latency: median=21.84ms p95=23.52ms
+results written to experiments/sweep_resnet50_heavy_20260831-180241/benchmark.json
