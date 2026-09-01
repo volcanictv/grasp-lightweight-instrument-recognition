@@ -1393,3 +1393,48 @@ multiple multi-hour runs across a full session). Milestone 9 is now
 functionally done to the same standard as Milestone 8 (box detection):
 a real, cross-validated, literature-comparable number with a small,
 understood remaining gap, not a diagnosed-but-open problem.
+
+## 2026-09-01 -- Official-split confirmatory run: the real number is 0.8101, not 0.8446
+
+Per CLAUDE.md's Splits policy, `split: official` is reserved for exactly
+one locked-in confirmatory run, made only after development (here: the
+fold1/fold2 cross-validation above) already gave confidence the approach
+works. Warm-started from the existing `detection_weighted_loss` checkpoint
+(also trained on `official`, so no leakage -- its backbone/RPN/box-head
+never saw official test via gradient descent, only via early-stopping
+selection, an already-disclosed and much milder form of leakage than the
+fold1 case two entries up). Early-stopped at epoch 14 (best box mAP50 =
+0.8371 at epoch 4).
+
+**AP50_segm = 0.8101** (run_id `instance_segmentation_maskrcnn_
+official_20260901-180758`), occlusion-stratified recall isolated 0.909 /
+light 0.930 / heavy 0.672, box mAP@50/50:95 = 0.837/0.628. Per-class
+AP@50: Monopolar Curved Scissors 0.978, Large Needle Driver 0.960,
+Bipolar Forceps 0.930, Clip Applier 0.839, Suction Instrument 0.778,
+Laparoscopic Grasper 0.708, **Prograsp Forceps 0.667 (weakest here** --
+notably not Laparoscopic Grasper, which is the usual weakest class
+everywhere else in this project; worth noting as a split-dependent
+wrinkle, not investigated further).
+
+**This is the number that goes in the report, not the fold average.**
+0.8101 vs. TAPIS's 89.85 is a gap of **8.8 points** -- still nowhere
+near the fold-average estimate's 5.4 points, though nowhere near the
+original architecture's 52-point gap either. This is a useful, honest
+lesson about cross-validation estimates: fold1 (0.8458) and fold2
+(0.8433) agreeing tightly with each other confirmed the result was
+*repeatable*, not that it would exactly predict the official number --
+different case composition (all 8 train cases here vs. 4 in each fold)
+and a different, real held-out test set (5 cases genuinely never
+touched by training, vs. fold1/fold2's own cases which the underlying
+box detector's Mask R-CNN sibling never saw but which come from the
+same 8-case pool) both mean the official run is not simply "fold1 and
+fold2, averaged." The direction and magnitude of the architecture fix
+(52-point gap collapsing to single digits) is confirmed by all three
+runs; the exact final number needed the real confirmatory run to know,
+which is exactly why the policy requires one.
+
+Does not clear the user's stated 3-point bar. Does land in a
+qualitatively different place than where Milestone 9 started this
+session (52 points, a diagnosed-but-unsolved problem) -- an 8.8-point
+gap is a real, reportable, honest result, in a similar range to the box
+detector's own 5-9 point gap to literature, not a failure.

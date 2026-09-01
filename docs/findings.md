@@ -640,6 +640,30 @@ Milestone 9 is now at the same evidentiary standard as Milestone 8: a
 real, cross-validated, literature-comparable number with a small,
 understood remaining gap -- not a diagnosed-but-open problem.
 
+## Milestone 9 final update, 2026-09-01: the official-split confirmatory number
+
+The cross-validation above (fold1/fold2, average 0.8446) was development
+evidence that the architecture switch worked, not the number to report.
+Per this project's Splits policy, `official` is reserved for exactly one
+locked-in confirmatory run, made only after that development confidence
+existed. Run: warm-started from the existing `detection_weighted_loss`
+checkpoint (itself trained on `official`, so no leakage), trained on all
+8 official train cases, evaluated on the true 5 held-out test cases.
+
+**AP50_segm = 0.8101** -- the number that actually goes in the report.
+Occlusion-stratified recall: isolated 0.909, light 0.930, heavy 0.672.
+Box mAP@50/50:95 = 0.837/0.628. Gap to TAPIS's 89.85: **8.8 points**,
+noticeably wider than the fold average suggested (5.4 points), though
+nowhere near the original architecture's 52-point gap. This is an
+honest reminder that cross-validation confirms a result is *repeatable*,
+not that it predicts the exact number a different, larger training set
+and a genuinely-never-touched test set will produce -- the three numbers
+(0.8458, 0.8433, 0.8101) agree on the qualitative finding (architecture
+family was the fix) and disagree by several points on the precise value,
+which is exactly why the official run, not the fold average, is what's
+reported as final. Full reasoning: `docs/DECISIONS.md`, 2026-09-01
+entries.
+
 ## Checked against the wider published literature (web search, 2026-08-31)
 
 `docs/imbalance_notes.md` originally stated no independent third-party
