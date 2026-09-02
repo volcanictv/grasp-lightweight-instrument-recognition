@@ -438,6 +438,87 @@ ensemble is still far under any real-time budget relevant to this project
 (the 33ms/30fps figure used elsewhere) -- unlike the segmentation
 ensemble's 768ms, doubling a lightweight classifier costs almost nothing.
 
+## Full end-to-end pipeline: detect -> classify -> segment, wired together for the first time
+
+Every number in this project up to this point evaluates one stage in
+isolation -- Task B's 0.889 accuracy uses oracle ground-truth boxes/masks,
+the Mask R-CNN's own class head has the same confusion issues as the box
+detector (above), and no prior benchmark measured the actual cost of
+running detection, classification, and segmentation as one pipeline on a
+real image. Built directly on request: `scripts/evaluate_end_to_end_pipeline.py`.
+
+Pipeline: the official box-then-mask Mask R-CNN checkpoint
+(`instance_segmentation_maskrcnn_official`, AP50_segm 0.8101) gives boxes
++ masks in one forward pass; its own class head is discarded and replaced
+by the Task B ensemble (region_baseline + region_letterbox_crop) applied
+to each detected box+mask crop, since the ensemble is the more accurate
+classifier per this document's own findings. No new training -- this
+wires together checkpoints that already existed.
+
+**Latency, measured on 100 real official-test frames (native 800x1280,
+Titan Xp, warmed up, synchronized)** -- not a fixed dummy tensor, since
+instance count varies frame to frame and that variability is a real cost
+of running this pipeline:
+
+| stage | median | p95 |
+|---|---|---|
+| Detect + segment (Mask R-CNN forward pass) | 30.63ms | 33.82ms |
+| Classification (all instances in frame) | 36.74ms | 75.65ms |
+| **Total, per frame** | **67.26ms** | **108.87ms** |
+
+Mean 2.59 instances/frame (1-6 observed), ~17.3ms per instance for
+classification. **This pipeline is not real-time as constructed** -- 67ms
+median is roughly 2x the 33ms/30fps budget used elsewhere in this project,
+and p95 is over 3x. Two components of that cost are notably higher than
+what summing this project's previously-reported numbers would predict:
+
+1. **Classification's real per-instance cost (~17.3ms) is roughly 2x the
+   previously-benchmarked ensemble latency (8.3ms combined, docs/DECISIONS.md).**
+   That 8.3ms figure timed two GPU forward passes on a tensor already
+   resident on the GPU -- no PIL image construction, no transform pipeline,
+   no per-instance (non-batched) CPU-to-GPU transfer. This end-to-end run
+   includes all of that, and it roughly doubles the real cost. The 8.3ms
+   number was correct for what it measured (pure GPU compute); it was
+   never a deployment-latency claim on its own, and this is the number
+   that actually reflects the cost of using the ensemble in a real
+   pipeline.
+2. **The Mask R-CNN forward pass measured here (30.63ms) does not match
+   this project's previously-documented figure for the same architecture
+   family (84.8ms, the four-way segmentation ensemble's latency table,
+   docs/DECISIONS.md).** Re-benchmarked fresh, directly, on three related
+   checkpoints (`instance_segmentation_maskrcnn_official`,
+   `..._official_scratch`, and the original `instance_segmentation_maskrcnn`
+   run) using the project's own `benchmark_detection_gpu_latency` helper at
+   its documented settings (warmup=50, runs=200): all three measure
+   27-30ms, not 84.8ms. **This is an open, unresolved discrepancy, not
+   something this document is asserting an explanation for** -- possible
+   causes include a different checkpoint/config being the true source of
+   the 84.8ms figure, GPU contention at the time of that original
+   measurement (it was taken during an extended multi-experiment session),
+   or a difference in the exact benchmarking invocation. Flagged honestly
+   rather than silently overwritten; if the ensemble latency table needs
+   correcting, that should be a deliberate re-check, not an inference from
+   this script's incidental finding.
+
+**Accuracy: classification on real detected instances vs. oracle boxes.**
+Matched 219 detections to ground truth (IoU >= 0.5, score >= 0.5) across
+the same 100 frames and checked the ensemble's classification accuracy on
+those real, non-oracle boxes/masks: **0.8493**, against Task B's own
+oracle-box ensemble accuracy of **0.889** -- a real, quantified ~4-point
+cost of classifying from the detector's actual (imperfect) localization
+instead of ground-truth boxes. This is the first number in this project
+that measures "how accurate is the classifier when fed what the detector
+actually gives it," rather than what it's given a perfect box.
+
+**Honest summary**: the components exist and can be wired together today
+without new training, but as a naive sequential pipeline it is
+~2-3x over a real-time budget, and its real classification accuracy is a
+few points below the oracle-box number reported everywhere else in this
+document. Both the latency-discrepancy and the oracle-vs-real accuracy gap
+are exactly the kind of thing that only shows up once stages are actually
+connected -- neither would be visible from the individual-stage numbers
+this project had before.
+
 ## Negative result: tip-crop is worse than both the plain crop and the letterbox crop
 
 `configs/region_tip_crop.yaml` (`crop_mode: tip`, `tip_crop_frac: 0.45`) --
