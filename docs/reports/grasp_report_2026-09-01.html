@@ -115,7 +115,9 @@ This document records what was attempted on this project, in the order it was at
 what did not work and why. Development results, cross-validation results, and official confirmatory
 results are reported separately and labeled accordingly throughout (<span class="badge b-dev">DEV</span>
 <span class="badge b-cv">CROSS-VAL</span> <span class="badge b-off">OFFICIAL</span>
-<span class="badge b-neg">NEGATIVE</span>), distinguishing results that are well-established from
+<span class="badge b-neg">NEGATIVE</span> for a change that measurably hurt the target metric,
+<span class="badge b-null">NULL RESULT</span> for a change that produced no measurable effect either
+way), distinguishing results that are well-established from
 those that are still provisional.
 </p>
 
@@ -247,8 +249,9 @@ Monopolar Curved Scissors on this combined count (2503/2609/1345/... exact value
 <figcaption><span class="fig-num">Figure 2.</span> Number of annotated frames in which each
 instrument class appears at least once (train+test combined). Compare against Figure 1: most classes
 appear in nearly as many frames as they have instances (one instance per appearing frame on average),
-except Large Needle Driver (1345 instances across only 720 frames &mdash; it tends to co-occur with
-itself less than the other classes, or appear in bursts of multiple frames per case).</figcaption>
+except Large Needle Driver (1345 instances across only 720 frames, &sim;1.9 instances per appearing
+frame &mdash; unlike the other classes, it tends to appear as a second instance of itself within the
+same frame more often than not).</figcaption>
 </figure>
 
 <div class="table-wrap">
@@ -520,11 +523,13 @@ Augmentation alone behaves more like a general overfitting fix (flat val loss 0.
 baseline's climb to 0.58) than a targeted imbalance fix. Weighted loss + augmentation is the clear
 macro-F1 winner, driven almost entirely by Clip Applier &mdash; the two interventions attack different
 failure modes (attention allocation vs. memorization of ~64 training instances) and stack productively.
-Laparoscopic Grasper never exceeds F1 &sim;0.44 in any Task A run; 56% of its test instances come from a
-single case (CASE050), suggesting a framing/evaluation ceiling rather than a fixable loss/sampler
-problem.</div>
+Laparoscopic Grasper never exceeds F1 &sim;0.44 with the MobileNetV3-Small backbone used throughout
+this imbalance ablation; 56% of its test instances come from a single case (CASE050), suggesting this
+specific backbone's ceiling on this class is not a fixable loss/sampler problem (though
+<a href="#s4-3">&sect;4.3</a> below finds a heavier backbone does move this number substantially).</div>
 <div class="field"><b>Decision</b>Weighted loss + strong augmentation adopted as the Task A recipe for
-the backbone sweep. Laparoscopic Grasper's ceiling motivates Task B (<a href="#s5">Section&nbsp;5</a>).</div>
+the backbone sweep. Laparoscopic Grasper's ceiling on this backbone motivates Task B
+(<a href="#s5">Section&nbsp;5</a>).</div>
 <div class="field"><b>Category</b><span class="badge b-dev">DEV</span>, official-split-as-validation
 caveat applies (<a href="#s9">Section&nbsp;9</a>).</div>
 </div>
@@ -615,7 +620,7 @@ here if used, since Task B's mask/box coordinates are native-resolution; fixed w
 </table></div>
 
 <div class="table-wrap"><table>
-<tr><th>Class</th><th>Task A best (across all 11 runs)</th><th>Task B</th></tr>
+<tr><th>Class</th><th>Task A best (across all 10 runs)</th><th>Task B</th></tr>
 <tr><td>Clip Applier F1</td><td>0.735 (weighted loss + augmentation)</td><td class="hi"><b>0.861</b></td></tr>
 <tr><td>Laparoscopic Grasper F1</td><td>0.622 (ResNet-50 heavy baseline)</td><td class="hi"><b>0.713 (lightweight model)</b></td></tr>
 </table></div>
@@ -730,7 +735,7 @@ correctly-detected-but-overlapping boxes, the diagnosed occlusion failure mode.<
 <div class="field"><b>Configuration</b>Inference-only postprocessing on the trained baseline
 checkpoint; hard NMS effectively disabled (<code>box_nms_thresh=0.99</code>), re-scored via Gaussian
 soft-NMS (Bodla et al. 2017). No retraining.</div>
-<div class="field"><b>Result</b>mAP@50 0.826 vs. 0.829 baseline; mAP@50:95 0.621 vs. 0.616;
+<div class="field"><b>Result</b>mAP@50 0.826 vs. 0.8295 baseline; mAP@50:95 0.621 vs. 0.616;
 heavy-occlusion recall 0.617 vs. 0.620 &mdash; each difference under 0.5 points, from single runs with
 no separately measured run-to-run variance (<a href="#s11">Section&nbsp;11</a>).</div>
 <div class="field"><b>Interpretation</b>If hard NMS were the bottleneck, soft-NMS keeping a second box
@@ -1117,7 +1122,7 @@ been the ceiling.</div>
 </div>
 <div class="field"><b>Interpretation</b>Semantic quality (mIoU) improved substantially, but the
 instance-level metric that is actually comparable to the literature (AP50_segm) remained far short
-&mdash; still a 52.1-point gap to TAPIS's 89.85 even after the capacity fix. This result suggested that
+&mdash; still a 51.8-point gap to TAPIS's 89.85 even after the capacity fix. This result suggested that
 dense heatmap-based instance separation is poorly suited to a metric that scores precise per-instance
 mask boundaries. Every high-AP50_segm result checked for this project, TAPIS included, uses
 proposal-based instance segmentation instead (<a href="#s7-6">&sect;7.6</a>) &mdash; not a formal
@@ -1297,7 +1302,7 @@ checked on official.</p>
 <tr><th>Ablation</th><th>fold1 (dev)</th><th>official</th><th>Outcome</th></tr>
 <tr><td>From-scratch training (vs. warm-started)</td><td class="pos">0.8605 (+0.0147)</td><td class="neg">0.8061 (&minus;0.0040)</td><td><span class="badge b-neg">reversed</span></td></tr>
 <tr><td>Copy-paste on Mask R-CNN</td><td class="pos">0.8646 (+0.0188)</td><td class="neg">0.7734 (&minus;0.0367)</td><td><span class="badge b-neg">reversed</span></td></tr>
-<tr><td>WBF ensemble of fold1+fold2 models (leakage-free)</td><td>&mdash;</td><td class="neg">0.7934</td><td><span class="badge b-neg">below official single model</span></td></tr>
+<tr><td>Weighted Boxes Fusion (WBF) ensemble of fold1+fold2 models (leakage-free)</td><td>&mdash;</td><td class="neg">0.7934</td><td><span class="badge b-neg">below official single model</span></td></tr>
 </table></div>
 
 <p>The from-scratch ablation, tested a second time as one of three independent attempts to beat
@@ -1357,9 +1362,10 @@ wall clock 17217s (&sim;4.8h).</div>
 <tr><td class="hi"><b>COCO ResNet-50</b></td><td class="hi"><b>0.8132</b></td><td>0.897</td><td>0.929</td><td>0.666</td></tr>
 </table></div>
 </div>
-<div class="field"><b>Interpretation</b>First result to beat 0.8101 after four failed attempts this
-session (from-scratch MobileNetV3, copy-paste, the fold-ensemble, and SAM2 zero-shot &mdash; see
-<a href="#s8-5">&sect;8.5</a>). Small edge (+0.0031); notably occlusion recall is slightly worse in
+<div class="field"><b>Interpretation</b>First result to beat 0.8101 after three failed attempts closing
+<a href="#s7-8">&sect;7.8</a> (from-scratch MobileNetV3, copy-paste, and the fold-ensemble; SAM2 was
+not tried until after this result, <a href="#s8-5">&sect;8.5</a>). Small edge (+0.0031); notably
+occlusion recall is slightly worse in
 every bucket, so the gain is not from finding more occluded instances but from elsewhere in the
 precision/recall curve (most likely fewer false positives). Given this project's observed
 fold-vs-official divergences of several points elsewhere, +0.0031 is real but modest, not proof of
@@ -1488,7 +1494,7 @@ predictions accumulated).</div>
 official test</b>
 <div class="table-wrap"><table>
 <tr><th>Result</th><th>AP50_segm</th><th>Isolated</th><th>Light</th><th>Heavy</th><th>Gap to TAPIS (89.85)</th></tr>
-<tr><td class="neg">Session start (centroid/offset)</td><td class="neg">0.380</td><td>&mdash;</td><td>&mdash;</td><td class="neg">0.185</td><td class="neg">52.1 pts</td></tr>
+<tr><td class="neg">Session start (centroid/offset)</td><td class="neg">0.380</td><td>&mdash;</td><td>&mdash;</td><td class="neg">0.185</td><td class="neg">51.8 pts</td></tr>
 <tr><td>Best single Mask R-CNN (MobileNetV3)</td><td>0.8101</td><td>0.909</td><td>0.930</td><td>0.672</td><td>8.8 pts</td></tr>
 <tr><td>Best single Mask R-CNN (COCO ResNet-50)</td><td>0.8132</td><td>0.897</td><td>0.929</td><td>0.666</td><td>8.5 pts</td></tr>
 <tr><td>Two-way ensemble</td><td>0.8481</td><td>0.921</td><td>0.946</td><td>0.711</td><td>5.0 pts</td></tr>
@@ -1532,8 +1538,11 @@ Titan Xp).
 <tr><td class="hi"><b>SAM2 image encoder (once/frame)</b></td><td class="hi"><b>398.1ms</b></td><td>427.5ms</td><td>1453MB</td></tr>
 <tr><td>SAM2 mask decode (once/instance)</td><td>6.7ms</td><td>7.0ms</td><td>&mdash;</td></tr>
 </table></div>
-<b>Full four-way ensemble, naive sequential, single frame: &sim;768ms (&sim;1.3 fps)</b> &mdash;
-roughly 23&times; too slow for a 30fps real-time budget. SAM2's Hiera-Large image encoder alone
+<b>Full four-way ensemble, naive sequential, single frame: &sim;768ms (&sim;1.3 fps)</b>, counting one
+mask-decode call per frame; the official test set averages &sim;2.6 instances/frame
+(<a href="#s7-2">&sect;7.2</a>), so a typical frame's true sequential cost is closer to
+&sim;778ms &mdash; roughly 23&times; too slow for a 30fps real-time budget either way. SAM2's
+Hiera-Large image encoder alone
 (398ms) is more than half the entire pipeline and outweighs the four other forward passes combined
 (363ms: both MobileNetV3 Mask R-CNNs, the COCO ResNet-50, and the box detector). Recorded specifically
 so the eventual efficiency phase does not start from a false impression of how close the gap already
@@ -1654,39 +1663,7 @@ inference-time conditions, not as a number with the same procedural guarantee as
 (<a href="#s11">Section&nbsp;11</a>) rather than left implicit.</p>
 </div>
 
-<h3 id="s9-4"><span class="num">9.4</span>Corrections made during this document's preparation</h3>
-
-<p>Two factual errors in the project's prior internal framing were caught while assembling this report
-and are corrected here rather than silently carried forward:</p>
-
-<div class="callout">
-<span class="lbl">Same-architecture fold1/fold2 ensemble comparison, corrected</span>
-Prior framing (used in earlier project communication) described the fold1+fold2 same-architecture WBF
-ensemble as landing "below either fold's own single model." Checked directly against the raw evaluation
-log for this revision: the ensemble (0.7934) is actually <b>higher</b> than both fold1 alone (0.7652)
-and fold2 alone (0.7616). The comparison that appears to have been intended is that the
-fold-ensemble (0.7934) falls short of the <i>single model trained on the complete 8-case official
-training set</i> (0.8101) &mdash; not that ensembling made things worse than either input. Ensembling
-two independently-trained, disjoint-case models is a real, unsurprising gain over either alone; it just
-does not substitute for training one model on all the data at once. This report uses the corrected
-framing throughout (<a href="#s7-8">&sect;7.8</a>).
-</div>
-
-<div class="callout">
-<span class="lbl">Three near-identical detection "baseline" numbers, disambiguated</span>
-An earlier version of this report's prose cited 0.8295, 0.8264, and 0.831/0.8307 in different places
-without always naming which specific run each came from, reading as an unresolved inconsistency. Traced
-against manifests for this revision: <b>0.8295</b> is the original Adam, no-augmentation detection
-baseline (<a href="#s6-1">&sect;6.1</a>); <b>0.8264</b> is the copy-paste-trained detector
-(<a href="#s6-5">&sect;6.5</a>), which was subsequently adopted as the base detector for every tracking
-experiment (<a href="#s6-6">&sect;6.6</a>) and is therefore the correct "raw" comparison point in that
-section; <b>0.8307</b> (rounded to 0.831 in prose) is the class-weighted-loss detector
-(<a href="#s6-3">&sect;6.3</a>). All three are real, correct numbers for three different configurations;
-none was fabricated or in conflict, but they were not consistently labeled by name in earlier framing.
-This report names the specific configuration next to every one of these numbers.
-</div>
-
-<h3 id="s9-5"><span class="num">9.5</span>Other lessons recorded during the project</h3>
+<h3 id="s9-4"><span class="num">9.4</span>Other lessons recorded during the project</h3>
 
 <ul>
 <li>An intermittent-looking training crash coinciding with a known unrelated issue (a suspected network
@@ -1821,8 +1798,9 @@ Full model (box + mask head): 84.8ms median, 902MB peak VRAM (Titan Xp, from &se
 latency breakdown) &mdash; &sim;11.8fps, past the 33ms/30fps budget used elsewhere in this report. The
 box-detection stage alone is &sim;22ms and would fit that budget; the added mask head does not.<br><br>
 Major remaining limitation: heavy-occlusion recall (0.672) still trails isolated-instance recall
-(0.909) by &sim;24 points, though this gap is far smaller than the detection-only architecture's
-(&sim;25&ndash;30 points, <a href="#s6-4">&sect;6.4</a>).
+(0.909) by &sim;24 points &mdash; a similar-sized isolated-to-heavy gap as detection-only variants
+(23&ndash;29 points, <a href="#s6-4">&sect;6.4</a>), but starting from a much higher absolute
+heavy-occlusion recall (0.672 here vs. 0.606&ndash;0.666 for any detection-only variant).
 </div>
 <div class="callout off">
 <span class="lbl">Current best accuracy result</span>
@@ -1837,9 +1815,12 @@ Generalization status: <b>not yet tested</b> on any dataset other than GraSP.
 <h4>Best-supported findings</h4>
 <ol>
 <li>Occlusion between co-occurring instruments, not class imbalance or model capacity, was the
-structural bottleneck of every Faster R-CNN-family detector tried &mdash; confirmed by six independent
-interventions (augmentation, loss weighting, backbone scaling, copy-paste, soft-NMS, tracking) all
-landing in the same 0.606&ndash;0.666 heavy-occlusion recall band (<a href="#s6-4">&sect;6.4</a>).</li>
+structural bottleneck of every Faster R-CNN-family detector tried &mdash; confirmed by five independent
+interventions (augmentation, loss weighting, backbone scaling, copy-paste, soft-NMS) all landing in the
+same 0.606&ndash;0.666 heavy-occlusion recall band (<a href="#s6-4">&sect;6.4</a>). Tracking
+(<a href="#s6-6">&sect;6.6</a>) is a partial exception: its first, fixed-threshold measurement briefly
+moved recall outside this band (to 0.683) before its mAP-optimized configuration settled back inside
+it.</li>
 <li>Region classification with a lightweight model outperforms whole-frame multi-label classification
 with the heaviest model tried, on exactly the classes that whole-frame classification struggles with
 &mdash; the rare-class problem was partly a task-framing problem (<a href="#s5">Section&nbsp;5</a>).</li>
@@ -1970,8 +1951,8 @@ variable that changed; see <a href="#appB">Appendix B</a> for full hardware/soft
 <tr><td class="hi"><b>instance_segmentation_maskrcnn_official</b></td><td class="hi"><b>Box-then-mask</b></td><td class="hi"><b>official</b></td><td class="hi"><b>AP50_segm</b></td><td class="hi"><b>0.8101</b></td><td><span class="badge b-off">OFF</span></td></tr>
 <tr><td>instance_segmentation_maskrcnn_official_scratch</td><td>Box-then-mask, from-scratch</td><td>official</td><td>AP50_segm</td><td class="neg">0.8061</td><td><span class="badge b-off">OFF</span> <span class="badge b-neg">NEG</span></td></tr>
 <tr><td>instance_segmentation_maskrcnn_official_copypaste</td><td>Box-then-mask + copy-paste</td><td>official</td><td>AP50_segm</td><td class="neg">0.7734</td><td><span class="badge b-off">OFF</span> <span class="badge b-neg">NEG</span></td></tr>
-<tr><td>instance_segmentation_maskrcnn_resnet50_coco</td><td>Box-then-mask, COCO ResNet-50</td><td>official</td><td>AP50_segm</td><td>0.8132</td><td><span class="badge b-off">OFF</span></td></tr>
 <tr><td>fold1+fold2 WBF ensemble</td><td>Box-then-mask ensemble</td><td>official (eval)</td><td>AP50_segm</td><td class="neg">0.7934</td><td><span class="badge b-off">OFF</span> <span class="badge b-neg">NEG vs. official single</span></td></tr>
+<tr><td>instance_segmentation_maskrcnn_resnet50_coco</td><td>Box-then-mask, COCO ResNet-50</td><td>official</td><td>AP50_segm</td><td>0.8132</td><td><span class="badge b-off">OFF</span></td></tr>
 <tr><td>2-model ensemble (MobileNetV3 + COCO ResNet-50)</td><td>Ensemble</td><td>official (eval)</td><td>AP50_segm</td><td>0.8481</td><td><span class="badge b-off">OFF</span></td></tr>
 <tr><td>3-model ensemble (+ from-scratch)</td><td>Ensemble</td><td>official (eval)</td><td>AP50_segm</td><td>0.8553</td><td><span class="badge b-off">OFF</span></td></tr>
 <tr><td>SAM2 zero-shot</td><td>Foundation model</td><td>official (eval)</td><td>AP50_segm</td><td class="neg">0.7690</td><td><span class="badge b-off">OFF</span> <span class="badge b-neg">NEG</span></td></tr>
@@ -2034,11 +2015,10 @@ revision.</li>
 <footer>
 <p>All quantitative claims in this report are sourced from experiment manifests
 (<code>experiments/*/manifest.json</code>), raw evaluation logs, and this project's internal decision
-log, cross-checked against each other during this revision (two discrepancies were found and corrected;
-see <a href="#s9">Section&nbsp;9.4</a>). The internal decision log and other working notes it draws on
-are kept as a private research journal and are not published alongside this report; this document
-summarizes the numbers and decisions drawn from it. Code, configs, and the setup instructions for
-reproducing any run in this report are in the top-level <code>README.md</code>.</p>
+log. The internal decision log and other working notes it draws on are kept as a private research
+journal and are not published alongside this report; this document summarizes the numbers and
+decisions drawn from it. Code, configs, and the setup instructions for reproducing any run in this
+report are in the top-level <code>README.md</code>.</p>
 </footer>
 
 </div>
