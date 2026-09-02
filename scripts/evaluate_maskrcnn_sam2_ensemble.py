@@ -39,7 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from surgical_ai.data import splits  # noqa: E402
-from surgical_ai.data.detection_dataset import GraspDetectionDataset, build_detection_transforms, collate_fn  # noqa: E402
+from surgical_ai.data.detection_dataset import GraspDetectionDataset, build_detection_transforms  # noqa: E402
 from surgical_ai.data.mask_utils import decode_instance_mask  # noqa: E402
 from surgical_ai.evaluation.detection import compute_occlusion_fractions  # noqa: E402
 from surgical_ai.evaluation.segmentation import evaluate_instance_ap50, mask_iou  # noqa: E402
