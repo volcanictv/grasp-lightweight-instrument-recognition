@@ -201,3 +201,60 @@ Not pursued here because it's a bigger lift for uncertain payoff: a
 tissue-occlusion-aware metric (parallel to occlusion-stratified recall but
 for instrument-vs-tissue coverage) would need a way to detect tissue
 coverage from RGB alone, no annotation exists for it.
+
+## Outcome: letterbox crop confirms the mechanism, but trades against the rarest classes
+
+`configs/region_letterbox_crop.yaml`, official split, otherwise identical to
+`region_baseline.yaml`. Result: accuracy 0.857 -> **0.882** (+2.5 points),
+macro-F1 0.825 -> 0.827 (flat). Full run: `docs/DECISIONS.md`, 2026-09-02.
+
+The confusion matrix confirms the mechanism directly, not just by
+correlation -- the exact pairs the aspect-ratio hypothesis predicted would
+shrink, did:
+
+| pair | before | after |
+|---|---|---|
+| Large Needle Driver -> Bipolar Forceps | 65 (14.5%) | 24 (5.3%) |
+| Prograsp Forceps -> Bipolar Forceps | 48 (14.5%) | 28 (8.5%) |
+| Monopolar Curved Scissors -> Suction Instrument | 48 (5.7%) | 22 (2.6%) |
+| Bipolar Forceps -> Prograsp Forceps | 56 (6.9%) | 41 (5.1%) |
+
+But two others got worse, and they land on the project's already-weakest
+class:
+
+| pair | before | after |
+|---|---|---|
+| Bipolar Forceps -> Large Needle Driver | 21 (2.6%) | 41 (5.1%) |
+| Prograsp Forceps -> Laparoscopic Grasper | 12 (3.6%) | 23 (7.0%) |
+| Laparoscopic Grasper -> Suction Instrument | 8 (9.9%) | 10 (12.3%) |
+
+Per-class F1: five of seven classes improved (Bipolar Forceps +0.029,
+Prograsp Forceps +0.045, Large Needle Driver +0.044, Monopolar Curved
+Scissors +0.016, Suction Instrument +0.032) -- exactly the classes the
+confusion-pair analysis implicated. But **Clip Applier (-0.076) and
+Laparoscopic Grasper (-0.079, down to F1 0.634, the worst of any class in
+either run) got worse.** Macro-F1 ends up flat because it weights all seven
+classes equally, so the gains on the well-represented, previously-confused
+classes are offset by losses on the two smallest classes.
+
+**Honest read**: this is a real, confirmed, single-variable causal result
+(the crop-aspect-ratio mechanism reduces exactly the pairs it should), not
+a wash. But it is not a clean win to adopt as the new baseline without
+qualification -- it shifts the error distribution rather than removing it,
+and the class it makes worse (Laparoscopic Grasper) was already this
+project's hardest class across every prior milestone
+(`docs/findings.md`, Task A section). Both classes it hurt are also the two
+smallest in the dataset (Clip Applier, Laparoscopic Grasper), which fits a
+plausible mechanism: letterbox padding shrinks the instrument's effective
+in-canvas resolution for already-elongated crops, and there isn't enough
+training data in these two rare classes for the model to compensate the way
+it can for the well-represented classes. Not confirmed further (would need
+a per-class effective-resolution measurement to verify rather than infer).
+
+Next honest step, not yet done: check whether combining `letterbox_crop`
+with the existing `class_weights: true` (already on in this config) needs a
+stronger rare-class weight specifically to recover Laparoscopic Grasper and
+Clip Applier, or whether letterboxing should be applied selectively (only to
+crops above some aspect-ratio threshold, sparing already-square-ish rare
+class crops from the padding/resolution cost). Not implemented -- a decision
+point, not a default next action.

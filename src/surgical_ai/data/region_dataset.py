@@ -42,10 +42,25 @@ class GraspRegionDataset(Dataset):
         data_root: Path,
         split: str,
         transform: Callable | None = None,
+        letterbox: bool = False,
     ):
+        """`letterbox=True` pads the mask-cropped instance to a square (zeros,
+        matching the mask-zeroed background already used) before any resize
+        happens, instead of letting the downstream fixed-size resize stretch
+        the crop's native aspect ratio to square. Motivated by
+        docs/error_analysis.md: several of the region classifier's worst
+        confusion pairs turned out to be long, thin instrument crops (e.g. a
+        730x788 bbox where the tool is a diagonal sliver) where the
+        distinguishing tip occupies a small fraction of the crop and gets
+        compressed by a non-uniform stretch to 224x224. Padding to square
+        first keeps the crop's true proportions through every transform
+        after it (Resize, RandomResizedCrop) without touching those
+        transforms or their configs.
+        """
         doc = splits.load_short_term(data_root, split)
         self.frames_root = Path(data_root) / "frames-001" / "frames"
         self.transform = transform
+        self.letterbox = letterbox
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -105,8 +120,17 @@ class GraspRegionDataset(Dataset):
 
         mask = decode_instance_mask(segmentation)
         crop = frame[y0:y1, x0:x1] * mask[y0:y1, x0:x1, None]
+        crop = crop.astype(np.uint8)
 
-        image = Image.fromarray(crop.astype(np.uint8))
+        if self.letterbox:
+            ch, cw = crop.shape[:2]
+            side = max(ch, cw)
+            square = np.zeros((side, side, 3), dtype=np.uint8)
+            top, left = (side - ch) // 2, (side - cw) // 2
+            square[top : top + ch, left : left + cw] = crop
+            crop = square
+
+        image = Image.fromarray(crop)
         if self.transform is not None:
             image = self.transform(image)
         return image, torch.tensor(label_idx, dtype=torch.long)

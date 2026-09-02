@@ -47,6 +47,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--image-size", type=int, default=224)
     parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--task-b-letterbox", action="store_true",
+        help="match GraspRegionDataset(letterbox=True) -- use when --task-b-checkpoint was trained with data.letterbox_crop: true",
+    )
     return parser.parse_args()
 
 
@@ -126,7 +130,10 @@ def run_task_b(args: argparse.Namespace, device: torch.device) -> None:
     print("TASK B -- region classification error analysis")
     print("=" * 70)
 
-    ds = GraspRegionDataset(args.data_root, args.split, transform=build_transforms(args.image_size, train=False))
+    ds = GraspRegionDataset(
+        args.data_root, args.split, transform=build_transforms(args.image_size, train=False),
+        letterbox=args.task_b_letterbox,
+    )
     class_names = ds.class_names_ordered()
 
     model = load_classifier("mobilenet_v3_small", len(class_names), args.task_b_checkpoint, device)

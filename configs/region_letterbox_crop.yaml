@@ -1,0 +1,22 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 224
+  augmentation: default # default | strong
+  letterbox_crop: true # one-variable ablation vs. region_baseline.yaml -- see
+                        # docs/error_analysis.md. Pads the mask-cropped instance
+                        # to a square before resizing instead of stretching its
+                        # native aspect ratio to 224x224.
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

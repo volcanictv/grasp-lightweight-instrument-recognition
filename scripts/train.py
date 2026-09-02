@@ -203,12 +203,15 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
     image_size = config["data"]["image_size"]
     augmentation = config["data"].get("augmentation", "default")
 
+    letterbox = config["data"].get("letterbox_crop", False)
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
         transform=build_transforms(image_size, train=True, augmentation=augmentation),
+        letterbox=letterbox,
     )
     val_ds = GraspRegionDataset(
-        args.data_root, val_split, transform=build_transforms(image_size, train=False)
+        args.data_root, val_split, transform=build_transforms(image_size, train=False),
+        letterbox=letterbox,
     )
     class_names = train_ds.class_names_ordered()
 
