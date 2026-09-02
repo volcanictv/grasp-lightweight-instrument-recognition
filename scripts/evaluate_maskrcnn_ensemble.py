@@ -114,7 +114,13 @@ def main() -> None:
         model_specs.append((checkpoint_path, registry_name, model))
 
     n_samples = len(val_ds.samples) if args.limit is None else min(args.limit, len(val_ds.samples))
-    preds_per_model: list[list[list[tuple]]] = [[] for _ in model_specs]
+    # Holding every model's individual per-image mask predictions (in addition to
+    # the ensemble's) for the full 1125-image official test set OOM'd the
+    # workstation at N=3 models (28.5GB resident, killed by the kernel at
+    # image ~900/1125 -- confirmed via dmesg, not the earlier network outage
+    # as first suspected). Each model's solo score is already known from its
+    # own dedicated run anyway, so only the ensemble's predictions are kept
+    # here now -- that alone cuts peak memory by roughly (N+1)/2.
     preds_ensemble: list[list[tuple]] = []
     gt_instances: list[list[tuple]] = []
 
@@ -124,9 +130,6 @@ def main() -> None:
     for idx, (images, targets) in enumerate(loader):
         image_tensor = images[0].to(device)
         dets_all = [collect_model_detections(model, image_tensor, args.score_threshold) for _cp, _name, model in model_specs]
-
-        for i, dets in enumerate(dets_all):
-            preds_per_model[i].append([(d["mask"] >= 0.5, d["label"], d["score"]) for d in dets])
 
         fused = weighted_fusion_merge(dets_all, iou_threshold=args.fusion_iou_threshold)
         preds_ensemble.append([(d["mask"] >= 0.5, d["label"], d["score"]) for d in fused])
@@ -147,14 +150,11 @@ def main() -> None:
     # so pad untested indices (under --limit) with empty predictions rather than
     # truncate -- see the identical fix in evaluate_tracking_segm.py.
     for _ in range(len(val_ds.samples) - n_samples):
-        for preds in preds_per_model:
-            preds.append([])
         preds_ensemble.append([])
         gt_instances.append([])
 
-    for (checkpoint_path, registry_name, _model), preds in zip(model_specs, preds_per_model):
-        label = f"{registry_name} ({Path(checkpoint_path).parent.name}) alone"
-        evaluate_predictions(preds, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, label)
+    # Individual per-model scores: see each model's own dedicated training run --
+    # not recomputed here (see the memory note above this loop).
     evaluate_predictions(preds_ensemble, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, f"ensemble of {len(model_specs)} (WBF)")
 
 
