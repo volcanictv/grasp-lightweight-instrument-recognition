@@ -1548,3 +1548,41 @@ locked-in confirmatory split, where it reversed. Worth stating plainly
 rather than cherry-picking the better-looking number: this project
 reports the number that came from the correct evaluation protocol, not
 the more flattering one.
+
+## 2026-09-01 -- Weighted box+mask fusion ensemble (fold1+fold2) on official test: works, but doesn't beat the real model
+
+User's idea: two independently-trained, mutually-clean models already
+exist (fold1's model trained only on fold2's cases, fold2's model
+trained only on fold1's cases) -- neither has ever seen an official-test
+case, so ensembling their predictions on official test is legitimate,
+free of leakage, and needs no new training. Implemented weighted boxes
+fusion (Solovyev et al. 2021) with masks: pool both models' detections
+per image, greedily cluster by same-class box-IoU>=0.5, collapse each
+cluster to one detection via score-weighted box and mask-probability
+averaging (`src/surgical_ai/inference/ensemble.py`,
+`scripts/evaluate_maskrcnn_ensemble.py`).
+
+| Evaluated on official test | AP50_segm | Heavy-occlusion recall |
+|---|---|---|
+| fold1 model alone | 0.7652 | 0.596 |
+| fold2 model alone | 0.7616 | 0.627 |
+| **Ensemble (WBF)** | **0.7934** | **0.655** |
+| (reference) official model, trained on all 8 cases directly | 0.8101 | 0.672 |
+
+**The ensembling mechanism itself works as expected**: fusing the two
+fold models beat either one alone by +0.028 to +0.032 AP50_segm, a real,
+unsurprising gain from combining two models trained on disjoint data.
+**But it does not beat the officially-trained single model.** Reason:
+each fold model only ever trained on 4 cases; even two independent
+4-case models fused together apparently don't match what one model
+gets from training on all 8 cases at once -- data diversity per model
+mattered more here than model diversity across models. Also a real,
+practical cost the aggregate numbers don't show: the ensemble runs two
+full forward passes per image, roughly doubling inference cost, which
+cuts against this project's efficiency thesis for no net accuracy gain
+here.
+
+**Not adopted.** The official single-model result (AP50_segm = 0.8101,
+8.8-point gap to TAPIS) remains this project's best and reported
+Milestone 9.5 number. Interesting confirmed mechanism, not a path that
+closed the gap this time.
