@@ -1,0 +1,18 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: true # no warm_start_checkpoint -- box and mask heads trained jointly from
+                    # scratch. Fold1 ablation (docs/DECISIONS.md, 2026-09-01) found this
+                    # slightly beats warm-starting on AP50_segm (+0.0147) and heavy-occlusion
+                    # recall (+0.018), at ~4.5x the wall-clock cost. Testing whether that
+                    # holds on the official confirmatory split too.
+data:
+  split: official
+  augmentation: none
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
