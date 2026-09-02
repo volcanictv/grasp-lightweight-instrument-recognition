@@ -1890,3 +1890,31 @@ and the real inference-cost tradeoff of a growing ensemble (now 4 full
 model forward passes per image, directly working against the eventual
 efficiency phase), this is a reasonable point to pause for a decision
 rather than keep adding members unsupervised.
+
+## 2026-09-02 -- Per-frame latency of the 4-way ensemble, measured
+
+Requested explicitly: the actual cost behind the 0.8594 result. Measured
+via `scripts/benchmark_ensemble_latency.py`, following this project's
+established convention (`src/surgical_ai/evaluation/benchmarking.py`):
+single image, batch size 1, warmed up, `torch.cuda.synchronize()`'d,
+median/p95 over 200 runs, Titan Xp.
+
+| Component | Median | p95 | Peak VRAM |
+|---|---|---|---|
+| MobileNetV3 Mask R-CNN | 84.8ms | 85.7ms | 902MB |
+| COCO ResNet-50 Mask R-CNN | 163.5ms | 165.8ms | 1146MB |
+| Box detector (also SAM2's prompt source) | 29.9ms | 30.3ms | 309MB |
+| SAM2 image encoder (once/frame) | **398.1ms** | 427.5ms | 1453MB |
+| SAM2 mask decode (once/instance) | 6.7ms | 7.0ms | -- |
+
+**Full 4-way ensemble, naive sequential, single frame: ~778ms
+(~1.3 fps)** -- roughly 23x too slow for a 30fps real-time budget.
+SAM2's Hiera-Large image encoder alone (398ms) is more than half the
+entire pipeline and outweighs all four Mask R-CNN-family forward passes
+combined (278ms). This is the honest cost of the 3.9-point-gap result:
+a real number, not a "we'll optimize it later" hand-wave, recorded now
+specifically so nobody assumes the eventual efficiency phase starts from
+a small gap. Two structural, not yet explored, ways to close it when
+that phase begins: a smaller SAM2 checkpoint (tiny/small vs. this run's
+hiera-large), or running the four models in parallel across processes/
+GPUs rather than this benchmark's sequential sum.
