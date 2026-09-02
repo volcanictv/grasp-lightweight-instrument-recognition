@@ -1816,3 +1816,27 @@ assuming the coincidence explains it.
 Next, if pursued further: a fourth ensemble member from a genuinely
 different source (e.g. the SAM2-decoder-fine-tuned pipeline, once that
 finishes) could plausibly continue the same pattern -- untested.
+
+## 2026-09-02 -- SAM2 decoder fine-tuning result: real improvement over zero-shot, still weakest model overall
+
+`finetune_sam2_decoder.py` finished (8 epochs to early-stop, best val_loss
+at epoch 4, decoder checkpoint `experiments/sam2_decoder_finetune_
+20260901-235635/decoder_best.pt`).
+
+| SAM2 (box-prompted, official test) | AP50_segm | Heavy recall |
+|---|---|---|
+| Zero-shot (frozen decoder) | 0.7690 | 0.624 |
+| **Fine-tuned decoder** | **0.7966** | **0.638** |
+
++0.0276 AP50_segm from fine-tuning just the mask decoder (image encoder
+frozen throughout) -- confirms the decoder-only adaptation approach
+works as intended. Still the weakest individual model in the project
+(below even the weakest Mask R-CNN variant, from-scratch at 0.8061).
+Per-class: same familiar pattern -- Prograsp Forceps (0.653) and
+Laparoscopic Grasper (0.664) weakest, Monopolar Curved Scissors (0.973)
+strongest.
+
+Given the three-way ensemble entry above showed a *weaker* model
+(from-scratch MobileNetV3, 0.8061 alone) still improved the ensemble via
+error diversity, testing SAM2 as a fourth member is a reasonable next,
+cheap step -- not yet run as of this entry.
