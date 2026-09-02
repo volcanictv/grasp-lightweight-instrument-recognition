@@ -539,15 +539,17 @@ caveat applies.</div>
 
 <figure>
 <img src="figures/fig09_backbone_accuracy_vs_params.png" alt="Backbone accuracy vs params">
-<figcaption><span class="fig-num">Figure 10.</span> Task A backbone accuracy vs. parameter count.</figcaption>
+<figcaption><span class="fig-num">Figure 10.</span> Task A backbone accuracy, bars ordered
+left-to-right by increasing parameter count.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig10_backbone_latency_vs_params.png" alt="Backbone latency vs params">
-<figcaption><span class="fig-num">Figure 11.</span> Task A backbone latency vs. parameter count.
-Titan Xp ranking (dots) does not track parameter count; ONNX CPU ranking (squares) does &mdash; note
-ResNet-18's counterintuitively low Titan Xp latency is very likely a cuDNN kernel-selection artifact
-for this specific input size, not a real efficiency property of the architecture.</figcaption>
+<figcaption><span class="fig-num">Figure 11.</span> Task A backbone latency, same left-to-right
+ordering by parameter count. Titan Xp latency (blue) does not track parameter count; ONNX CPU latency
+(red) does &mdash; note ResNet-18's counterintuitively low Titan Xp latency is very likely a cuDNN
+kernel-selection artifact for this specific input size, not a real efficiency property of the
+architecture.</figcaption>
 </figure>
 
 <hr class="sect">
