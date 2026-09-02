@@ -1840,3 +1840,53 @@ Given the three-way ensemble entry above showed a *weaker* model
 (from-scratch MobileNetV3, 0.8061 alone) still improved the ensemble via
 error diversity, testing SAM2 as a fourth member is a reasonable next,
 cheap step -- not yet run as of this entry.
+
+## 2026-09-02 -- Four-way ensemble (+ fine-tuned SAM2): 3.9-point gap, overnight summary
+
+Added the fine-tuned SAM2 decoder (box-prompted by `fasterrcnn_
+mobilenet_v3`) as a fourth ensemble member, alongside the three Mask
+R-CNN checkpoints (`scripts/evaluate_maskrcnn_sam2_ensemble.py`, a
+separate script from the pure-Mask-R-CNN ensemble tool since SAM2's
+inference interface is fundamentally different -- same OOM lesson
+applied, only the ensemble's predictions accumulated, not each member's).
+
+**Full overnight progression, all evaluated identically on official
+test:**
+
+| Result | AP50_segm | Isolated | Light | Heavy | Gap to TAPIS (89.85) |
+|---|---|---|---|---|---|
+| Session start (centroid/offset architecture) | 0.380 | -- | -- | 0.185 | 52.1 pts |
+| Best single Mask R-CNN (MobileNetV3, warm-started) | 0.8101 | 0.909 | 0.930 | 0.672 | 8.8 pts |
+| Best single Mask R-CNN (COCO ResNet-50) | 0.8132 | 0.897 | 0.929 | 0.666 | 8.5 pts |
+| Two-way ensemble | 0.8481 | 0.921 | 0.946 | 0.711 | 5.0 pts |
+| Three-way ensemble | 0.8553 | 0.929 | 0.948 | 0.725 | 4.3 pts |
+| **Four-way ensemble (+ SAM2)** | **0.8594** | 0.923 | 0.950 | 0.718 | **3.9 pts** |
+
+Note occlusion recall isn't monotonically improving with each addition
+(isolated and heavy both dipped slightly from 3-way to 4-way while
+overall AP50_segm still rose) -- consistent with the earlier observation
+that AP50 integrates the full precision-recall curve, not just recall at
+one fixed threshold; a net gain in overall ranking quality doesn't
+require every diagnostic sub-metric to move in the same direction.
+
+**This is the closest this project has gotten to the user's 3-point bar
+by a wide margin**, achieved entirely through architecture diversity
+(different backbones: MobileNetV3, ResNet-50-COCO, and a from-scratch
+variant of MobileNetV3; plus a structurally different foundation-model
+pipeline in SAM2) combined via inference-time ensembling, at a fraction
+of the cost of further training runs. Every component was individually
+verified and honestly reported, including two negative results along the
+way (copy-paste reversed on official; from-scratch training alone did
+not beat warm-starting) and one real bug caught and fixed (an OOM in the
+ensemble script, misattributed to a coincidental network outage before
+`dmesg` revealed the actual cause).
+
+**Not yet done, deliberately left for the user's input rather than
+pursued further overnight**: a fifth ensemble member, further backbone
+options (e.g. a heavier detector to warm-start from), or accepting
+3.9 points as the final reported number. Given diminishing returns
+observed at each additional ensemble member (+0.0349, +0.0072, +0.0041)
+and the real inference-cost tradeoff of a growing ensemble (now 4 full
+model forward passes per image, directly working against the eventual
+efficiency phase), this is a reasonable point to pause for a decision
+rather than keep adding members unsupervised.
