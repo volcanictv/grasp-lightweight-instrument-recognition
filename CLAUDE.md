@@ -59,6 +59,7 @@ This file is the rules. Read the others when the situation calls for it.
 | `docs/imbalance_notes.md` | Working on class imbalance. Literature and fit-for-budget notes. |
 | `docs/findings.md` | Writing up or citing results. Consolidated, report-ready results and analysis across all milestones, numbers sourced from `experiments/*/manifest.json`. |
 | `docs/detection_literature_notes.md` | Working on detection/occlusion (Milestone 8-9). What the field has already tried for occluded/overlapping-instrument detection, before trying something new. |
+| `docs/generalization_datasets.md` | Scoping the generalizability test (priority 2, accuracy-first realignment). Candidate second datasets researched so far, not yet acted on. |
 
 If a rule here and the spec disagree, this file wins and the spec gets fixed.
 
