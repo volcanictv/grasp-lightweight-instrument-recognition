@@ -112,12 +112,11 @@ li { margin: 0.35em 0; }
 
 <p class="small" style="margin-top:2em;">
 This document records what was attempted on this project, in the order it was attempted, including
-what failed and why. It reports development results, cross-validation results, and official
-confirmatory results separately and labels every table accordingly (<span class="badge b-dev">DEV</span>
+what did not work and why. Development results, cross-validation results, and official confirmatory
+results are reported separately and labeled accordingly throughout (<span class="badge b-dev">DEV</span>
 <span class="badge b-cv">CROSS-VAL</span> <span class="badge b-off">OFFICIAL</span>
-<span class="badge b-neg">NEGATIVE</span>). It is written for a supervisor who needs to know what is
-trustworthy, what is not yet established, and what should happen next &mdash; not to make the project
-look more finished than it is.
+<span class="badge b-neg">NEGATIVE</span>), distinguishing results that are well-established from
+those that are still provisional.
 </p>
 
 <div class="toc">
@@ -211,15 +210,15 @@ independent surgical-instrument dataset.</li>
 (quantization, pruning, distillation, or a smaller architecture informed by what actually worked).</li>
 </ol>
 
-<p>This is a real constraint on the search, not a procedural afterthought: efficiency techniques compress
-an already-chosen architecture, they do not retroactively make an accuracy-optimized design cheap. The
-work in <a href="#s4">Sections&nbsp;4</a>&ndash;<a href="#s7">7</a> below was performed under the
-original lightweight-first framing and its results stand as real, valid reference points &mdash; in
-particular the occlusion diagnosis (<a href="#s6-4">&sect;6.4</a>) and the finding that architecture
-family, not capacity, was the actual bottleneck in instance segmentation
-(<a href="#s7-6">&sect;7.6</a>). <a href="#s8">Section&nbsp;8</a> reports the work performed after the
-priority change. Both bodies of work are reported in full; neither supersedes or invalidates the other,
-because they answer different questions (<a href="#s8-7">&sect;8.7</a>).</p>
+<p>Efficiency work is scoped to compress whichever architecture the accuracy and generalizability work
+settles on, rather than running in parallel with it. The work in
+<a href="#s4">Sections&nbsp;4</a>&ndash;<a href="#s7">7</a> below was performed under the original
+lightweight-first framing and its results remain valid reference points &mdash; in particular the
+occlusion diagnosis (<a href="#s6-4">&sect;6.4</a>) and the finding that architecture family, more than
+capacity, was the main bottleneck in instance segmentation (<a href="#s7-6">&sect;7.6</a>).
+<a href="#s8">Section&nbsp;8</a> reports the work performed after the priority change. Both bodies of
+work are reported in full, as answers to two different questions
+(<a href="#s8-7">&sect;8.7</a>).</p>
 
 <hr class="sect">
 
@@ -312,9 +311,10 @@ never wrote a custom splitter.</p>
 counts sum to the train total). Official test is never touched by fold1 or fold2. The intended usage
 discipline is: <code>fold1</code>/<code>fold2</code> for every development decision (architecture
 choice, hyperparameter comparison, early stopping), <code>official</code> for exactly one locked
-confirmatory run per finished configuration. This discipline was violated for roughly two-thirds of the
-project's history before being caught and corrected &mdash; see <a href="#s9">Section&nbsp;9</a> for
-the full account, which is the single most important methodological finding in this report.</p>
+confirmatory run per finished configuration. This discipline was not followed for roughly two-thirds
+of the project's history, until the gap was identified and corrected &mdash; see
+<a href="#s9">Section&nbsp;9</a> for the full account, one of the central methodological findings in
+this report.</p>
 
 <figure>
 <img src="figures/fig03_split_composition.png" alt="Split composition">
@@ -331,8 +331,9 @@ this report:</p>
 
 <ul>
 <li><b>Task A &mdash; multi-label frame classification.</b> Seven independent sigmoid outputs, BCE
-loss, per-class AP and macro-F1. This is the honest version of "what instruments are in this frame,"
-given that 94.7% of frames contain more than one instrument. (<a href="#s4">Section&nbsp;4</a>)</li>
+loss, per-class AP and macro-F1. This framing reflects "what instruments are in this frame" more
+accurately than a single-label alternative, given that 94.7% of frames contain more than one
+instrument. (<a href="#s4">Section&nbsp;4</a>)</li>
 <li><b>Task B &mdash; region classification.</b> Each annotated instrument instance is cropped from
 its ground-truth mask bounding box and classified single-label into one of the 7 classes. This is the
 task TAPIS itself solves with a heavy transformer head. (<a href="#s5">Section&nbsp;5</a>)</li>
@@ -358,8 +359,8 @@ Hiera-Large) as a box-prompted foundation-model mask generator, zero-shot and de
 <p>Every experiment is described by one YAML config; no hyperparameters live in Python and no CLI flags
 change results (only paths and device do). Each run writes a <code>manifest.json</code> containing the
 full resolved config, git commit hash, seed, split file checksums, package versions, GPU name, wall-clock
-duration, and final metrics &mdash; this document's numbers are read directly from those manifests and
-from the project's internal decision log, not transcribed from memory or estimated.</p>
+duration, and final metrics &mdash; this document's numbers are sourced directly from those manifests
+and from the project's internal decision log.</p>
 
 <p>Augmentation constraints (applied throughout): horizontal flip, brightness/contrast/saturation/mild
 color jitter, blur, noise, and mild crop/scale are permitted. Vertical flips, large rotations, and hue
@@ -402,8 +403,7 @@ synchronized (<code>torch.cuda.synchronize()</code>), warmed up, median and p95 
 <h2 id="s3"><span class="num">3.</span>Experimental Roadmap</h2>
 
 <p>The sequence below is causal, not just chronological: each step was performed because the previous
-one produced a specific result that motivated it. It is presented here before the detailed sections so
-the overall shape of the project is visible before the numbers.</p>
+one produced a specific result that motivated it.</p>
 
 <figure>
 <img src="figures/fig34_roadmap.png" alt="Experimental roadmap">
@@ -444,8 +444,9 @@ only the classification head trained (598,023 / 1,525,031 params). Fine-tuned: d
 </table></div>
 Laparoscopic Grasper F1 specifically: 0.024 (frozen, effectively never predicted, recall 0.012) &rarr;
 0.403 (fine-tuned).</div>
-<div class="field"><b>Interpretation</b>Fine-tuning wins decisively, especially on rare classes.
-ImageNet features alone do not transfer well to endoscopic imagery. The fine-tuned run overfits by
+<div class="field"><b>Interpretation</b>Fine-tuning outperforms the frozen backbone by a wide margin,
+especially on rare classes, suggesting ImageNet features alone transfer poorly to endoscopic imagery.
+The fine-tuned run overfits by
 epoch 20 (train macro-F1 0.995, val plateaus 0.60&ndash;0.65 from epoch &sim;8).</div>
 <div class="field"><b>Decision</b>Fine-tuning adopted as default. The overfitting signature motivates
 the imbalance/regularization ablations below.</div>
@@ -582,17 +583,16 @@ here if used, since Task B's mask/box coordinates are native-resolution; fixed w
 <tr><td>Laparoscopic Grasper F1</td><td>0.622 (ResNet-50 heavy baseline)</td><td class="hi"><b>0.713 (lightweight model)</b></td></tr>
 </table></div>
 </div>
-<div class="field"><b>Interpretation</b>The single most important finding in the project up to this
+<div class="field"><b>Interpretation</b>One of the most notable findings in the project to this
 point: region classification with the <i>lightweight</i> model beats the <i>heaviest</i> Task A model
 on the worst classes. Confirmed via confusion matrix (Figure 13; 34/38 Clip Applier test instances land
 on the diagonal), not an artifact of aggregation. The rare-class problem was partly a task-framing
 problem &mdash; whole-frame multi-label classification asks the model to localize, disambiguate, and
 classify simultaneously from one frame-level signal; given an isolated instance, only classification
-remains. <b>Caveat that must stay attached to this number:</b> Task B uses ground-truth instance masks,
-so it measures "can the model name an instrument once perfectly told where it is," not end-to-end
-pipeline accuracy &mdash; it is not comparable to TAPIS's published number for this reason, independent
-of any metric mismatch.</div>
-<div class="field"><b>Decision</b>Established as the strongest lightweight result to that point in the
+remains. <b>Caveat:</b> Task B uses ground-truth instance masks, so it measures "can the model name an
+instrument once perfectly told where it is," not end-to-end pipeline accuracy &mdash; it is not
+comparable to TAPIS's published number for this reason, independent of any metric mismatch.</div>
+<div class="field"><b>Decision</b>Established as the best lightweight result found to that point in the
 project; motivates building a real detection/segmentation stage (Sections
 <a href="#s6">6</a>&ndash;<a href="#s7">7</a>) for an apples-to-apples literature comparison.</div>
 <div class="field"><b>Category</b><span class="badge b-dev">DEV</span>, official-split-as-validation
@@ -719,8 +719,9 @@ constructor hook exists) to add class weights to box-classification cross-entrop
 </table></div>
 </div>
 <div class="field"><b>Interpretation</b>Aggregate mAP barely moves (+0.0012), but the weakest class
-gains +5.5 AP50 points at a small cost (0.5&ndash;1.3pt dips) on common classes &mdash; a textbook
-class-weighted-loss signature. Occlusion-stratified recall unchanged (0.617 vs. 0.620), confirming
+gains +5.5 AP50 points at a small cost (0.5&ndash;1.3pt dips) on common classes &mdash; the pattern
+typically expected from class-weighted loss. Occlusion-stratified recall unchanged (0.617 vs. 0.620),
+confirming
 occlusion is a structural/localization axis separate from class imbalance.</div>
 <div class="field"><b>Decision</b>Not sufficient alone against the literature gap; launched
 ResNet-50-alone and ResNet-50+weighted-loss in parallel.</div>
@@ -746,8 +747,8 @@ every other variant.
 <div class="field"><b>Interpretation</b>More capacity never beat the lightweight baseline on 8 training
 cases &mdash; a heavier backbone overfits rather than generalizes here. Combining levers (backbone +
 weighted loss) did not help beyond the backbone alone.</div>
-<div class="field"><b>Decision</b>Closes the "trade efficiency for accuracy via bigger backbone"
-branch entirely, at this (pre-priority-realignment) stage of the project. Note this is later revisited
+<div class="field"><b>Decision</b>Sets aside the "trade efficiency for accuracy via bigger backbone"
+direction for this (pre-priority-realignment) stage of the project. This is later revisited
 under the accuracy-first priority with a <i>differently-pretrained</i> ResNet-50
 (<a href="#s8-2">&sect;8.2</a>) &mdash; that result does not contradict this one; the ResNet-50 here is
 only ImageNet-classification-pretrained, the later one is fully COCO-instance-segmentation-pretrained,
@@ -779,10 +780,11 @@ point forward.</div>
 </div>
 <div class="field"><b>Interpretation</b>Every variant lands in the same 0.606&ndash;0.666
 heavy-occlusion recall band regardless of backbone size, loss weighting, or augmentation strategy
-&mdash; a &sim;25&ndash;30 point recall drop from the isolated rate that nothing in the Faster R-CNN
-family closes. The <i>consistency</i> across so many independent interventions is itself the finding:
-a structural limitation in the box-proposal + NMS pipeline (confirmed not NMS-suppression-specific by
-the soft-NMS null result above), not something tunable within this architecture family.</div>
+&mdash; a &sim;25&ndash;30 point recall drop from the isolated rate that none of the Faster R-CNN
+variants tried closes. The <i>consistency</i> across so many independent interventions is itself the
+finding: it points to a structural limitation in the box-proposal + NMS pipeline (confirmed not
+NMS-suppression-specific by the soft-NMS null result above) that none of the interventions attempted
+were able to move.</div>
 <div class="field"><b>Decision</b>Primary evidence base motivating the architecture change in
 <a href="#s7">Section&nbsp;7</a>.</div>
 </div>
@@ -898,9 +900,9 @@ max_age=1) reaches mAP@50 = 0.8130, still 1.34 points below the raw detector (0.
 <b>net negative on the literature-comparable headline metric</b>, despite a real, validated,
 causally-checked recall benefit at the fixed-threshold diagnostic level, and despite two genuine bugs
 found and fixed along the way. Reported as a validated-but-not-yet-net-positive research direction, not
-adopted. Worth stating plainly: the first tracking result was initially read as a clean win after only
-the causality check, and needed the more demanding mAP check to reveal the true picture &mdash; a
-methodological lesson in its own right.</div>
+adopted. The first tracking result initially looked like a clean win after the causality check alone;
+the more demanding mAP check told a different story &mdash; a methodological lesson in its own
+right.</div>
 <div class="field"><b>Category</b><span class="badge b-dev">DEV</span> &mdash;
 <span class="badge b-neg">NEGATIVE on headline metric</span>, positive on a fixed-threshold diagnostic</div>
 </div>
@@ -979,10 +981,10 @@ schedule, data augmentation) across four runs converged to the same mIoU &sim;0.
 &sim;0.10&ndash;0.12, heavy-occlusion recall &sim;0.07&ndash;0.11 plateau. No longer readable as "just
 needs more training" &mdash; training is stable and converged. The ceiling looked, at this point, like
 capacity or architecture design, not optimization.</div>
-<div class="field"><b>Decision</b>Stop the hyperparameter chase. Flagged as a genuine fork in scope
-to the user rather than picked unilaterally: pursue a segmentation capacity increase (bigger, riskier
-step) or continue tuning detection (more mature). <b>User chose tracking-by-detection</b>
-(<a href="#s6-6">&sect;6.6</a>) at that point; segmentation capacity was revisited afterward.</div>
+<div class="field"><b>Decision</b>Stop the hyperparameter chase. This left a genuine choice rather than
+an obvious next step: pursue a segmentation capacity increase (bigger, riskier) or continue tuning
+detection (more mature). <b>Tracking-by-detection was pursued first</b> (<a href="#s6-6">&sect;6.6</a>);
+segmentation capacity was revisited afterward.</div>
 <div class="field"><b>Category</b>All four runs <span class="badge b-dev">DEV</span> &mdash;
 <span class="badge b-neg">repeated negative result, four independent runs capping &sim;0.31&ndash;0.32
 mIoU / &sim;0.10&ndash;0.12 AP50_segm</span></div>
@@ -1030,8 +1032,8 @@ merely frozen.</figcaption>
 <div class="expblock">
 <div class="field"><b>Result, deep backbone alone</b> Val mIoU = 0.5163 <i>by epoch 5</i> &mdash;
 already 60%+ above the shallow variant's entire four-run plateau (&sim;0.32, reached only after
-70&ndash;100+ epochs). Dramatic, unambiguous confirmation the shallow-features bug was the real
-ceiling.</div>
+70&ndash;100+ epochs). Clear confirmation that the shallow-features bug, not capacity or training, had
+been the ceiling.</div>
 <div class="field"><b>Final results, deep backbone alone and + copy-paste</b>
 <div class="table-wrap"><table>
 <tr><th>Configuration</th><th>mIoU</th><th>AP50_segm</th><th>Occlusion recall (iso/light/heavy)</th></tr>
@@ -1039,12 +1041,12 @@ ceiling.</div>
 <tr><td class="pos"><b>Deep backbone + copy-paste</b></td><td class="pos"><b>0.654</b></td><td class="pos">0.3802</td><td>0.557/0.615/0.185</td></tr>
 </table></div>
 </div>
-<div class="field"><b>Interpretation</b>Semantic quality (mIoU) improved dramatically, but the
+<div class="field"><b>Interpretation</b>Semantic quality (mIoU) improved substantially, but the
 instance-level metric that is actually comparable to the literature (AP50_segm) remained far short
-&mdash; still a 52.1-point gap to TAPIS's 89.85 even after the capacity fix. This is the critical pivot
-point: dense heatmap-based instance separation is structurally the wrong architecture family for a
-metric scoring precise per-instance mask boundaries. Every published high-AP50_segm result, TAPIS
-included, uses proposal-based instance segmentation instead. This diagnosis directly motivates
+&mdash; still a 52.1-point gap to TAPIS's 89.85 even after the capacity fix. This result suggested that
+dense heatmap-based instance separation is poorly suited to a metric that scores precise per-instance
+mask boundaries. Every published high-AP50_segm result, TAPIS included, uses proposal-based instance
+segmentation instead. This diagnosis directly motivates
 <a href="#s7-6">&sect;7.6</a>.</div>
 <div class="field"><b>Category</b><span class="badge b-dev">DEV</span></div>
 </div>
@@ -1117,7 +1119,7 @@ than let it finish and need a caveat attached after the fact.
 occlusion recall 0.934/0.955/0.713. Per-class AP@50: Monopolar Curved Scissors 0.977, Large Needle
 Driver 0.967, Bipolar Forceps 0.937, Clip Applier 0.893, Suction Instrument 0.887, Prograsp Forceps
 0.781, Laparoscopic Grasper 0.711 (weakest, consistent with every other task).</div>
-<div class="field"><b>Interpretation</b>Not an incremental improvement &mdash; a different regime.
+<div class="field"><b>Interpretation</b>A substantial jump rather than an incremental improvement.
 AP50_segm 0.380&rarr;0.846 closes the 52-point gap to &sim;5.3 points, exceeding the expectation set
 before the run (a Mask R-CNN result landing within a few points of TAPIS's own purpose-built
 transformer was considered very unlikely going in). Heavy-occlusion recall jump (0.185&rarr;0.713) is
@@ -1209,11 +1211,11 @@ independently-trained, disjoint-case models is a real, unsurprising gain), but d
 model trained on the complete 8-case official training set (0.8101): two 4-case models fused don't
 match one model trained on all 8 at once, and doubling inference cost bought nothing net.</p>
 
-<p><b>Conclusion stated explicitly at the time and preserved here:</b> 0.8101 is a solid number for
-this architecture family, not an undertrained fluke or a lucky warm-start artifact &mdash; four
-independent attempts, three of which looked promising on a development split first, all failed to beat
-it on the real, never-touched test set. This closes the "tune within this Mask R-CNN configuration"
-line of experimentation; further gains require a different lever, which is exactly what
+<p>0.8101 appears to be a reliable number for this architecture family rather than an artifact of
+undertraining or a favorable warm start: four independent attempts, three of which looked promising on
+a development split first, all failed to beat it on the real, never-touched test set. This suggests
+diminishing returns from further tuning within this Mask R-CNN configuration; further gains likely
+require a different lever, which is exactly what
 <a href="#s8">Section&nbsp;8</a> pursues.</p>
 
 <hr class="sect">
@@ -1290,8 +1292,8 @@ bucket also improving &mdash; opposite pattern from the earlier fold1/fold2 same
 (MobileNetV3/ImageNet vs. ResNet-50/COCO-instance-seg) produce more complementary errors than the same
 architecture trained on two case subsets &mdash; model diversity paying off here, not just data
 diversity. New gap to TAPIS: &sim;5.0 points, for near-zero additional GPU cost (pure inference on two
-already-trained models). Cost not glossed over: this requires two full models (21.6M + 45.9M params)
-per image at inference.</div>
+already-trained models). This comes at a real cost, however: two full models (21.6M + 45.9M params)
+run per image at inference.</div>
 <div class="field"><b>Decision</b>Add a third, independently-trained model.</div>
 </div>
 
@@ -1397,7 +1399,7 @@ official test</b>
 addition (isolated and heavy both dip slightly from three-way to four-way even as overall AP50_segm
 rises) &mdash; consistent with AP50 integrating the full precision/recall curve rather than recall at
 one fixed threshold. Closest the project has gotten to the original 3-point bar by a wide margin,
-achieved entirely through architecture diversity (different backbones plus a structurally different
+achieved primarily through architecture diversity (different backbones plus a structurally different
 foundation-model pipeline) combined at inference time, at a fraction of the cost of further training.
 <b>Diminishing returns per added member: +0.0349 (2-way), +0.0072 (3-way), +0.0041 (4-way).</b></div>
 <div class="field"><b>Decision</b>A fifth ensemble member, further backbone options, or accepting 3.9
@@ -1417,9 +1419,9 @@ recall at one fixed point.</figcaption>
 
 <div class="callout">
 <span class="lbl">The measured cost of the 3.9-point gap</span>
-Requested explicitly, including "what does one frame actually cost now" &mdash; measured by the same
-protocol as every other latency number in this report (median over 200 warm runs, batch size 1, GPU
-synchronized, Titan Xp).
+This section reports the per-frame cost of the 3.9-point gap, measured by the same protocol as every
+other latency number in this report (median over 200 warm runs, batch size 1, GPU synchronized,
+Titan Xp).
 <div class="table-wrap" style="margin-top:0.8em;"><table>
 <tr><th>Component</th><th>Median</th><th>p95</th><th>Peak VRAM</th></tr>
 <tr><td>MobileNetV3 Mask R-CNN</td><td>84.8ms</td><td>85.7ms</td><td>902MB</td></tr>
@@ -1463,7 +1465,7 @@ of the other.</p>
 
 <h2 id="s9"><span class="num">9.</span>Methodological Corrections and Lessons Learned</h2>
 
-<h3 id="s9-1"><span class="num">9.1</span>Official-split-as-validation (the single most important correction in the project)</h3>
+<h3 id="s9-1"><span class="num">9.1</span>Official-split-as-validation (a major correction to the project's methodology)</h3>
 
 <div class="callout" style="border-left:4px solid var(--red); border-left-width:4px;">
 <span class="lbl">What exactly happened</span>
@@ -1477,16 +1479,16 @@ checkpoint-selection decision, and every headline metric reported across Task A,
 tracking, and the first phase of segmentation was measured directly on the official 5-case test split
 &mdash; there was no held-out validation set distinct from test anywhere in the project's history up to
 that date.</p>
-<p><b>Why this matters, precisely stated:</b> this is not label leakage (test labels never entered the
-loss function). It is <b>model-selection leakage</b>: early stopping picks the checkpoint that scores
-best on test, and every comparative judgment made in that period (copy-paste vs. plain augmentation,
-the backbone-depth bug fix, the tracking <code>max_age</code> sweep) was made by watching test-set
-performance move. This inflates every reported number's credibility as a true generalization estimate,
-by an unquantified amount. It was never flagged anywhere before this point &mdash; not in project
-instructions, not in the specification document, not in any prior results writeup.</p>
-<p><b>How it was caught:</b> directly, by a question that prompted checking the actual split-resolution
-source and every config file, rather than assuming the answer. Not caught by any automated test or code
-review.</p>
+<p><b>Significance:</b> this is not label leakage (test labels never entered the loss function). It is
+<b>model-selection leakage</b>: early stopping picks the checkpoint that scores best on test, and every
+comparative judgment made in that period (copy-paste vs. plain augmentation, the backbone-depth bug fix,
+the tracking <code>max_age</code> sweep) was made by watching test-set performance move. This inflates
+every reported number's credibility as a true generalization estimate, by an unquantified amount. It
+had not previously been flagged in the project instructions, the specification document, or any prior
+results writeup.</p>
+<p><b>How it was caught:</b> a direct question prompted checking the actual split-resolution source and
+every config file, rather than assuming the answer. There was no automated test or code-review step in
+place at the time that would have caught it.</p>
 <p><b>What was done to correct it:</b> the fix already existed and cost nothing to build &mdash;
 <code>fold1</code>/<code>fold2</code> exactly partition the 8 official-train cases and were already
 wired to resolve to disjoint (train, val) pairs that never touch official test; this had existed since
@@ -1558,7 +1560,7 @@ and are corrected here rather than silently carried forward:</p>
 Prior framing (used in earlier project communication) described the fold1+fold2 same-architecture WBF
 ensemble as landing "below either fold's own single model." Checked directly against the raw evaluation
 log for this revision: the ensemble (0.7934) is actually <b>higher</b> than both fold1 alone (0.7652)
-and fold2 alone (0.7616). The correct, and clearly originally intended, comparison is that the
+and fold2 alone (0.7616). The comparison that appears to have been intended is that the
 fold-ensemble (0.7934) falls short of the <i>single model trained on the complete 8-case official
 training set</i> (0.8101) &mdash; not that ensembling made things worse than either input. Ensembling
 two independently-trained, disjoint-case models is a real, unsurprising gain over either alone; it just
@@ -1653,7 +1655,7 @@ it did not help on official, but that is a different question from whether the i
 itself has blind spots).</li>
 <li>No CPU/ONNX latency was measured for the detection or segmentation models specifically (only for
 Task A backbones) &mdash; deemed less reliable to estimate for two-stage detectors with a
-dynamic-length RPN/ROI pipeline; an honestly-missing number was preferred over a fabricated one.</li>
+dynamic-length RPN/ROI pipeline; this number is reported as missing rather than estimated.</li>
 <li>Literature comparison numbers (TAPIS and related work) came from published papers and web search,
 not a formal systematic review.</li>
 <li>Every finding from <a href="#s4">Section&nbsp;4</a> through the first four segmentation runs in
@@ -1712,7 +1714,8 @@ landing in the same 0.606&ndash;0.666 heavy-occlusion recall band (<a href="#s6-
 <li>Region classification with a lightweight model outperforms whole-frame multi-label classification
 with the heaviest model tried, on exactly the classes that whole-frame classification struggles with
 &mdash; the rare-class problem was partly a task-framing problem (<a href="#s5">Section&nbsp;5</a>).</li>
-<li>Architecture family, not capacity, was the binding constraint for instance-level segmentation:
+<li>Architecture family, more than capacity, appears to have been the binding constraint for
+instance-level segmentation:
 a 5.88M-param model with the right architecture (box-then-mask) beat a fundamentally different but
 larger-capacity 2.1M&rarr;5.88M-param centroid/offset model by over 40 AP50_segm points
 (<a href="#s7">Section&nbsp;7</a>).</li>
@@ -1859,7 +1862,7 @@ than repeated here.</p>
 <p>The following figures are described by the original figure-requirements list for this document but
 were not generated for this revision, because producing them correctly requires running fresh inference
 with saved checkpoints (available on the training workstation) rather than plotting numbers already on
-record. They are listed here as explicit, honest gaps rather than fabricated:</p>
+record. They are listed here as known gaps rather than left unmentioned:</p>
 
 <ul>
 <li><b>Representative detection successes and failures</b> &mdash; example frames with predicted boxes
@@ -1884,9 +1887,9 @@ revision.</li>
 (<code>experiments/*/manifest.json</code>), raw evaluation logs, and this project's internal decision
 log, cross-checked against each other during this revision (two discrepancies were found and corrected;
 see <a href="#s9">Section&nbsp;9.4</a>). The internal decision log and other working notes it draws on
-are kept as a private research journal and are not part of the shared repository this report is
-published alongside &mdash; the numbers here are the record of it, not a link to it. Code, configs, and
-the setup instructions for reproducing any run in this report are in the top-level <code>README.md</code>.</p>
+are kept as a private research journal and are not published alongside this report; this document
+summarizes the numbers and decisions drawn from it. Code, configs, and the setup instructions for
+reproducing any run in this report are in the top-level <code>README.md</code>.</p>
 </footer>
 
 </div>
