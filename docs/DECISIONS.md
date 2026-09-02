@@ -1724,3 +1724,52 @@ with the original MobileNetV3 result -- two genuinely different
 backbones/pretraining regimes may have more complementary errors than
 the fold1/fold2 ensemble did (same architecture, just different training
 data), which only recovered partway to the single best model's score.
+
+## 2026-09-02 -- Cross-architecture ensemble: the biggest single win of the accuracy-first push
+
+Ensembled the two independently-trained official models -- MobileNetV3
+(`instance_segmentation_maskrcnn_official_20260901-180758`, 0.8101) and
+COCO-pretrained ResNet-50 (`instance_segmentation_maskrcnn_resnet50_
+coco_20260901-233358`, 0.8132) -- via the same weighted-box-and-mask
+fusion built for the fold1/fold2 ensemble
+(`scripts/evaluate_maskrcnn_ensemble.py`, generalized to accept two
+different registry model names for this run).
+
+| Official test | AP50_segm | Isolated | Light | Heavy |
+|---|---|---|---|---|
+| MobileNetV3 alone | 0.8101 | 0.909 | 0.930 | 0.672 |
+| COCO ResNet-50 alone | 0.8132 | 0.897 | 0.929 | 0.666 |
+| **Ensemble (WBF)** | **0.8481** | **0.921** | **0.946** | **0.711** |
+
+**+0.0349 over the best single model, with every occlusion bucket also
+improving** -- the opposite pattern from the earlier fold1/fold2
+ensemble (`docs/DECISIONS.md`, "works, but doesn't beat the real
+model"), which only reached 0.7934, below either of its own component
+models. Confirms the hypothesis stated when this was queued: genuinely
+different backbones and pretraining regimes (MobileNetV3/ImageNet vs.
+ResNet-50/COCO-instance-segmentation) produce meaningfully more
+complementary errors than the same architecture trained on two case
+subsets. This is model diversity actually paying off, not just data
+diversity.
+
+**New gap to TAPIS's 89.85: ~5.0 points** -- down from 8.8 (single best
+model) and worlds away from the 52-point gap this session started
+Milestone 9.5 with. Now in the same range as the box detector's own
+5-9 point literature gap. Still short of the user's original 3-point
+bar, but the closest this project has gotten by a wide margin, and for
+near-zero additional GPU cost (this was pure inference on two already-
+trained models, no new training).
+
+**Efficiency note, not to be glossed over**: this result requires
+running two full models (21.6M + 45.9M params) per image at inference
+time -- roughly the cost of the box detector plus the heavy backbone
+combined. Consistent with the accuracy-first priority (efficiency
+deferred to last), but worth flagging plainly for when that phase
+starts: this specific number comes with a real 2-model inference cost,
+not a free lunch.
+
+Natural next step, not yet run: a three-way ensemble adding a third,
+differently-trained model (e.g. the from-scratch MobileNetV3 official
+run, `docs/DECISIONS.md` "also did not beat warm-starting" -- weaker
+alone, but may still contribute complementary errors to a larger
+ensemble, the same pattern just demonstrated here).
