@@ -390,6 +390,27 @@ python scripts/evaluate_region_ensemble.py \
     --checkpoint-b experiments/region_letterbox_crop_20260902-152750/best.pt --letterbox-b true
 ```
 
+**Latency, measured (Titan Xp, single image, warmed up, synchronized,
+median/p95 over 200 runs -- CLAUDE.md's standard benchmark protocol)**: an
+accuracy win reported without its latency cost is incomplete per this
+project's own rule, and this ensemble hadn't been benchmarked yet.
+
+| | Model A alone | Model B alone | Combined (sequential) |
+|---|---|---|---|
+| Titan Xp median / p95 | 4.156 / 4.227 ms | 4.237 / 4.308 ms | **8.302 / 8.415 ms** |
+| ONNX CPU median | 1.432 ms | 1.420 ms | **2.853 ms** |
+| Params | 1.525M | 1.525M | 3.050M |
+| Model size | 5.94 MB | 5.93 MB | 11.87 MB |
+| Peak VRAM | -- | -- | 22.5 MB |
+
+Combined latency is within 0.1ms of the naive sum of the two individual
+medians (8.302ms measured vs. 8.393ms summed) -- no meaningful overhead
+from running both sequentially, and peak VRAM barely rises above a single
+model's (22.5MB either way, both models are ~6MB). At 8.3ms/frame the
+ensemble is still far under any real-time budget relevant to this project
+(the 33ms/30fps figure used elsewhere) -- unlike the segmentation
+ensemble's 768ms, doubling a lightweight classifier costs almost nothing.
+
 ## Negative result: tip-crop is worse than both the plain crop and the letterbox crop
 
 `configs/region_tip_crop.yaml` (`crop_mode: tip`, `tip_crop_frac: 0.45`) --
