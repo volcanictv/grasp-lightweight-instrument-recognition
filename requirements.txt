@@ -1,0 +1,19 @@
+torch
+torchvision
+numpy
+scipy
+scikit-learn
+pillow
+pyyaml
+pycocotools
+matplotlib
+pytest
+
+# optional: only needed for scripts/benchmark.py's FLOPs/ONNX-CPU-latency modes
+# thop
+# onnxruntime
+
+# optional: only needed for the SAM2 scripts (scripts/evaluate_sam2_boxprompt.py,
+# scripts/finetune_sam2_decoder.py, scripts/evaluate_maskrcnn_sam2_ensemble.py,
+# scripts/benchmark_ensemble_latency.py) -- not pip-installable directly, see
+# README's SAM2 section.
