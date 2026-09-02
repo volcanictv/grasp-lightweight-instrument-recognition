@@ -1516,3 +1516,35 @@ in parallel with the already-running official from-scratch test on the
 other GPU. If the +0.0188 gain transfers, the official number would move
 from 0.8101 toward ~0.829, narrowing the TAPIS gap from 8.8 points to
 roughly 7.
+
+## 2026-09-01 -- Official copy-paste result: the fold1 gain reversed, not confirmed
+
+`instance_segmentation_maskrcnn_official_copypaste` finished (run_id
+`..._20260901-213344`, best box mAP50=0.8338 at epoch 2, early-stopped
+at epoch 10).
+
+| Official split | AP50_segm | Occlusion recall (iso/light/heavy) | Box mAP50/50:95 |
+|---|---|---|---|
+| No copy-paste (reported) | 0.8101 | 0.909/0.930/0.672 | 0.837/0.628 |
+| **+ copy-paste** | **0.7734** (-0.0367) | 0.911/0.943/0.683 (+0.011 heavy) | 0.834/0.607 |
+
+**The fold1 gain (+0.0188) did not transfer -- it reversed to a -0.0367
+loss on the official split.** Occlusion recall moved the same direction
+as fold1 (up a little, heavy +0.011), consistent with the general-
+occlusion-exposure mechanism theory, but AP50_segm itself dropped
+meaningfully, driven by Suction Instrument (0.778->0.754) and, again,
+**Clip Applier itself getting worse (0.839->0.803)** -- the second
+official-split-relevant data point (after the fold1 result) confirming
+copy-paste is not reliably helping the class it specifically targets on
+this architecture.
+
+**Decision: do not adopt copy-paste for the reported Mask R-CNN
+result.** The official, no-copy-paste number (AP50_segm = 0.8101,
+8.8-point gap to TAPIS) stands as this project's Milestone 9.5 headline
+result. This is exactly why fold1/fold2 are development splits and the
+official run is the one that gets reported: a promising single-fold
+signal (+0.0188) looked like a real finding until checked against the
+locked-in confirmatory split, where it reversed. Worth stating plainly
+rather than cherry-picking the better-looking number: this project
+reports the number that came from the correct evaluation protocol, not
+the more flattering one.
