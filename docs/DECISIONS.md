@@ -1687,3 +1687,40 @@ prompting) would close this gap or exceed our current best -- a
 meaningfully different experiment (needs training, not just inference)
 from what was tested here. Zero-shot alone does not beat the current
 best result.
+
+## 2026-09-02 -- COCO-pretrained ResNet-50 Mask R-CNN: first result to actually beat 0.8101
+
+Overnight accuracy-first run (`maskrcnn_resnet50_coco`, backbone/RPN/box-
+head/mask-head all pretrained on COCO instance segmentation, not just
+ImageNet -- see `src/surgical_ai/models/detectors/maskrcnn_coco.py`).
+Fine-tuned on official split directly (lr=5e-5, conservative to avoid
+disrupting the pretraining), 25 epochs to early-stop, wall clock 17217s
+(~4.8h), run_id `instance_segmentation_maskrcnn_resnet50_coco_
+20260901-233358`.
+
+| Official test | AP50_segm | Isolated | Light | Heavy |
+|---|---|---|---|---|
+| MobileNetV3 (previous best) | 0.8101 | 0.909 | 0.930 | 0.672 |
+| **COCO ResNet-50** | **0.8132** | 0.897 | 0.929 | 0.666 |
+
+**First result to beat 0.8101** after five failed attempts this session
+(tracking, copy-paste, ensemble, from-scratch MobileNetV3, SAM2 zero-
+shot). Small edge (+0.0031), and notably occlusion recall is slightly
+*worse* in every bucket -- the AP gain isn't coming from finding more
+occluded instances, it's coming from somewhere else in the precision-
+recall curve (likely fewer false positives / better calibration
+overall, since AP50 integrates across all confidence thresholds, not
+just the fixed-threshold recall check). Given this session's observed
+run-to-run variance (fold-vs-official divergences up to several points),
++0.0031 is a real but modest edge, not proof this architecture is
+decisively better -- though it is the right *direction* per the
+accuracy-first priority (heavier backbone + full-task pretraining, not
+just backbone-only ImageNet pretraining).
+
+Cost/benefit: 4.8 GPU-hours for +0.0031 AP50_segm. Reasonable for an
+overnight run under the new priority, but not something to repeat many
+times without a stronger prior. Next, cheap step: ensemble this model
+with the original MobileNetV3 result -- two genuinely different
+backbones/pretraining regimes may have more complementary errors than
+the fold1/fold2 ensemble did (same architecture, just different training
+data), which only recovered partway to the single best model's score.
