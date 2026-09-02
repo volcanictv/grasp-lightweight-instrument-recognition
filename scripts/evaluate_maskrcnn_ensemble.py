@@ -1,14 +1,21 @@
-"""Evaluate the fold1 and fold2 Mask R-CNN checkpoints, individually and
-ensembled, against the official test set -- legitimate because neither
-checkpoint's training data (fold2 for the fold1 model, fold1 for the
-fold2 model) overlaps with the 5 official-test cases at all (fold1 and
-fold2 partition the 8 official-train cases exactly). See
+"""Evaluate two Mask R-CNN checkpoints, individually and ensembled,
+against the official test set. `--model1-name`/`--model2-name` select
+each checkpoint's architecture from the registry (default
+`maskrcnn_mobilenet_v3` for both, matching this script's original use:
+the fold1/fold2 cross-validation checkpoints, legitimate to ensemble on
+official test since neither's training data overlaps it -- fold1 and
+fold2 partition the 8 official-train cases exactly). Also supports
+cross-architecture ensembling (e.g. the MobileNetV3 official model with
+the COCO-pretrained ResNet-50 model, docs/DECISIONS.md 2026-09-02) --
+genuinely different backbones/pretraining may have more complementary
+errors than same-architecture-different-fold ensembling did. See
 src/surgical_ai/inference/ensemble.py and docs/DECISIONS.md.
 
-Usage:
+Usage (cross-architecture example):
     python scripts/evaluate_maskrcnn_ensemble.py \\
-        experiments/instance_segmentation_maskrcnn_20260901-171545/best.pt \\
-        experiments/instance_segmentation_maskrcnn_fold2_20260901-170628/best.pt \\
+        experiments/instance_segmentation_maskrcnn_official_20260901-180758/best.pt \\
+        experiments/instance_segmentation_maskrcnn_resnet50_coco_20260901-233358/best.pt \\
+        --model1-name maskrcnn_mobilenet_v3 --model2-name maskrcnn_resnet50_coco \\
         --data-root ./GraSP --device cuda:0
 """
 
@@ -38,6 +45,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("checkpoint_fold1", type=Path)
     parser.add_argument("checkpoint_fold2", type=Path)
+    parser.add_argument("--model1-name", default="maskrcnn_mobilenet_v3", help="Registry name for checkpoint_fold1.")
+    parser.add_argument("--model2-name", default="maskrcnn_mobilenet_v3", help="Registry name for checkpoint_fold2.")
     parser.add_argument("--data-root", type=Path, default=REPO_ROOT / "GraSP")
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--score-threshold", type=float, default=0.05, help="Candidate threshold before fusion.")
@@ -97,11 +106,11 @@ def main() -> None:
     class_names = val_ds.class_names_ordered()
     occlusion_fractions = compute_occlusion_fractions(val_ds)
 
-    model1 = build_detector("maskrcnn_mobilenet_v3", num_classes=len(class_names), pretrained=False).to(device)
+    model1 = build_detector(args.model1_name, num_classes=len(class_names), pretrained=False).to(device)
     model1.load_state_dict(torch.load(args.checkpoint_fold1, map_location=device))
     model1.eval()
 
-    model2 = build_detector("maskrcnn_mobilenet_v3", num_classes=len(class_names), pretrained=False).to(device)
+    model2 = build_detector(args.model2_name, num_classes=len(class_names), pretrained=False).to(device)
     model2.load_state_dict(torch.load(args.checkpoint_fold2, map_location=device))
     model2.eval()
 
@@ -146,8 +155,8 @@ def main() -> None:
         preds_ensemble.append([])
         gt_instances.append([])
 
-    evaluate_predictions(preds_model1, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, "fold1 model alone")
-    evaluate_predictions(preds_model2, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, "fold2 model alone")
+    evaluate_predictions(preds_model1, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, f"model1 ({args.model1_name}) alone")
+    evaluate_predictions(preds_model2, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, f"model2 ({args.model2_name}) alone")
     evaluate_predictions(preds_ensemble, gt_instances, val_ds, occlusion_fractions, class_names, args.recall_score_threshold, "ensemble (WBF)")
 
 
