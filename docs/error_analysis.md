@@ -389,3 +389,57 @@ python scripts/evaluate_region_ensemble.py \
     --checkpoint-a experiments/region_baseline_20260831-182451/best.pt --letterbox-a false \
     --checkpoint-b experiments/region_letterbox_crop_20260902-152750/best.pt --letterbox-b true
 ```
+
+## Negative result: tip-crop is worse than both the plain crop and the letterbox crop
+
+`configs/region_tip_crop.yaml` (`crop_mode: tip`, `tip_crop_frac: 0.45`) --
+described above, visually validated before training (correctly located the
+tip on known hard examples, including the diagonally-held one whose
+axis-aligned bbox is misleadingly close to square). One variable against
+`region_baseline.yaml` (`crop_mode: bbox` there).
+
+| class | region_baseline | region_letterbox_crop | **region_tip_crop** |
+|---|---|---|---|
+| Bipolar Forceps | 0.859 | 0.888 | 0.834 |
+| Prograsp Forceps | 0.727 | 0.772 | 0.691 |
+| Large Needle Driver | 0.830 | 0.874 | 0.822 |
+| Monopolar Curved Scissors | 0.939 | 0.955 | 0.935 |
+| Suction Instrument | 0.847 | 0.879 | 0.872 |
+| Clip Applier | 0.861 | 0.785 | **0.615** |
+| Laparoscopic Grasper | 0.713 | 0.634 | **0.437** |
+| **macro-F1 / accuracy** | 0.825 / 0.857 | 0.827 / 0.882 | **0.744 / 0.831** |
+
+Worse than *both* other variants on every single class except Suction
+Instrument (where it's within noise of letterbox). Laparoscopic Grasper's
+F1 (0.437) is the single worst Task B result recorded in this project --
+this class had been Task B's strongest result relative to Task A (F1 0.713
+in the original baseline, `docs/findings.md`'s "single most important
+finding" section) before this run.
+
+Training curves point at overfitting, not underfitting: train macro-F1
+reached 0.973 by epoch 20 while val macro-F1 oscillated noisily in the
+0.64-0.74 band with no clear late-epoch improvement, and val loss (up to
+1.1+) was consistently higher and noisier than the letterbox run's.
+
+**Likely mechanism, not confirmed**: the crop was designed to fix one cause
+(the tip's pixels being a small fraction of an elongated crop), but
+discarding the shaft/wrist region also throws away context the model
+apparently relies on -- shaft diameter, wrist-joint articulation style,
+color transitions -- for classes where that context matters more than a
+tighter view of the tip. The effect lands hardest on Clip Applier and
+Laparoscopic Grasper, which are also the two smallest classes with the
+least training data to compensate for a harder, more information-sparse
+crop -- the same two classes every other rare-class intervention this
+session has hurt, which suggests the mechanism here may be more "less
+signal, less data to compensate" than something specific to tip-cropping
+per se. Not verified against a less aggressive `tip_crop_frac` (a bigger
+window that keeps more shaft context) -- that's the natural next variant if
+tip-cropping is revisited, not attempted here.
+
+**Decision: not adopted.** Closes the tip-crop idea as tested. The Task B
+ensemble above (region_baseline + region_letterbox_crop, macro-F1 0.848)
+remains the best available result; tip-crop's checkpoint was not added as a
+third ensemble member since its standalone performance is below both
+existing members on most classes, unlike SAM2's addition to the
+segmentation ensemble (weaker overall but still additive) -- worth checking
+empirically rather than assuming, if a third Task B member is wanted later.
