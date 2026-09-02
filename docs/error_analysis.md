@@ -311,6 +311,33 @@ alternative for a borderline-calibration problem like Suction Instrument's,
 since it doesn't touch training dynamics or interact with `pos_weight` at
 all.
 
+## Follow-up: per-class threshold, small isolated win for Suction Instrument, unreliable for the rarest classes
+
+`scripts/tune_per_class_thresholds.py`. Tuned per-class thresholds on the
+TRAIN split's own predictions (in-sample -- this checkpoint used
+`data.split: official`, so no leakage-free held-out split exists for it
+specifically), applied to official test, compared against an oracle
+(thresholds tuned directly on test, reference only, never reportable as an
+achievable result).
+
+Tuning all 7 thresholds at once is net negative (macro-F1 0.701 -> 0.690,
+vs. an oracle of 0.731 -- real headroom exists but in-sample tuning doesn't
+reliably capture it): Bipolar Forceps and Prograsp Forceps improved close
+to their oracle values, but Clip Applier (0.706 -> 0.596) and Laparoscopic
+Grasper (0.408 -> 0.383) got worse, landing on extreme train-optimal
+thresholds (0.94, 0.89) that read as overfit to a handful of positive
+training examples -- the same two classes every other rare-class
+intervention this session has hurt.
+
+Applied only to Suction Instrument (threshold 0.41, every other class left
+at 0.5): macro-F1 0.701 -> **0.703**, Suction Instrument F1 0.532 -> **0.542**,
+zero effect elsewhere by construction. Modest, but the first genuinely
+non-negative result this session for this specific problem, and the only
+one that didn't cost something else to get it. Adopted for Suction
+Instrument only; the other six classes' in-sample thresholds are not
+trusted given the overfitting evidence. Full numbers: `docs/DECISIONS.md`,
+2026-09-02.
+
 ## Negative result: combining selective letterbox + sharper class weights made things worse, not better
 
 Direct follow-up attempt to recover Clip Applier/Laparoscopic Grasper
