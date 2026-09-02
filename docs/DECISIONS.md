@@ -1586,3 +1586,45 @@ here.
 8.8-point gap to TAPIS) remains this project's best and reported
 Milestone 9.5 number. Interesting confirmed mechanism, not a path that
 closed the gap this time.
+
+## 2026-09-01 -- Priority realignment: accuracy first, lightweight last
+
+After four single-variable attempts to close the AP50_segm gap within
+the lightweight architecture family (tracking: net negative; copy-paste:
+reversed on official; from-scratch box training: pending, best case
+~1.5pts; weighted fusion ensemble: works but doesn't beat the best
+single model) -- none closing the gap to anywhere near the user's
+original 3-point bar -- the user relayed direct guidance from the PhD
+students running the upstream research this project feeds into:
+**accuracy is the top priority, lightweight is secondary, not
+simultaneous.** Specific guidance as relayed: get accuracy as high as
+possible first, ideally above the dataset authors' own published
+benchmark; once accuracy is strong (~90%+), validate generalizability
+on a second, different dataset; only then look into making the
+resulting approach lightweight.
+
+This is a real reordering, not a minor adjustment -- every design
+decision from Milestone 3 onward (MobileNetV3 as the default backbone,
+avoiding heavier backbones after ResNet-50 overfit the box detector,
+"one variable at a time" partly in service of protecting the efficiency
+story) was made under the opposite priority. The user independently
+flagged the same concern the reasoning above would predict: efficiency
+techniques (quantization, pruning, distillation) compress an
+already-chosen architecture, they don't retroactively make an
+accuracy-optimized design cheap -- so deferring lightweight-ification
+to last is a real constraint on the search that should be made
+knowingly, not "we'll shrink it later" as an afterthought. Recorded
+here rather than silently overwritten so the reasoning for every
+milestone 0-9.5 decision remains legible against the framing it was
+actually made under.
+
+**Effective immediately**: `CLAUDE.md`'s "What this project is" section
+now states the new priority order as the current rule (heavy,
+COCO-pretrained backbones explicitly in scope); `PROJECT_SPEC.md`'s
+lightweight-first reasoning is marked superseded, kept as historical
+record. Milestones 0-9.5's actual results are not invalidated by this
+change -- the occlusion diagnosis, the proposal-based-vs-heatmap-based
+architecture lesson, and every honestly-reported number stand. What
+changes is which direction gets pursued next: heavier/COCO-pretrained
+backbones for accuracy, then a second dataset for generalizability,
+with efficiency work deferred until both are satisfied.

@@ -4,6 +4,16 @@ Full context for the GraSP lightweight instrument recognition project. CLAUDE.md
 holds the rules. This file holds the reasoning. Read it when you need to know
 *why* a rule exists, when scoping a new milestone, or when writing docs.
 
+> **Superseded 2026-09-01**: the lightweight-first framing throughout this
+> document (efficiency as the primary axis, "secondary: an efficient
+> component") has been reordered per direct guidance from the PhD students
+> running the upstream research. Current priority: accuracy first (ideally
+> exceeding TAPIS's published benchmark), then generalizability on a second
+> dataset, then efficiency last. CLAUDE.md's "What this project is" section
+> holds the current rule; this file's reasoning below is kept as the
+> historical record of why lightweight-first was the original choice, not as
+> a currently-governing goal. See `docs/DECISIONS.md`, 2026-09-01.
+
 ---
 
 ## 1. Context

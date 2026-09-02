@@ -4,15 +4,47 @@ Guidance for Claude Code working in this repository.
 
 ## What this project is
 
-Research codebase for lightweight surgical instrument recognition on the **GraSP**
-dataset. The question we are answering:
+Research codebase for surgical instrument recognition on the **GraSP** dataset.
+Originally framed as a lightweight-first efficiency study (see "Original framing"
+below); **priority realigned 2026-09-01** per direct guidance from the PhD
+students running the upstream research this feeds into.
 
-> Can a lightweight recognition model reach competitive instrument recognition on
-> GraSP while substantially cutting parameters, latency, memory, and model size
-> versus heavier architectures?
+**Current priority order, highest first:**
 
-The deliverable is a defensible accuracy/efficiency tradeoff curve, not a new
-architecture. Benchmarking rigor and reproducibility beat novelty here.
+1. **Accuracy.** Push GraSP instrument segmentation accuracy as high as possible,
+   ideally exceeding the dataset authors' own published benchmark (TAPIS,
+   mAP@0.5IoU_segm = 89.85%) or reaching ~90%+ on whichever metric is the
+   current task's headline. Do not withhold backbone size, capacity, or
+   pretraining strength to protect a lightweight thesis while this ordering is
+   in effect. A heavy, well-pretrained backbone (COCO-pretrained Mask R-CNN,
+   ResNet-50/101-FPN, etc.) is explicitly in scope now, not something to avoid.
+2. **Generalizability.** Once accuracy is strong on GraSP, validate the approach
+   against a second, independent surgical instrument dataset -- not GraSP again.
+3. **Efficiency.** Only after 1 and 2 are satisfied, revisit making the
+   winning approach lighter (quantization, pruning, distillation, or a smaller
+   architecture informed by what actually worked) -- not before. Efficiency
+   techniques compress an already-chosen architecture; they are not a
+   substitute for choosing capacity deliberately in the first place, so
+   deferring this to last is a real constraint on the search, not a
+   procedural afterthought.
+
+Milestones 0-9.5 below were built under the original lightweight-first framing
+and their results stand as real, valid reference points -- in particular the
+MobileNetV3 baselines, the occlusion diagnosis, and the proposal-based-vs-
+heatmap-based architecture lesson from Milestone 9.5 all still inform the
+accuracy-first work directly. The milestone list is not being replayed in
+order under the new priority; current work builds on Milestone 9.5's Mask
+R-CNN and pushes backbone/pretraining strength directly. Full context and
+reasoning: `docs/DECISIONS.md`, 2026-09-01, "priority realignment" entry.
+
+**Original framing (superseded above, kept for historical reference):**
+Research codebase for lightweight surgical instrument recognition on GraSP,
+asking whether a lightweight recognition model could reach competitive
+instrument recognition while substantially cutting parameters, latency,
+memory, and model size versus heavier architectures. The deliverable was a
+defensible accuracy/efficiency tradeoff curve, not a new architecture.
+Benchmarking rigor and reproducibility still beat novelty here -- that part
+of the original framing is unchanged.
 
 ## Documents in this repo
 
@@ -213,6 +245,14 @@ Confusion matrix for every classification run.
 ## Milestones
 
 Work in this order. Do not skip ahead.
+
+**Superseded 2026-09-01 for current work**: the strict ordering below reflects
+the original lightweight-first framing. Under the accuracy-first priority
+(see "What this project is"), current work does not replay this list from
+the top -- it continues from Milestone 9.5 (Mask R-CNN) and pushes
+backbone/pretraining strength directly. Milestone 10 (efficiency) is
+explicitly deferred until accuracy and generalizability goals are met, not
+skipped -- see the priority order above.
 
 -1. **Environment.** The workstation's CUDA install is currently broken and GPU
    detection fails. Fix and pin it. Verify with a real tensor op on `cuda:0`, not
