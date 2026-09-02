@@ -433,8 +433,20 @@ def run_maskrcnn_training(config: dict, args: argparse.Namespace, device: torch.
     class_names = train_ds.class_names_ordered()
     coco_gt_val = dataset_to_coco_gt(val_ds)
 
+    copy_paste_cfg = config["data"].get("copy_paste", {})
+    train_loader_ds = train_ds
+    if copy_paste_cfg.get("enabled", False):
+        train_loader_ds = CopyPasteDetectionDataset(
+            train_ds, include_masks=True,
+            paste_prob=copy_paste_cfg.get("paste_prob", 0.5),
+            max_pastes=copy_paste_cfg.get("max_pastes", 2),
+            rare_classes=copy_paste_cfg.get("rare_classes"),
+            occlusion_bias=copy_paste_cfg.get("occlusion_bias", 0.7),
+            seed=config["training"]["seed"],
+        )
+
     train_loader = torch.utils.data.DataLoader(
-        train_ds, batch_size=config["training"]["batch_size"], shuffle=True,
+        train_loader_ds, batch_size=config["training"]["batch_size"], shuffle=True,
         num_workers=args.num_workers, collate_fn=collate_fn,
     )
     val_loader = torch.utils.data.DataLoader(

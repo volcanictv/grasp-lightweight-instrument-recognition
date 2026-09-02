@@ -113,6 +113,11 @@ def composite_patch(image_np: np.ndarray, patch_rgb: np.ndarray, patch_mask: np.
 class CopyPasteDetectionDataset(torch.utils.data.Dataset):
     """Wraps a *train-split* `GraspDetectionDataset`. Do not use on val/test
     -- evaluation must stay on real, unmodified frames.
+
+    `include_masks` mirrors `GraspDetectionDataset`'s own flag -- set it to
+    match the base dataset when training `maskrcnn_mobilenet_v3` (Milestone
+    9.5), so pasted instances get a real per-instance mask (the patch mask
+    placed at the paste location) alongside their box/label, not just a box.
     """
 
     def __init__(
@@ -123,11 +128,13 @@ class CopyPasteDetectionDataset(torch.utils.data.Dataset):
         rare_classes: list[str] | None = None,
         occlusion_bias: float = 0.7,
         seed: int = 42,
+        include_masks: bool = False,
     ):
         self.base = base_dataset
         self.paste_prob = paste_prob
         self.max_pastes = max_pastes
         self.occlusion_bias = occlusion_bias
+        self.include_masks = include_masks
         self.rng = random.Random(seed)
 
         rare_classes = rare_classes if rare_classes is not None else ["Clip Applier"]
@@ -147,12 +154,15 @@ class CopyPasteDetectionDataset(torch.utils.data.Dataset):
 
         boxes: list[list[float]] = []
         labels: list[int] = []
+        masks: list[np.ndarray] = []
         for a in anns:
             x, y, w, h = a["bbox"]
             if w <= 0 or h <= 0:
                 continue
             boxes.append([x, y, x + w, y + h])
             labels.append(self.base._id_to_index[a["category_id"]] + 1)
+            if self.include_masks:
+                masks.append(decode_instance_mask(a["segmentation"]))
 
         image_np = np.array(image)
         if self.bank and self.rng.random() < self.paste_prob:
@@ -168,6 +178,17 @@ class CopyPasteDetectionDataset(torch.utils.data.Dataset):
                 composite_patch(image_np, patch_rgb, patch_mask, px, py)
                 boxes.append([px, py, px + pw, py + ph])
                 labels.append(label_idx + 1)
+                if self.include_masks:
+                    full_mask = np.zeros((height, width), dtype=np.uint8)
+                    full_mask[py : py + ph, px : px + pw] = patch_mask
+                    masks.append(full_mask)
+                    # a paste can land on top of an earlier instance's mask (deliberately,
+                    # per occlusion_bias) -- zero out whatever it covers in earlier masks so
+                    # no two instances claim the same pixels, matching real GraSP masks
+                    # (which are also non-overlapping per pixel).
+                    paste_bool = full_mask.astype(bool)
+                    for i in range(len(masks) - 1):
+                        masks[i] = masks[i] & ~paste_bool
 
         boxes_tensor = torch.tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         target = {
@@ -175,10 +196,15 @@ class CopyPasteDetectionDataset(torch.utils.data.Dataset):
             "labels": torch.tensor(labels, dtype=torch.int64),
             "image_id": torch.tensor([idx]),
         }
+        if self.include_masks:
+            masks_array = np.stack(masks).astype(np.uint8) if masks else np.zeros((0, height, width), dtype=np.uint8)
+            target["masks"] = tv_tensors.Mask(torch.from_numpy(masks_array))
 
         transform = self.base.transform or self._default_transform()
         image_out, target = transform(Image.fromarray(image_np), target)
         target["boxes"] = target["boxes"].as_subclass(torch.Tensor)
+        if self.include_masks:
+            target["masks"] = target["masks"].as_subclass(torch.Tensor)
         return image_out, target
 
     @staticmethod

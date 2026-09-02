@@ -1,0 +1,24 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: false
+  warm_start_checkpoint: experiments/detection_weighted_loss_fold1_20260901-163443/best.pt
+    # same leakage-free fold1-scoped detector as instance_segmentation_maskrcnn.yaml
+    # (AP50_segm 0.8458 without copy-paste) -- copy_paste is the only variable changed.
+data:
+  split: fold1
+  augmentation: none
+  copy_paste:
+    enabled: true
+    paste_prob: 0.5
+    max_pastes: 2
+    occlusion_bias: 0.7
+    # rare_classes defaults to ["Clip Applier"] (copy_paste.py), matching every other
+    # copy-paste config in this project -- not tuned specifically for this run.
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42
