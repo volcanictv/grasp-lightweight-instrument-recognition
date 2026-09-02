@@ -4,11 +4,11 @@ Code for recognizing surgical instruments (7 classes) in GraSP, a robot-assisted
 radical prostatectomy video dataset. Four ways of asking "what instrument is
 that," in increasing order of how precisely they answer it:
 
-- **multilabel_frame** — which instruments are somewhere in this frame.
-- **region_classification** — given a cropped instrument (from its ground-truth
+- **multilabel_frame**: which instruments are somewhere in this frame.
+- **region_classification**: given a cropped instrument (from its ground-truth
   mask), which class is it.
-- **detection** — draw a box around every instrument and label it (Faster R-CNN).
-- **instance_segmentation** — color in every instrument's exact pixels
+- **detection**: draw a box around every instrument and label it (Faster R-CNN).
+- **instance_segmentation**: color in every instrument's exact pixels
   (Mask R-CNN, plus a from-scratch centroid/offset architecture in
   `models/segmenters/`).
 
@@ -61,47 +61,47 @@ python -m pytest tests/ -q
 ```
 
 81 tests, should all pass, takes under 20 seconds. If it doesn't pass, stop and
-fix that first — nothing past this point means anything if the basics are broken.
+fix that first: nothing past this point means anything if the basics are broken.
 
 ## Running things
 
 Every experiment is one YAML config. No hyperparameters live in Python, no CLI
-flags change results — only paths and device do.
+flags change results, only paths and device do.
 
 ```bash
 python scripts/train.py configs/<name>.yaml --data-root ./GraSP --device cuda:0
 ```
 
 Each run writes `experiments/<run_id>/` with a `manifest.json` (full config,
-git commit, seed, split checksums, package versions, final metrics — everything
+git commit, seed, split checksums, package versions, final metrics: everything
 needed to answer "how did we get this number" without guessing) and `best.pt`.
 `configs/` has ~36 examples covering every task type above; copy the closest one
 and change what you need, don't start from scratch.
 
 Splits: `official` (train on the 8 official-train cases, test on the 5
-official-test cases — use this for one final confirmatory run, not for
+official-test cases; use this for one final confirmatory run, not for
 picking hyperparameters), `fold1`/`fold2` (case-level cross-validation carved
-out of the 8 train cases, official test never touched — use these for
+out of the 8 train cases, official test never touched; use these for
 everything else). This distinction matters and got violated once already
 this project; don't repeat that.
 
 Other scripts, all under `scripts/`:
 
-- `inspect_dataset.py` — dataset stats, class histograms, mask overlays.
-- `build_frame_cache.py` — resized on-disk JPEG cache of the annotated frames
+- `inspect_dataset.py`: dataset stats, class histograms, mask overlays.
+- `build_frame_cache.py`: resized on-disk JPEG cache of the annotated frames
   only, if your dataloader turns out to be the bottleneck (it probably will
   be, native resolution is 800x1280 and there's no getting around decoding
   that every epoch otherwise).
-- `benchmark.py` / `benchmark_ensemble_latency.py` — parameter count, FLOPs,
+- `benchmark.py` / `benchmark_ensemble_latency.py`: parameter count, FLOPs,
   model size, GPU/CPU latency. `train.py` already reports final metrics
-  per-run, there's no separate "load a checkpoint and re-evaluate" script —
+  per-run, there's no separate "load a checkpoint and re-evaluate" script;
   if you need that, it's a small addition, not a missing feature.
-- `evaluate_tracking*.py` — IOU-tracker-by-detection, on top of a trained
+- `evaluate_tracking*.py`: IOU-tracker-by-detection, on top of a trained
   detector or segmenter.
-- `evaluate_maskrcnn_ensemble.py` — weighted box+mask fusion across N
+- `evaluate_maskrcnn_ensemble.py`: weighted box+mask fusion across N
   Mask R-CNN checkpoints (`--model checkpoint_path:registry_name`, repeatable).
 - `evaluate_sam2_boxprompt.py` / `finetune_sam2_decoder.py` /
-  `evaluate_maskrcnn_sam2_ensemble.py` — SAM2 as a box-prompted mask generator,
+  `evaluate_maskrcnn_sam2_ensemble.py`: SAM2 as a box-prompted mask generator,
   zero-shot and fine-tuned. Needs SAM2 installed separately (it's not a normal
   pip package):
 
@@ -117,7 +117,7 @@ Other scripts, all under `scripts/`:
 Models live behind a registry per task type (`models/registry.py` for
 classifiers, `models/detectors/registry.py`, `models/segmenters/registry.py`). Add a file,
 register it with a decorator, import it once in that registry's `__init__`/
-bottom-of-file import list. That's the whole contract — training, data
+bottom-of-file import list. That's the whole contract: training, data
 loading, and evaluation code never need to know a new model exists. If you're
 touching `data/` or `training/` to add a model, you're doing it wrong; go
 look at how an existing one is wired up instead.
