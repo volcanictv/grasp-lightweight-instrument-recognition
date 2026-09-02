@@ -13,8 +13,12 @@ that," in increasing order of how precisely they answer it:
   `models/segmenters/`).
 
 Full results, figures, and the actual accuracy numbers live in the published
-report, not here. This file is setup and how-to-run only. I promise I will not
-make you read a research paper to figure out how to install torch.
+report, not here:
+
+**https://volcanictv.github.io/grasp-lightweight-instrument-recognition/reports/grasp_report_2026-09-01.html**
+
+This file is setup and how-to-run only. I promise I will not make you read a
+research paper to figure out how to install torch.
 
 ## Setup
 
@@ -131,6 +135,7 @@ src/surgical_ai/
 scripts/            everything you actually run
 experiments/        one dir per run, git-ignored except manifest.json
 docs/reports/       the actual report with actual numbers -- go read that instead
+                    (also hosted, see the link at the top of this file)
 tests/
 ```
 
