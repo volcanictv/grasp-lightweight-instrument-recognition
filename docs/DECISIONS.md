@@ -1656,3 +1656,34 @@ this dataset. This closes out that line of experimentation -- further
 gains require a different lever entirely (backbone/pretraining strength,
 per the priority realignment above), not more hyperparameter or
 training-recipe variation on the current architecture.
+
+## 2026-09-01 -- Zero-shot SAM2 box-prompted segmentation: underperforms our own fine-tuned mask head
+
+User's idea, checked against real literature first (Zero-Shot Surgical
+Tool Segmentation Using SAM2, arXiv 2408.01648; npj Digital Surgery's
+systematic SAM surgical-video evaluation -- both confirm this is a
+known, characterized direction, not novel). Pipeline: the already-
+trained box detector (`detection_weighted_loss`, AP50_box 0.831) finds
+and classifies each instrument; each predicted box prompts SAM2.1
+(hiera-large checkpoint, zero-shot, frozen, no fine-tuning) for the
+mask (`scripts/evaluate_sam2_boxprompt.py`).
+
+| Official test | AP50_segm | Isolated | Light | Heavy |
+|---|---|---|---|---|
+| **Our Mask R-CNN (reported)** | **0.8101** | 0.909 | 0.930 | **0.672** |
+| SAM2 zero-shot (box-prompted) | 0.7690 | 0.881 | 0.917 | 0.624 |
+
+**Worse across every metric.** Consistent with the literature check's
+own caveat ("performance can vary under dynamic surgical conditions") --
+SAM2 was never trained on surgical video, and zero-shot general-object
+segmentation quality doesn't transfer cleanly to GraSP's specific
+lighting, tissue texture, and instrument appearance. Our own much
+smaller, GraSP-fine-tuned mask head already captures domain-specific
+detail a frozen foundation model does not.
+
+**Not adopted as-is. Real remaining question, not yet tested**: whether
+*fine-tuning* SAM2's mask decoder on GraSP (rather than zero-shot
+prompting) would close this gap or exceed our current best -- a
+meaningfully different experiment (needs training, not just inference)
+from what was tested here. Zero-shot alone does not beat the current
+best result.
