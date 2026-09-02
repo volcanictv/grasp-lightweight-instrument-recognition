@@ -1628,3 +1628,31 @@ architecture lesson, and every honestly-reported number stand. What
 changes is which direction gets pursued next: heavier/COCO-pretrained
 backbones for accuracy, then a second dataset for generalizability,
 with efficiency work deferred until both are satisfied.
+
+## 2026-09-01 -- Official from-scratch result: also did not beat warm-starting, closing this line of testing
+
+`instance_segmentation_maskrcnn_official_scratch` finished (run_id
+`..._20260901-211934`, box mAP50=0.820, wall clock 7678s / ~2.1h).
+
+| Official split | AP50_segm | Heavy-occlusion recall | Box mAP50/50:95 |
+|---|---|---|---|
+| **Warm-started (reported)** | **0.8101** | **0.672** | 0.837/0.628 |
+| From-scratch | 0.8061 (-0.004) | 0.666 (-0.006) | 0.820/0.546 |
+
+**Reverses the fold1 signal a second time** (fold1: from-scratch beat
+warm-start by +0.0147; official: from-scratch loses by -0.004). Combined
+with copy-paste's reversal and the ensemble's failure to beat the best
+single model, this is now **four independent attempts** (tracking,
+copy-paste, ensemble, from-scratch) that failed to beat the original
+warm-started official result once checked against the real,
+never-touched-in-development test set. Three of the four looked
+promising on a development split first.
+
+**Conclusion: 0.8101 is a solid number for this architecture family, not
+an undertrained fluke or an artifact of a lucky warm start.** Further
+one-variable tuning within `maskrcnn_mobilenet_v3` (same backbone, same
+capacity) has a demonstrated, now four-times-confirmed low hit rate on
+this dataset. This closes out that line of experimentation -- further
+gains require a different lever entirely (backbone/pretraining strength,
+per the priority realignment above), not more hyperparameter or
+training-recipe variation on the current architecture.
