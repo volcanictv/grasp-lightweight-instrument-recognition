@@ -258,3 +258,55 @@ Clip Applier, or whether letterboxing should be applied selectively (only to
 crops above some aspect-ratio threshold, sparing already-square-ish rare
 class crops from the padding/resolution cost). Not implemented -- a decision
 point, not a default next action.
+
+## Negative result: focal loss for Task A's Suction Instrument calibration problem
+
+A second, parallel diagnostic (same session) found Task A's Suction
+Instrument misses are mostly borderline, not confidently wrong -- mean
+predicted probability 0.507 when the class is actually present (only 14% of
+misses scored under 0.1). That specific pattern is exactly what focal loss
+(Lin et al. 2017) is built to sharpen, and it hadn't been tried anywhere in
+this project (Milestone 5 tried weighted loss, weighted sampler, and
+augmentation, not a loss-shape change). Tested as `configs/imbalance_focal_loss.yaml`
+(`loss.type: focal_bce`, gamma=2.0) -- one variable against
+`imbalance_weighted_loss_augmentation.yaml`, same pos_weight mechanism kept
+so focal loss is a strict addition, not a replacement.
+
+**Result: worse across the board, including on the target class.**
+
+| class | baseline F1 | focal-loss F1 |
+|---|---|---|
+| Bipolar Forceps | 0.894 | 0.899 |
+| Prograsp Forceps | 0.569 | 0.552 |
+| Large Needle Driver | 0.859 | 0.838 |
+| Monopolar Curved Scissors | 0.941 | 0.944 |
+| **Suction Instrument** | **0.530** | **0.495** |
+| Clip Applier | 0.735 | 0.677 |
+| Laparoscopic Grasper | 0.425 | 0.333 |
+| **macro-F1 / mean AP** | **0.708 / 0.745** | **0.677 / 0.736** |
+
+Suction Instrument's recall did move in the intended direction (0.531 ->
+0.553), but precision collapsed (0.529 -> 0.448), so F1 net *dropped*.
+Clip Applier and Laparoscopic Grasper -- the two smallest classes, already
+carrying the largest `pos_weight` values -- got substantially worse
+(Laparoscopic Grasper F1 0.425 -> 0.333, the worst score recorded for that
+class in this project). Val macro-F1 was also visibly noisier epoch-to-epoch
+than the baseline run.
+
+**Likely mechanism, not fully confirmed**: focal loss's hard-example
+up-weighting compounds with `pos_weight`'s already-large inverse-frequency
+multiplier for rare classes (both push the same direction -- more gradient
+on rare/hard positives). For classes with very few training instances (Clip
+Applier, Laparoscopic Grasper), that combination likely concentrates
+gradient on a handful of genuinely ambiguous or borderline examples rather
+than sharpening a real decision boundary, destabilizing training on exactly
+the classes with the least data to absorb it. Not confirmed by a separate
+ablation (e.g. focal loss without `pos_weight`, or a lower gamma) -- this is
+the plausible explanation, not a verified one.
+
+**Decision: not adopted.** Closes this specific lever for Task A's
+calibration problem; a per-class decision threshold (chosen from a
+validation split, not touched here) is the more promising untried
+alternative for a borderline-calibration problem like Suction Instrument's,
+since it doesn't touch training dynamics or interact with `pos_weight` at
+all.

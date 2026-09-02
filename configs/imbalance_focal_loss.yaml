@@ -1,0 +1,24 @@
+task: multilabel_frame
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 224
+  sampling: none # none | weighted
+  augmentation: strong # default | strong
+loss:
+  type: focal_bce # one-variable ablation vs imbalance_weighted_loss_augmentation.yaml
+                   # (loss.type: bce there) -- see docs/error_analysis.md and
+                   # docs/DECISIONS.md 2026-09-02. Suction Instrument's misses are
+                   # mostly borderline (mean predicted prob 0.507 when present),
+                   # not confidently wrong -- focal loss targets exactly that.
+  focal_gamma: 2.0 # RetinaNet's original default (Lin et al. 2017); not tuned here.
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

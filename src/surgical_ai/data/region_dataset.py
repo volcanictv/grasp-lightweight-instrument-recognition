@@ -43,6 +43,7 @@ class GraspRegionDataset(Dataset):
         split: str,
         transform: Callable | None = None,
         letterbox: bool = False,
+        letterbox_min_aspect: float = 1.0,
     ):
         """`letterbox=True` pads the mask-cropped instance to a square (zeros,
         matching the mask-zeroed background already used) before any resize
@@ -56,11 +57,24 @@ class GraspRegionDataset(Dataset):
         first keeps the crop's true proportions through every transform
         after it (Resize, RandomResizedCrop) without touching those
         transforms or their configs.
+
+        `letterbox_min_aspect` (long side / short side) gates which crops get
+        padded -- a near-square crop barely distorts under a stretch resize,
+        so padding it only adds black canvas with no upside. Default 1.0
+        letterboxes every crop (the first ablation's behavior, kept for
+        reproducibility). `docs/DECISIONS.md` 2026-09-02: the first
+        unconditional-letterbox run fixed the diagnosed aspect-ratio
+        confusion pairs but measurably hurt the two smallest classes (Clip
+        Applier, Laparoscopic Grasper) -- restricting padding to genuinely
+        elongated crops is the follow-up meant to keep the fix's benefit
+        while reducing how much of the fixed-size canvas becomes wasted
+        black padding overall.
         """
         doc = splits.load_short_term(data_root, split)
         self.frames_root = Path(data_root) / "frames-001" / "frames"
         self.transform = transform
         self.letterbox = letterbox
+        self.letterbox_min_aspect = letterbox_min_aspect
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -124,11 +138,13 @@ class GraspRegionDataset(Dataset):
 
         if self.letterbox:
             ch, cw = crop.shape[:2]
-            side = max(ch, cw)
-            square = np.zeros((side, side, 3), dtype=np.uint8)
-            top, left = (side - ch) // 2, (side - cw) // 2
-            square[top : top + ch, left : left + cw] = crop
-            crop = square
+            aspect = max(ch, cw) / max(1, min(ch, cw))
+            if aspect >= self.letterbox_min_aspect:
+                side = max(ch, cw)
+                square = np.zeros((side, side, 3), dtype=np.uint8)
+                top, left = (side - ch) // 2, (side - cw) // 2
+                square[top : top + ch, left : left + cw] = crop
+                crop = square
 
         image = Image.fromarray(crop)
         if self.transform is not None:

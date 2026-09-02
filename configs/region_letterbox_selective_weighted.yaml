@@ -1,0 +1,35 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 224
+  augmentation: default # default | strong
+  letterbox_crop: true
+  letterbox_min_aspect: 2.0 # only pad crops with long:short side >= 2:1 -- see
+                            # docs/DECISIONS.md 2026-09-02. The unconditional
+                            # (region_letterbox_crop.yaml, min_aspect=1.0) run
+                            # fixed the diagnosed confusion pairs but hurt Clip
+                            # Applier/Laparoscopic Grasper; restricting padding
+                            # to genuinely elongated crops keeps most of the
+                            # fix while reducing wasted black canvas overall
+                            # (median aspect ratio across classes is ~1.4-1.9,
+                            # so most crops fall below this threshold and are
+                            # left as a plain stretch resize, same as baseline).
+loss:
+  type: cross_entropy
+  class_weights: true
+  class_weight_power: 1.5 # sharpens the balanced weight formula beyond the
+                           # region_baseline/region_letterbox_crop default of
+                           # 1.0, specifically to recover the two classes the
+                           # unconditional letterbox run hurt (both are also
+                           # the two smallest classes -- least training data
+                           # to compensate for any resolution cost).
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

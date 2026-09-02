@@ -204,14 +204,15 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
     augmentation = config["data"].get("augmentation", "default")
 
     letterbox = config["data"].get("letterbox_crop", False)
+    letterbox_min_aspect = config["data"].get("letterbox_min_aspect", 1.0)
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
         transform=build_transforms(image_size, train=True, augmentation=augmentation),
-        letterbox=letterbox,
+        letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
     )
     val_ds = GraspRegionDataset(
         args.data_root, val_split, transform=build_transforms(image_size, train=False),
-        letterbox=letterbox,
+        letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
     )
     class_names = train_ds.class_names_ordered()
 
@@ -230,7 +231,8 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
 
     class_weight = None
     if config["loss"].get("class_weights", False):
-        class_weight = compute_class_weights(label_counts).to(device)
+        class_weight_power = config["loss"].get("class_weight_power", 1.0)
+        class_weight = compute_class_weights(label_counts, power=class_weight_power).to(device)
     loss_fn = build_loss(config["loss"], class_weight=class_weight)
 
     return train_loader, val_loader, class_names, loss_fn, evaluate_region
