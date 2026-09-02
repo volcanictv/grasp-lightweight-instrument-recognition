@@ -524,13 +524,12 @@ architecture is the only variable.</div>
 </div>
 <div class="field"><b>Interpretation</b>Accuracy ranks roughly by parameter count (ResNet-50 wins,
 including Laparoscopic Grasper F1 0.622 &mdash; the only Task A configuration across every milestone to
-clear 0.5 on this class). <b>Key methodological finding:</b> Titan Xp GPU latency does not rank by
-parameter count. ResNet-18 has 4&ndash;8&times; the MACs of MobileNetV3/EfficientNet but the lowest
-Titan Xp latency in the sweep, because Pascal's lack of tensor cores makes depthwise-separable
-convolutions FLOP-efficient but not GPU-kernel-efficient (low arithmetic intensity, poor memory
-bandwidth utilization). ONNX CPU latency, by contrast, tracks parameter count closely
-(MobileNetV3-Small is 15&times; faster than ResNet-50 there). This directly validates the standing rule
-that Titan Xp latency is not a deployment claim.</div>
+clear 0.5 on this class). Titan Xp GPU latency, however, does not rank by parameter count: ResNet-18
+has 4&ndash;8&times; the MACs of MobileNetV3/EfficientNet but the lowest Titan Xp latency in the sweep,
+because Pascal's lack of tensor cores makes depthwise-separable convolutions FLOP-efficient but not
+GPU-kernel-efficient (low arithmetic intensity, poor memory bandwidth utilization). ONNX CPU latency,
+by contrast, tracks parameter count closely (MobileNetV3-Small is 15&times; faster than ResNet-50
+there) &mdash; consistent with Titan Xp latency not being a deployment claim.</div>
 <div class="field"><b>Decision</b>ResNet-50 established as the top-of-curve heavy baseline;
 MobileNetV3-Small remains the lightweight proposal. Motivates always reporting both Titan Xp and ONNX
 CPU latency going forward.</div>
@@ -781,19 +780,17 @@ point forward.</div>
 <div class="field"><b>Interpretation</b>Every variant lands in the same 0.606&ndash;0.666
 heavy-occlusion recall band regardless of backbone size, loss weighting, or augmentation strategy
 &mdash; a &sim;25&ndash;30 point recall drop from the isolated rate that none of the Faster R-CNN
-variants tried closes. The <i>consistency</i> across so many independent interventions is itself the
-finding: it points to a structural limitation in the box-proposal + NMS pipeline (confirmed not
-NMS-suppression-specific by the soft-NMS null result above) that none of the interventions attempted
-were able to move.</div>
+variants tried closes. This points to a structural limitation in the box-proposal + NMS pipeline
+(confirmed not NMS-suppression-specific by the soft-NMS null result above) rather than something
+specific to any one backbone, loss, or augmentation choice.</div>
 <div class="field"><b>Decision</b>Primary evidence base motivating the architecture change in
 <a href="#s7">Section&nbsp;7</a>.</div>
 </div>
 
 <figure>
 <img src="figures/fig16_detection_occlusion_recall.png" alt="Detection occlusion recall">
-<figcaption><span class="fig-num">Figure 17.</span> Occlusion-stratified recall is structurally flat
-across every Faster R-CNN variant tried &mdash; the throughline diagnostic of the whole detection
-stage.</figcaption>
+<figcaption><span class="fig-num">Figure 17.</span> Occlusion-stratified recall across every
+Faster R-CNN variant tried in this section.</figcaption>
 </figure>
 
 <h3 id="s6-5"><span class="num">6.5</span>Copy-Paste</h3>
@@ -845,8 +842,7 @@ marks the baseline mAP@50.</figcaption>
 <figure>
 <img src="figures/fig17_detection_lightweight_vs_resnet50.png" alt="Lightweight vs ResNet-50">
 <figcaption><span class="fig-num">Figure 19.</span> The lightweight detector (copy-paste variant)
-beats ResNet-50 on accuracy, latency, and memory simultaneously &mdash; not a speed/accuracy tradeoff
-at all in this instance.</figcaption>
+beats ResNet-50 on accuracy, latency, and memory simultaneously.</figcaption>
 </figure>
 
 <h3 id="s6-6"><span class="num">6.6</span>Tracking-by-Detection</h3>
@@ -861,10 +857,10 @@ CASE001: 10,972 raw files vs. 329 annotated) &mdash; checked directly before bui
 association) with track survival through <code>max_age</code> missed frames, windowed inference around
 each annotated frame.</div>
 <div class="field"><b>Result v1</b>Recall improved in every bucket: isolated 0.899&rarr;0.913, light
-0.920&rarr;0.930, <b>heavy 0.645&rarr;0.683</b> &mdash; the first technique this project tried that
-moved heavy-occlusion recall outside the 0.606&ndash;0.666 band. A causal-only rerun (backward-looking
-window) gave identical numbers, confirming no look-ahead leak in the original windowed setup.</div>
-<div class="field"><b>Configuration v2 (the literature-comparable metric)</b>Full COCO-style mAP@50
+0.920&rarr;0.930, <b>heavy 0.645&rarr;0.683</b> &mdash; moving heavy-occlusion recall outside the
+0.606&ndash;0.666 band seen in every prior variant. A causal-only rerun (backward-looking window) gave
+identical numbers, confirming no look-ahead leak in the original windowed setup.</div>
+<div class="field"><b>Configuration v2 (full COCO-style mAP)</b>Full COCO-style mAP@50
 needs a low score threshold for a real precision/recall curve, not just the fixed-threshold recall
 table above.</div>
 <div class="field"><b>Result v2 &mdash; <span class="badge b-neg">NEGATIVE, corrective</span></b>mAP@50
@@ -897,8 +893,8 @@ instruments (94.7%), so "another box overlaps the predicted position" is true al
 regardless of real occlusion &mdash; too weakly discriminating in practice on this dataset.</div>
 <div class="field"><b>Overall decision</b>Best configuration (confidence-gating + boundary-exit +
 max_age=1) reaches mAP@50 = 0.8130, still 1.34 points below the raw detector (0.8264) &mdash;
-<b>net negative on the literature-comparable headline metric</b>, despite a real, validated,
-causally-checked recall benefit at the fixed-threshold diagnostic level, and despite two genuine bugs
+<b>net negative on mAP@50</b>, despite a real, validated, causally-checked recall benefit at the
+fixed-threshold diagnostic level, and despite two genuine bugs
 found and fixed along the way. Reported as a validated-but-not-yet-net-positive research direction, not
 adopted. The first tracking result initially looked like a clean win after the causality check alone;
 the more demanding mAP check told a different story &mdash; a methodological lesson in its own
@@ -1046,8 +1042,7 @@ instance-level metric that is actually comparable to the literature (AP50_segm) 
 &mdash; still a 52.1-point gap to TAPIS's 89.85 even after the capacity fix. This result suggested that
 dense heatmap-based instance separation is poorly suited to a metric that scores precise per-instance
 mask boundaries. Every published high-AP50_segm result, TAPIS included, uses proposal-based instance
-segmentation instead. This diagnosis directly motivates
-<a href="#s7-6">&sect;7.6</a>.</div>
+segmentation instead (<a href="#s7-6">&sect;7.6</a>).</div>
 <div class="field"><b>Category</b><span class="badge b-dev">DEV</span></div>
 </div>
 
@@ -1593,8 +1588,8 @@ outage) is still worth checking against system logs before accepting the coincid
 was already correct &mdash; it was, but the empirical check was still worth running rather than trusting
 inspection alone.</li>
 <li>A result that looks like a clean win on one diagnostic (tracking's fixed-threshold occlusion
-recall) can be a net negative on the literature-comparable headline metric (mAP); both numbers are
-reported together throughout, not just the more favorable one.</li>
+recall) can be a net negative on mAP; both numbers are reported together throughout, not just the more
+favorable one.</li>
 <li>An implausibly good number (near-100% after one epoch, <a href="#s7-6">&sect;7.6</a>) is itself
 diagnostic evidence of leakage and should be investigated before being reported, not treated as a lucky
 result.</li>
