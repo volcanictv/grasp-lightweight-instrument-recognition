@@ -1,0 +1,28 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 224
+  augmentation: default # default | strong
+  crop_mode: tip # one-variable ablation vs region_baseline.yaml (crop_mode: bbox
+                 # there) -- see docs/error_analysis.md and docs/DECISIONS.md
+                 # 2026-09-02. Crops a square window around the mask's PCA-derived
+                 # working tip instead of the whole bbox -- more targeted than
+                 # letterboxing (region_letterbox_crop.yaml), which only stops the
+                 # resize from distorting the bbox's aspect ratio but doesn't zoom
+                 # into the small fraction of pixels that's actually diagnostic.
+                 # Also correctly handles a diagonally-held tool whose axis-aligned
+                 # bbox can be misleadingly close to square.
+  tip_crop_frac: 0.45 # crop side = max(0.45 * mask major-axis length, 1.5 * minor-axis width)
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

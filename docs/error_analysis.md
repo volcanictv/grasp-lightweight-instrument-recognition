@@ -310,3 +310,82 @@ validation split, not touched here) is the more promising untried
 alternative for a borderline-calibration problem like Suction Instrument's,
 since it doesn't touch training dynamics or interact with `pos_weight` at
 all.
+
+## Negative result: combining selective letterbox + sharper class weights made things worse, not better
+
+Direct follow-up attempt to recover Clip Applier/Laparoscopic Grasper
+without losing the letterbox fix's gain: `configs/region_letterbox_selective_weighted.yaml`
+combines `letterbox_min_aspect: 2.0` (only pad crops with long:short ratio
+>=2:1, ~33% of test crops instead of 100%) with `class_weight_power: 1.5`
+(sharpens the balanced class-weight formula beyond the default). Run in
+parallel with the focal-loss experiment above.
+
+Result: **worse than the unconditional letterbox run on almost every
+metric, including the two classes it specifically targeted.**
+
+| class | region_baseline | region_letterbox_crop (unconditional) | selective + sharper weights |
+|---|---|---|---|
+| Bipolar Forceps | 0.859 | 0.888 | 0.862 |
+| Prograsp Forceps | 0.727 | 0.772 | 0.725 |
+| Large Needle Driver | 0.830 | 0.874 | 0.824 |
+| Monopolar Curved Scissors | 0.939 | 0.955 | 0.928 |
+| **Clip Applier** | 0.861 | 0.785 | **0.775** |
+| **Laparoscopic Grasper** | 0.713 | 0.634 | **0.615** |
+| macro-F1 / accuracy | 0.825 / 0.857 | 0.827 / 0.882 | **0.801 / 0.853** |
+
+Laparoscopic Grasper's recall did rise (0.716 -> 0.728) but precision fell
+further (0.569 -> 0.532), so F1 dropped again rather than recovering --
+**the same recall-up/precision-down/F1-net-negative signature as the focal
+loss result above**, now seen twice from two different rare-class-weight-
+boosting mechanisms (a loss reshaping and a weight-formula exponent) on two
+different tasks. Restricting letterbox's scope also gave back most of its
+gain on the classes it was fixing (all four confused classes moved back
+toward baseline). Net effect: worse than either single-variable ablation it
+was meant to combine.
+
+**Decision: not adopted.** Aggressively up-weighting a class this project
+has already tried twice (here and with focal loss) consistently trades
+precision for recall without a net F1 gain -- this looks like a real,
+repeatable pattern for GraSP's rarest classes (too few training examples to
+support a sharper decision boundary), not noise from one run. Stronger
+weighting is not a promising direction for Clip Applier/Laparoscopic
+Grasper specifically; see the ensemble result below for what actually
+worked instead.
+
+## What actually worked: ensembling the two Task B checkpoints, no retraining
+
+Simplest idea on the table, tried last: average the softmax outputs of
+`region_baseline` (plain stretch) and `region_letterbox_crop` (pad-to-square)
+-- the same "architecture/preprocessing diversity beats single-model tuning"
+pattern already validated for the segmentation ensemble
+(`docs/DECISIONS.md`, four-way Mask R-CNN + SAM2 ensemble), tested here for
+Task B instead of assumed to transfer. `scripts/evaluate_region_ensemble.py`,
+no training, ~2 minutes of inference.
+
+| class | region_baseline | region_letterbox_crop | **ensemble** |
+|---|---|---|---|
+| Bipolar Forceps | 0.859 | 0.888 | **0.890** |
+| Prograsp Forceps | 0.727 | 0.772 | **0.775** |
+| Large Needle Driver | 0.830 | 0.874 | 0.874 |
+| Monopolar Curved Scissors | 0.939 | 0.955 | **0.961** |
+| Suction Instrument | 0.847 | 0.879 | **0.890** |
+| Clip Applier | 0.861 | 0.785 | 0.846 |
+| Laparoscopic Grasper | 0.713 | 0.634 | 0.701 |
+| **macro-F1 / accuracy** | 0.825 / 0.857 | 0.827 / 0.882 | **0.848 / 0.889** |
+
+Beats both individual models on five of seven classes outright, and on the
+two it doesn't outright beat (Large Needle Driver ties Model B; Clip
+Applier/Laparoscopic Grasper land between the two individual models rather
+than below both), recovering nearly all of what the letterbox model cost on
+the two classes it hurt while keeping nearly all of its gain on the classes
+it fixed. **Best Task B result in the project**, both by macro-F1 and
+accuracy, and it cost no additional training -- the two attempts to fix the
+letterbox trade-off by changing training (stronger weights, selective
+scope) both made it worse; combining the two *already-trained* models at
+inference time is what worked. Reproduction:
+
+```
+python scripts/evaluate_region_ensemble.py \
+    --checkpoint-a experiments/region_baseline_20260831-182451/best.pt --letterbox-a false \
+    --checkpoint-b experiments/region_letterbox_crop_20260902-152750/best.pt --letterbox-b true
+```

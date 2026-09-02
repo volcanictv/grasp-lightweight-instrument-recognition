@@ -205,14 +205,20 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
 
     letterbox = config["data"].get("letterbox_crop", False)
     letterbox_min_aspect = config["data"].get("letterbox_min_aspect", 1.0)
+    crop_mode = config["data"].get("crop_mode", "bbox")
+    tip_crop_frac = config["data"].get("tip_crop_frac", 0.45)
+    region_kwargs = dict(
+        letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
+        crop_mode=crop_mode, tip_crop_frac=tip_crop_frac,
+    )
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
         transform=build_transforms(image_size, train=True, augmentation=augmentation),
-        letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
+        **region_kwargs,
     )
     val_ds = GraspRegionDataset(
         args.data_root, val_split, transform=build_transforms(image_size, train=False),
-        letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
+        **region_kwargs,
     )
     class_names = train_ds.class_names_ordered()
 
