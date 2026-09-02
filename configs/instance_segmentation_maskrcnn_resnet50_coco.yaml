@@ -1,0 +1,25 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_resnet50_coco
+  pretrained: true # ignored by this model's builder -- COCO weights (backbone, RPN, box
+                    # head, AND mask head) are always loaded; only the final classifier
+                    # and mask-predictor layers are reset for GraSP's 7 classes. Accuracy-
+                    # first priority (docs/DECISIONS.md, 2026-09-01) -- not a lightweight
+                    # candidate (45.9M params vs. maskrcnn_mobilenet_v3's 21.6M).
+data:
+  split: official # locked-in confirmatory split, reported directly -- no fold1/fold2
+                   # development pass first, since this is a straightforward fine-tune
+                   # of an already-strong pretrained model, not a from-scratch design
+                   # needing a cheap place to fail first.
+  augmentation: none
+training:
+  batch_size: 2 # halved from maskrcnn_mobilenet_v3's 4 -- ResNet-50-FPN-v2 is
+                # substantially heavier; reduce if this still OOMs on the Titan Xp's 12GB.
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.00005 # lower than maskrcnn_mobilenet_v3's 1e-4 -- fine-tuning a fully COCO-pretrained
+              # model (every component already solved a real detection+segmentation task,
+              # not just ImageNet classification) warrants gentler steps to avoid catastrophic
+              # forgetting of that pretraining.
+  seed: 42
