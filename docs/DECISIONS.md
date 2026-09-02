@@ -1438,3 +1438,44 @@ qualitatively different place than where Milestone 9 started this
 session (52 points, a diagnosed-but-unsolved problem) -- an 8.8-point
 gap is a real, reportable, honest result, in a similar range to the box
 detector's own 5-9 point gap to literature, not a failure.
+
+## 2026-09-01 -- From-scratch ablation (fold1): warm-starting was not the reason AP50_segm was high
+
+Ran `instance_segmentation_maskrcnn_fold1_scratch.yaml` -- same
+architecture and split as the warm-started fold1 run, `pretrained: true`
+(ImageNet backbone only) instead of `warm_start_checkpoint`, box and
+mask heads trained jointly from scratch. One variable changed, to test
+whether warm-starting was actually doing the work, or just saving time.
+
+| | AP50_segm | Occlusion recall (iso/light/heavy) | Box mAP50/50:95 | Wall clock |
+|---|---|---|---|---|
+| Warm-started (fold1) | 0.8458 | 0.934/0.955/0.713 | 0.879/0.637 | ~2000s |
+| **From-scratch (fold1)** | **0.8605** | 0.930/0.957/**0.731** | 0.869/0.589 | **8928s** |
+
+**Result: from-scratch slightly beat the warm-started run** on both
+AP50_segm (+0.0147) and heavy-occlusion recall (+0.018), despite lower
+box mAP50:95 (0.589 vs 0.637) -- worse box localization precision at
+high IoU, but a somewhat better mask/instance-separation outcome
+overall. This is the opposite of the assumption going into the
+warm-start design (that reusing solved box weights would help the mask
+head learn against a better-fixed target). Plausible mechanism: joint
+end-to-end training lets gradients from the mask loss also lightly
+reshape the box/RPN features to be more mask-friendly, something a
+warm-started run's already-converged box components resist changing
+away from (still nominally trainable, `trainable_layers=6`, but starting
+from a stronger local optimum for boxes specifically, not for boxes-as-
+input-to-masks).
+
+**Practical tradeoff, not a clean win either way**: from-scratch cost
+~4.5x the wall-clock time (8928s vs ~2000s) for a 1.5-point AP50_segm
+gain on one fold. Whether that trade is worth it for the official
+confirmatory number (currently 0.8101, warm-started) is worth testing
+directly -- if the same ~1.5 point gain holds on official, that would
+bring the TAPIS gap from 8.8 points to roughly 7.3, still not the
+3-point bar but a real additional improvement for a few more hours of
+GPU time. Not yet run on official split as of this entry.
+
+This is exactly the kind of result that justifies keeping fold1/fold2 as
+real development splits rather than skipping straight to official: this
+ablation could be run and interpreted freely without touching the
+locked-in confirmatory number at all.
