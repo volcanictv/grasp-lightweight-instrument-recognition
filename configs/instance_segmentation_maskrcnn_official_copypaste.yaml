@@ -1,0 +1,24 @@
+task: instance_segmentation
+model:
+  name: maskrcnn_mobilenet_v3
+  pretrained: false
+  warm_start_checkpoint: experiments/detection_weighted_loss_20260901-001115/best.pt
+    # same official-split detector as instance_segmentation_maskrcnn_official.yaml
+    # (AP50_segm 0.8101 without copy-paste) -- copy_paste is the only variable changed,
+    # testing whether the fold1 gain (+0.0188 AP50_segm, docs/DECISIONS.md 2026-09-01)
+    # transfers to the official confirmatory split.
+data:
+  split: official
+  augmentation: none
+  copy_paste:
+    enabled: true
+    paste_prob: 0.5
+    max_pastes: 2
+    occlusion_bias: 0.7
+training:
+  batch_size: 4
+  epochs: 100
+  patience: 10
+  optimizer: adam
+  lr: 0.0001
+  seed: 42

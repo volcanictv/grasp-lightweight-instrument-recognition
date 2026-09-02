@@ -1479,3 +1479,40 @@ This is exactly the kind of result that justifies keeping fold1/fold2 as
 real development splits rather than skipping straight to official: this
 ablation could be run and interpreted freely without touching the
 locked-in confirmatory number at all.
+
+## 2026-09-01 -- Copy-paste on Mask R-CNN (fold1): bigger and differently-shaped gain than predicted
+
+`instance_segmentation_maskrcnn_fold1_copypaste.yaml`: same warm-started
+fold1 config as the original 0.8458 run, `copy_paste.enabled: true`
+added (`CopyPasteDetectionDataset` gained `include_masks` for this --
+pasted instances now get a real placed mask, with earlier masks'
+covered pixels cleared to keep per-pixel non-overlap, same convention
+GraSP's own masks follow). One variable changed.
+
+| | AP50_segm | Occlusion recall (iso/light/heavy) | Box mAP50/50:95 |
+|---|---|---|---|
+| Warm-started, no copy-paste | 0.8458 | 0.934/0.955/0.713 | 0.879/0.637 |
+| **Warm-started + copy-paste** | **0.8646** | 0.941/0.954/**0.753** | 0.883/0.643 |
+
+**+0.0188 AP50_segm, +0.040 heavy-occlusion recall** -- a real, larger
+gain than predicted going in (expected 1-3 points, "mostly concentrated
+on Clip Applier"). The per-class breakdown says otherwise: **Clip
+Applier itself barely moved (0.893 -> 0.887, slightly down)**; the
+biggest per-class winner was **Prograsp Forceps (0.781 -> 0.811)**, not
+the pasted class. Consistent explanation: `occlusion_bias=0.7` biases
+paste placement to land on top of an existing box 70% of the time --
+this run's gain looks like it's coming from the general increased-
+occlusion-exposure mechanism, not the rare-class-exposure mechanism,
+unlike the detection-stage precedent where copy-paste's gain *was*
+concentrated on Clip Applier specifically with occlusion recall
+unchanged. Worth noting as a genuine difference between how this
+technique interacts with a proposal-based architecture (masks per RoI,
+occlusion directly visible to the mask loss) versus the box-only
+detector (occlusion only visible through NMS survival).
+
+Next: testing whether this holds on the official split
+(`instance_segmentation_maskrcnn_official_copypaste`, to be created),
+in parallel with the already-running official from-scratch test on the
+other GPU. If the +0.0188 gain transfers, the official number would move
+from 0.8101 toward ~0.829, narrowing the TAPIS gap from 8.8 points to
+roughly 7.
