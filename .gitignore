@@ -21,3 +21,22 @@ experiments/*/**
 .claude/
 .vscode/
 .idea/
+
+# Internal research notes: decision log, findings, literature notes, dataset
+# report, environment notes, raw training logs, dataset-inspection figures.
+# These are working documents (a lot of "tried X, didn't work" reasoning and
+# GPU-cost/timeline detail) that fed the report but aren't meant to ship with
+# a shared codebase -- local only, on purpose. docs/reports/ (the actual
+# published report) is NOT covered by this and stays tracked.
+CLAUDE.md
+PROJECT_SPEC.md
+docs/DECISIONS.md
+docs/findings.md
+docs/dataset_report.md
+docs/environment.md
+docs/imbalance_notes.md
+docs/detection_literature_notes.md
+docs/generalization_datasets.md
+docs/*.log
+docs/figures/
+docs/samples/

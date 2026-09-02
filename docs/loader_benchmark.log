@@ -1,7 +1,0 @@
-dataset: 2324 samples, split=train, image_size=224
- num_workers    images/sec
-           0          94.6
-           1          92.8
-           2         174.4
-           3         228.7
-           4         317.3
