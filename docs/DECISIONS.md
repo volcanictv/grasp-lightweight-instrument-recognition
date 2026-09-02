@@ -1773,3 +1773,46 @@ differently-trained model (e.g. the from-scratch MobileNetV3 official
 run, `docs/DECISIONS.md` "also did not beat warm-starting" -- weaker
 alone, but may still contribute complementary errors to a larger
 ensemble, the same pattern just demonstrated here).
+
+## 2026-09-02 -- Three-way ensemble: another real gain, and an OOM bug caught along the way
+
+Added the from-scratch MobileNetV3 official model (`instance_
+segmentation_maskrcnn_official_scratch_20260901-211934`, alone: 0.8061,
+*weaker* than either two-way ensemble component) as a third member.
+`scripts/evaluate_maskrcnn_ensemble.py` generalized to N-way (repeatable
+`--model checkpoint:registry_name`, uses `weighted_fusion_merge`'s
+existing support for an arbitrary number of detection lists).
+
+| Official test | AP50_segm | Isolated | Light | Heavy |
+|---|---|---|---|---|
+| Two-way (MobileNetV3 + COCO ResNet-50) | 0.8481 | 0.921 | 0.946 | 0.711 |
+| **Three-way (+ from-scratch MobileNetV3)** | **0.8553** | **0.929** | **0.948** | **0.725** |
+
+**Another real gain (+0.0072) from adding a model that was *worse* than
+either existing ensemble member on its own** (0.8061 alone vs. the
+ensemble's 0.8481) -- reinforcing that ensemble value here comes from
+error diversity, not from each member being independently strong.
+**New gap to TAPIS: ~4.3 points**, down from 5.0 (two-way) and 8.8
+(single best model) -- the closest this project has gotten, still short
+of the user's 3-point bar but closing steadily with each genuinely
+different model added, at zero additional training cost.
+
+**Bug caught along the way, worth recording**: the first two attempts at
+this both crashed silently around image 900/1125. Initially misattributed
+to the network outage happening around the same time; `dmesg` on the
+workstation showed the real cause -- a kernel OOM kill (`anon-rss:
+28548244kB` against 31GB total system RAM). The script was holding every
+individual model's per-image mask predictions in memory in addition to
+the ensemble's, for the full 1125-image set, before evaluating anything
+-- fine at 2 models, not at 3. Fixed by dropping the redundant
+individual-model accumulation entirely (each model's solo score is
+already known from its own dedicated training run, so re-computing it
+here was never necessary) -- cut peak memory by roughly (N+1)/2 and the
+fixed run completed cleanly. General lesson: an intermittent-looking
+failure that coincides with an unrelated known issue (the network
+outage) is still worth checking against `dmesg`/system logs before
+assuming the coincidence explains it.
+
+Next, if pursued further: a fourth ensemble member from a genuinely
+different source (e.g. the SAM2-decoder-fine-tuned pipeline, once that
+finishes) could plausibly continue the same pattern -- untested.
