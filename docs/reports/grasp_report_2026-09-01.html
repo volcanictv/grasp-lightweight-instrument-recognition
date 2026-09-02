@@ -263,6 +263,31 @@ itself less than the other classes, or appear in bursts of multiple frames per c
 </table>
 </div>
 
+<p>Per-class instance counts on the official <i>test</i> set specifically (derived by subtracting the
+per-case train counts above from the train+test totals; verified to sum to the documented 2861 test
+instances) are given below, since every per-class number reported later in this document (AP@50, F1,
+IoU) is computed against these sample sizes:</p>
+
+<div class="table-wrap">
+<table>
+<tr><th>Class</th><th>Test instances (n)</th></tr>
+<tr><td>Monopolar Curved Scissors</td><td>844</td></tr>
+<tr><td>Bipolar Forceps</td><td>809</td></tr>
+<tr><td>Large Needle Driver</td><td>449</td></tr>
+<tr><td>Prograsp Forceps</td><td>330</td></tr>
+<tr><td>Suction Instrument</td><td>310</td></tr>
+<tr><td>Laparoscopic Grasper</td><td>81</td></tr>
+<tr><td class="neg">Clip Applier</td><td class="neg">38</td></tr>
+</table>
+</div>
+
+<p><b>Every per-class number for Clip Applier (n=38) and Laparoscopic Grasper (n=81) reported anywhere
+in this document should be read with a wide confidence interval in mind</b> &mdash; a three-decimal
+AP or F1 value on 38 instances implies far more precision than the sample size supports. These two
+classes' per-class numbers are useful for spotting large, qualitative differences (e.g., a class
+failing outright vs. performing well) but are not reliable for comparing configurations that differ by
+a few points.</p>
+
 <p>94.7% of annotated frames (3265/3449) contain two or more instrument instances simultaneously;
 1423 frames contain exactly 2, 1380 contain exactly 3, 449 contain 4, and 13 contain 5. This is why
 whole-frame single-label classification is not a valid task framing on this dataset (see
@@ -315,6 +340,15 @@ confirmatory run per finished configuration. This discipline was not followed fo
 of the project's history, until the gap was identified and corrected &mdash; see
 <a href="#s9">Section&nbsp;9</a> for the full account, one of the central methodological findings in
 this report.</p>
+
+<p>A note on terminology used throughout this report: fold1/fold2 results are labeled
+<span class="badge b-cv">CROSS-VAL</span> to distinguish them from official-test results, but with only
+two unequal-size folds (1225 vs. 1099 keyframes) this is not cross-validation in the statistical sense
+of averaging over many resampled folds to estimate variance. It means two independent, disjoint
+held-out development splits agreeing (or not) on a result &mdash; evidence that a result is not an
+artifact of one particular training set, but not a variance estimate. Where the two folds agree closely
+but still miss the official number by a few points (<a href="#s7-8">&sect;7.8</a>), that gap is the
+honest measure of what this check can and cannot tell us.</p>
 
 <figure>
 <img src="figures/fig03_split_composition.png" alt="Split composition">
@@ -695,7 +729,8 @@ correctly-detected-but-overlapping boxes, the diagnosed occlusion failure mode.<
 checkpoint; hard NMS effectively disabled (<code>box_nms_thresh=0.99</code>), re-scored via Gaussian
 soft-NMS (Bodla et al. 2017). No retraining.</div>
 <div class="field"><b>Result</b>mAP@50 0.826 vs. 0.829 baseline; mAP@50:95 0.621 vs. 0.616;
-heavy-occlusion recall 0.617 vs. 0.620 &mdash; all within noise.</div>
+heavy-occlusion recall 0.617 vs. 0.620 &mdash; each difference under 0.5 points, from single runs with
+no separately measured run-to-run variance (<a href="#s11">Section&nbsp;11</a>).</div>
 <div class="field"><b>Interpretation</b>If hard NMS were the bottleneck, soft-NMS keeping a second box
 at reduced score should have recovered recall. It did not move at all &mdash; points toward the model
 not producing a good candidate box for the occluded instrument in the first place (a
@@ -789,9 +824,48 @@ specific to any one backbone, loss, or augmentation choice.</div>
 <a href="#s7">Section&nbsp;7</a>.</div>
 </div>
 
+<div class="callout">
+<span class="lbl">Checking the occlusion metric against the actual instance masks</span>
+<p>The bucket definitions above are based on bounding-box overlap, disclosed elsewhere in this report as
+a proxy for true visual occlusion (<a href="#s2-6">&sect;2.6</a>). GraSP's annotations include a
+per-instance mask for every instrument, so this can be checked directly rather than left as a caveat.
+For each of the 2861 official-test instances, we computed what fraction of that instance's own
+bounding box is actually covered by another instrument's real visible pixels (not just another
+instrument's box), using the same isolated/light/heavy thresholds as the box-based metric.</p>
+<p>Two things came out of this check. First, comparing one instance's visible mask directly against
+another's visible mask is not informative on this dataset: GraSP's masks are modal (an occluded pixel
+is assigned to whichever instrument is actually visible there, not to both), so two instruments' own
+masks essentially never overlap by construction &mdash; the maximum pairwise mask-to-mask overlap
+found anywhere in the test set was 1.1% of an instance's own area. Checking a box against the other
+mask, rather than mask against mask, is the meaningful comparison, and is what the numbers below use.</p>
+<p>Second, the box-overlap proxy substantially overstates occlusion <i>severity</i> at the "heavy"
+threshold. Of the 287 instances labeled "heavy" by box overlap, only 4 (1.4%) still qualify as heavy
+once checked against real visible pixels; 224 (78%) drop to "light" and 59 (21%) drop to "isolated."
+Overall bucket agreement is 83.3%, and the two measures correlate at r=0.675 &mdash; a real,
+moderate-to-strong relationship, not noise, but not a precise one either.</p>
+</div>
+
+<figure>
+<img src="figures/fig36_occlusion_validation.png" alt="Occlusion proxy validation">
+<figcaption><span class="fig-num">Figure 17.</span> Where each box-overlap bucket actually lands once
+checked against real instance masks. "Heavy" by box overlap is predominantly "light" by visible-pixel
+coverage.</figcaption>
+</figure>
+
+<p>This does not overturn the occlusion-recall finding above, but it does change what "heavy" should be
+read to mean throughout this report. It is not "more than half of this instrument is hidden" &mdash;
+under a real pixel measure, that describes 4 instances in the entire test set. It is closer to "heavy
+box crowding," which correlates with, but regularly overstates, actual visual occlusion. This is not
+necessarily the wrong variable to stratify by: Faster R-CNN's non-maximum suppression operates on box
+IoU, not on pixel overlap, so a metric built on box crowding may be more mechanistically relevant to
+explaining <i>why detections get suppressed</i> than a pixel-accurate occlusion score would be &mdash;
+but the recall drop documented above should be understood as a response to box crowding, not to
+majority visual occlusion. Every use of "heavy occlusion" elsewhere in this report should be read with
+this calibration in mind rather than taken at face value.</p>
+
 <figure>
 <img src="figures/fig16_detection_occlusion_recall.png" alt="Detection occlusion recall">
-<figcaption><span class="fig-num">Figure 17.</span> Occlusion-stratified recall across every
+<figcaption><span class="fig-num">Figure 18.</span> Occlusion-stratified recall across every
 Faster R-CNN variant tried in this section.</figcaption>
 </figure>
 
@@ -804,8 +878,8 @@ occlusion exposure and rare-class representation in one intervention.</div>
 <div class="field"><b>Configuration</b>Pastes real Clip Applier instance crops (GraSP's own
 per-instance masks, no synthetic data) onto other training frames, 70% biased to land on top of an
 existing box. MobileNetV3-Large-FPN backbone.</div>
-<div class="field"><b>Result</b>mAP@50 = 0.826, mAP@50:95 = 0.590 &mdash; matches baseline within
-noise, the best Milestone-8 follow-up. Per-class AP@50: Bipolar Forceps 0.940, Prograsp Forceps 0.714,
+<div class="field"><b>Result</b>mAP@50 = 0.826, mAP@50:95 = 0.590 &mdash; within 0.4 points of baseline
+(0.8295), the best detection-stage follow-up tried. Per-class AP@50: Bipolar Forceps 0.940, Prograsp Forceps 0.714,
 Large Needle Driver 0.947, Monopolar Curved Scissors 0.968, Suction Instrument 0.741,
 <b>Clip Applier 0.780</b>, Laparoscopic Grasper 0.696. Occlusion recall: isolated 0.899, light 0.920,
 <b>heavy 0.645 &mdash; unchanged</b>.</div>
@@ -837,13 +911,13 @@ aggregate number, negative on the mechanism it targeted)</div>
 
 <figure>
 <img src="figures/fig14_detection_variants.png" alt="Detection variant comparison">
-<figcaption><span class="fig-num">Figure 18.</span> Detection ablations vs. baseline. Dotted line
+<figcaption><span class="fig-num">Figure 19.</span> Detection ablations vs. baseline. Dotted line
 marks the baseline mAP@50.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig17_detection_lightweight_vs_resnet50.png" alt="Lightweight vs ResNet-50">
-<figcaption><span class="fig-num">Figure 19.</span> The lightweight detector (copy-paste variant)
+<figcaption><span class="fig-num">Figure 20.</span> The lightweight detector (copy-paste variant)
 beats ResNet-50 on accuracy, latency, and memory simultaneously.</figcaption>
 </figure>
 
@@ -907,19 +981,19 @@ right.</div>
 
 <figure>
 <img src="figures/fig19_tracking_variants.png" alt="Tracking variants">
-<figcaption><span class="fig-num">Figure 20.</span> Every tracking-by-detection variant tried reduces
+<figcaption><span class="fig-num">Figure 21.</span> Every tracking-by-detection variant tried reduces
 mAP@50 below the raw detector.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig20_maxage_sweep.png" alt="max_age sweep">
-<figcaption><span class="fig-num">Figure 21.</span> max_age sweep, boundary-exit + confidence-gating
+<figcaption><span class="fig-num">Figure 22.</span> max_age sweep, boundary-exit + confidence-gating
 fixed. Shorter coasting windows lose less precision.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig21_tracking_occlusion_recall.png" alt="Tracking occlusion recall">
-<figcaption><span class="fig-num">Figure 22.</span> Occlusion recall at a fixed threshold rises with
+<figcaption><span class="fig-num">Figure 23.</span> Occlusion recall at a fixed threshold rises with
 tracking; the mAP-optimized version (right bar) barely moves it. These are two different diagnostics
 answering two different questions, not a contradiction.</figcaption>
 </figure>
@@ -1020,7 +1094,7 @@ four existing runs stay reproducible.</div>
 
 <figure>
 <img src="figures/fig22_architecture_shallow_vs_deep.png" alt="Shallow vs deep architecture">
-<figcaption><span class="fig-num">Figure 23.</span> The shallow-backbone bug: requesting only stride
+<figcaption><span class="fig-num">Figure 24.</span> The shallow-backbone bug: requesting only stride
 4/8 stages caused the deep, high-capacity stages to be pruned from the computation graph entirely, not
 merely frozen.</figcaption>
 </figure>
@@ -1050,13 +1124,13 @@ segmentation instead (<a href="#s7-6">&sect;7.6</a>).</div>
 
 <figure>
 <img src="figures/fig23_segmentation_miou_progression.png" alt="Segmentation mIoU progression">
-<figcaption><span class="fig-num">Figure 24.</span> mIoU across the four shallow-backbone runs and
+<figcaption><span class="fig-num">Figure 25.</span> mIoU across the four shallow-backbone runs and
 the two deep-backbone runs. The plateau was a capacity ceiling, not a training-recipe problem.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig24_segmentation_ap50segm_progression.png" alt="Segmentation AP50_segm progression">
-<figcaption><span class="fig-num">Figure 25.</span> AP50_segm across the same six runs. The
+<figcaption><span class="fig-num">Figure 26.</span> AP50_segm across the same six runs. The
 metric that matters for literature comparison stayed in the single digits even after the capacity fix
 &mdash; the mIoU jump did not translate into a comparable instance-level jump, motivating the
 architecture-family pivot in &sect;7.6.</figcaption>
@@ -1064,7 +1138,7 @@ architecture-family pivot in &sect;7.6.</figcaption>
 
 <figure>
 <img src="figures/fig25_segmentation_occlusion_recall.png" alt="Segmentation occlusion recall">
-<figcaption><span class="fig-num">Figure 26.</span> Occlusion-stratified recall, shallow (averaged
+<figcaption><span class="fig-num">Figure 27.</span> Occlusion-stratified recall, shallow (averaged
 across 4 runs) vs. deep-backbone centroid/offset segmentation.</figcaption>
 </figure>
 
@@ -1093,7 +1167,7 @@ most of the gap in one run.</p>
 
 <figure>
 <img src="figures/fig26_architecture_box_then_mask.png" alt="Box-then-mask architecture">
-<figcaption><span class="fig-num">Figure 27.</span> Box-then-mask architecture: box localization is
+<figcaption><span class="fig-num">Figure 28.</span> Box-then-mask architecture: box localization is
 inherited from the already-trained detector; only the mask head is new.</figcaption>
 </figure>
 
@@ -1121,7 +1195,7 @@ AP50_segm 0.380&rarr;0.846 closes the 52-point gap to &sim;5.3 points, exceeding
 before the run (a Mask R-CNN result landing within a few points of TAPIS's own purpose-built
 transformer was considered very unlikely going in). Heavy-occlusion recall jump (0.185&rarr;0.713) is
 larger than anything else attempted in the project, including the tracker. Caveat stated at the time:
-one fold's result, not yet cross-validated.</div>
+one fold's result, not yet checked against the second held-out split.</div>
 </div>
 
 <h3 id="s7-7"><span class="num">7.7</span>Cross-Validation</h3>
@@ -1132,10 +1206,12 @@ one fold's result, not yet cross-validated.</div>
 0.864/0.631.</div>
 <div class="field"><b>Interpretation</b>Two independent folds, disjoint training cases, independently
 fold-scoped warm-start detectors, land within 0.3 points of AP50_segm and within 3 points of
-heavy-occlusion recall &mdash; a real cross-validated result. Average: AP50_segm = 0.8446,
-heavy-occlusion recall = 0.698 (vs. 0.185 on the old architecture, a 3.8&times; improvement).</div>
-<div class="field"><b>Decision</b>Closes the architecture-diagnosis loop: the 52-point gap really was
-an architecture-family mismatch. Proceed to the one locked-in official confirmatory run.</div>
+heavy-occlusion recall &mdash; close agreement between the two splits, though two folds cannot
+distinguish a genuinely stable result from two splits that happen to be similar. Average: AP50_segm =
+0.8446, heavy-occlusion recall = 0.698 (vs. 0.185 on the old architecture, a 3.8&times; improvement).</div>
+<div class="field"><b>Decision</b>The two splits agreeing, combined with the architecture reasoning in
+<a href="#s7-6">&sect;7.6</a>, was judged sufficient to proceed to the one locked-in official
+confirmatory run.</div>
 </div>
 
 <h3 id="s7-8"><span class="num">7.8</span>Official Confirmatory Evaluation</h3>
@@ -1152,17 +1228,28 @@ descent, only via the already-disclosed, much milder early-stopping-selection le
 <tr><td>fold2 (dev)</td><td>0.8433</td><td>0.902/0.948/0.682</td><td>0.864/0.631</td></tr>
 <tr><td class="hi"><b>official (reported)</b></td><td class="hi"><b>0.8101</b></td><td class="hi">0.909/0.930/0.672</td><td class="hi">0.837/0.628</td></tr>
 </table></div>
-Per-class AP50_segm (official): Monopolar Curved Scissors 0.978, Large Needle Driver 0.960, Bipolar
-Forceps 0.930, Clip Applier 0.839, Suction Instrument 0.778, Laparoscopic Grasper 0.708,
-<b>Prograsp Forceps 0.667 (weakest here</b> &mdash; notably not Laparoscopic Grasper, the usual weakest
-class everywhere else; a split-dependent wrinkle, not investigated further).
+Per-class AP50_segm (official, n from <a href="#s2-1">&sect;2.1</a>'s per-class test counts):
+Monopolar Curved Scissors 0.978 (n=844), Large Needle Driver 0.960 (n=449), Bipolar Forceps 0.930
+(n=809), Clip Applier 0.839 (n=38), Suction Instrument 0.778 (n=310), Laparoscopic Grasper 0.708
+(n=81), <b>Prograsp Forceps 0.667 (n=330, weakest here</b> &mdash; notably not Laparoscopic Grasper,
+the usual weakest class everywhere else; a split-dependent wrinkle, not investigated further). The
+Clip Applier and Laparoscopic Grasper figures in particular carry wide confidence intervals given their
+small n.
 </div>
 <div class="field"><b>Interpretation</b>Gap to TAPIS = <b>8.8 points</b> &mdash; wider than the
 fold-average estimate (5.4 points from the 0.8446 average, or "5.3 points" as estimated from fold1
 alone), though nowhere near the original architecture's 52-point gap. Honest lesson: fold1/fold2
 agreeing tightly confirmed the result was <i>repeatable</i>, not that it would exactly predict the
 official number &mdash; different case composition (8 cases vs. 4 per fold) and a genuinely different,
-never-touched 5-case test set both explain the discrepancy.</div>
+never-touched 5-case test set both explain the discrepancy.<br><br>
+Decomposing where the remaining gap sits: box mAP@50 is 0.837 and AP50_segm is 0.8101, so the mask
+head retains 0.8101/0.837 &asymp; 96.8% of the box detector's own localization quality &mdash; only a
+&sim;3.2% relative loss going from boxes to masks. This suggests most of the 8.8-point gap to TAPIS is
+attributable to box localization quality rather than to the mask-prediction step itself, since the mask
+head is already close to a ceiling set by the boxes it receives. This is a within-pipeline comparison
+(TAPIS's own box-detection number is not available for a direct check) but it points toward improving
+box localization, not the mask head, as the more promising lever &mdash; see
+<a href="#s13">Section&nbsp;13</a>.</div>
 <div class="field"><b>Decision</b><b>AP50_segm = 0.8101 established as this project's headline
 instance-segmentation number</b> prior to the priority realignment &mdash; not 0.8446, and not either
 fold number.</div>
@@ -1170,20 +1257,20 @@ fold number.</div>
 
 <figure>
 <img src="figures/fig27_boxmask_splits.png" alt="Box-then-mask splits">
-<figcaption><span class="fig-num">Figure 28.</span> Box-then-mask across fold1, fold2, and official.
+<figcaption><span class="fig-num">Figure 29.</span> Box-then-mask across fold1, fold2, and official.
 Development splits (green) agree closely; official (navy) is the number that is actually reported.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig28_architecture_family_before_after.png" alt="Architecture family before/after">
-<figcaption><span class="fig-num">Figure 29.</span> Architecture family, not capacity, closed the
+<figcaption><span class="fig-num">Figure 30.</span> Architecture family, not capacity, closed the
 instance-segmentation gap: the deep-backbone capacity fix alone (still centroid/offset) barely moved
 AP50_segm; switching to box-then-mask closed the great majority of the remaining distance.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig29_architecture_family_occlusion.png" alt="Occlusion recall architecture comparison">
-<figcaption><span class="fig-num">Figure 30.</span> Occlusion-stratified recall: the deep-backbone
+<figcaption><span class="fig-num">Figure 31.</span> Occlusion-stratified recall: the deep-backbone
 centroid/offset segmenter vs. box-then-mask (official). The architecture-family change, not the
 capacity increase alone, is responsible for the heavy-occlusion recall jump.</figcaption>
 </figure>
@@ -1324,7 +1411,7 @@ explains it.</div>
 
 <figure>
 <img src="figures/fig30_ensemble_progression.png" alt="Ensemble AP50_segm progression">
-<figcaption><span class="fig-num">Figure 31.</span> AP50_segm progression across the full
+<figcaption><span class="fig-num">Figure 32.</span> AP50_segm progression across the full
 accuracy-first push, official test set throughout &mdash; every step measured against the same
 never-touched official test data as every other official result in this report.</figcaption>
 </figure>
@@ -1407,7 +1494,7 @@ directly working against the eventual efficiency phase).</div>
 
 <figure>
 <img src="figures/fig31_ensemble_occlusion.png" alt="Ensemble occlusion recall">
-<figcaption><span class="fig-num">Figure 32.</span> Occlusion-stratified recall across the ensemble
+<figcaption><span class="fig-num">Figure 33.</span> Occlusion-stratified recall across the ensemble
 build-up. Not monotonic in every bucket &mdash; AP50 scores the whole precision/recall curve, not
 recall at one fixed point.</figcaption>
 </figure>
@@ -1438,21 +1525,22 @@ parallel across processes/GPUs instead of sequentially.
 
 <figure>
 <img src="figures/fig32_ensemble_latency_breakdown.png" alt="Ensemble latency breakdown">
-<figcaption><span class="fig-num">Figure 33.</span> Per-component latency of the four-way ensemble.
+<figcaption><span class="fig-num">Figure 34.</span> Per-component latency of the four-way ensemble.
 The MobileNetV3 Mask R-CNN architecture runs twice (once warm-started, once from-scratch), since both
 trained checkpoints are separate ensemble members.</figcaption>
 </figure>
 
 <figure>
 <img src="figures/fig33_accuracy_vs_latency.png" alt="Accuracy vs latency">
-<figcaption><span class="fig-num">Figure 34.</span> Every accuracy gain in this section plotted
+<figcaption><span class="fig-num">Figure 35.</span> Every accuracy gain in this section plotted
 against its measured per-frame cost. The lightweight result (leftmost point) and the accuracy-first
 result (rightmost point) answer different questions; this is the tradeoff curve the project set out
 to characterize, now climbing in the direction the new priority asked for.</figcaption>
 </figure>
 
 <p>These two numbers answer different questions and neither supersedes the other. 0.8101 is the result
-for a single, real-time-plausible model, addressing "how good can the lightweight approach get."
+for a single model (84.8ms median, &sim;11.8fps on Titan Xp &mdash; lighter than the ensemble but still
+past a 33ms/30fps real-time budget), addressing "how good can the lightweight approach get."
 0.8594 addresses a different question &mdash; "how good can accuracy get if cost is not yet a
 constraint" &mdash; which is the question this project was redirected to answer first
 (<a href="#s1">Section&nbsp;1</a>). Both are reported in full rather than treating one as an upgrade
@@ -1623,7 +1711,7 @@ that produced 0.8101.</p>
 
 <figure>
 <img src="figures/fig35_comparative_summary.png" alt="Comparative summary">
-<figcaption><span class="fig-num">Figure 35.</span> Best result per task category against the TAPIS
+<figcaption><span class="fig-num">Figure 36.</span> Best result per task category against the TAPIS
 reference line. Only the two segmentation bars are on a comparable metric to that line.</figcaption>
 </figure>
 
@@ -1634,8 +1722,9 @@ reference line. Only the two segmentation bars are on a comparable metric to tha
 <ol>
 <li>Task B assumes ground-truth instance location (uses the true mask outline, not a predicted one)
 &mdash; it measures classification given localization, not full-pipeline accuracy.</li>
-<li>Rare instruments (Clip Applier: 102 instances total, 64 in the train split alone; Laparoscopic
-Grasper: 275) give low statistical confidence on their own metrics throughout every task.</li>
+<li>Rare instruments (Clip Applier: 102 instances total, 64 train / 38 test; Laparoscopic Grasper: 275
+total, 194 train / 81 test) give low statistical confidence on their own metrics throughout every task
+&mdash; see the per-class test-set counts and caveat in <a href="#s2-1">&sect;2.1</a>.</li>
 <li>Only 13 real surgeries total (8 train / 5 test) &mdash; inter-surgery and inter-surgeon variation
 is not well captured by one split, official or fold-based.</li>
 <li>The occlusion-stratified recall metric used from <a href="#s6-4">&sect;6.4</a> onward is a
@@ -1652,9 +1741,23 @@ it did not help on official, but that is a different question from whether the i
 itself has blind spots).</li>
 <li>No CPU/ONNX latency was measured for the detection or segmentation models specifically (only for
 Task A backbones) &mdash; deemed less reliable to estimate for two-stage detectors with a
-dynamic-length RPN/ROI pipeline; this number is reported as missing rather than estimated.</li>
-<li>Literature comparison numbers (TAPIS and related work) came from published papers and web search,
-not a formal systematic review.</li>
+dynamic-length RPN/ROI pipeline; this number is reported as missing rather than estimated. GPU latency
+for the segmentation models is available (<a href="#s8-7">&sect;8.7</a>'s ensemble latency table), but
+was measured there as part of the ensemble breakdown rather than reported directly alongside the
+official 0.8101 result in <a href="#s7-8">&sect;7.8</a>.</li>
+<li><b>The TAPIS comparison, used throughout this report as the primary external benchmark, has not
+been independently verified at the evaluation-protocol level.</b> TAPIS's 89.85 AP50_segm is reported
+in the same paper that defines the GraSP dataset (Ayobi et al. 2024), and is very likely computed on
+the same 5-case official test split used throughout this report, since that is the dataset's own
+canonical benchmark split. What has <i>not</i> been verified: whether TAPIS's evaluation code uses the
+same IoU-matching implementation, the same score threshold, and the same per-instance matching
+convention as this project's own evaluation code. AP is sensitive to these implementation details, so
+every "gap to TAPIS" figure in this report (8.8 points, 3.9 points, etc.) should be read as an
+approximate comparison under an assumption of matching protocol, not a verified apples-to-apples
+number. Closing this gap would require running TAPIS's own published evaluation harness
+(<a href="#appB">Appendix&nbsp;B</a>) against this project's predictions, which has not been done.
+Literature comparison numbers more generally (TAPIS and related work) came from published papers and
+web search, not a formal systematic review.</li>
 <li>Every finding from <a href="#s4">Section&nbsp;4</a> through the first four segmentation runs in
 <a href="#s7-2">&sect;7.2</a> was selected using official-test-as-validation, a methodological error
 corrected partway through the project (<a href="#s9">Section&nbsp;9.1</a>) but not retroactively
@@ -1663,11 +1766,17 @@ re-verified.</li>
 result: &sim;778ms/&sim;1.3fps per frame, roughly 23&times; too slow for real-time use. It should be
 read as the answer to "how good can accuracy get if cost is not yet a constraint," not a straight
 upgrade of the 0.8101 lightweight number (<a href="#s8-7">&sect;8.7</a>).</li>
-<li>Each ensemble configuration in <a href="#s8">Section&nbsp;8</a> was evaluated once on the official
-test set, with each successive addition decided by observing that same test set
-(<a href="#s9">&sect;9.3</a>) &mdash; there is no repeated-run variance estimate for the ensemble
-deltas, and the exact per-model increments (+0.0349/+0.0072/+0.0041) should not be treated as
-guaranteed-reproducible.</li>
+<li><b>No result in this report has a variance estimate.</b> Every training run in every section used
+one seed and one run; nothing in this project was repeated across multiple seeds to measure run-to-run
+noise. Several conclusions rest on small deltas that are described qualitatively (e.g., the +0.0012
+weighted-loss detection change in <a href="#s6-3">&sect;6.3</a> being called a small effect, the
+soft-NMS and copy-paste comparisons in <a href="#s6-2">&sect;6.2</a>/<a href="#s6-5">&sect;6.5</a> being
+described as landing "within noise") without ever having measured what noise actually looks like for
+this setup. The same applies to the ensemble increments in <a href="#s8">Section&nbsp;8</a>
+(+0.0349/+0.0072/+0.0041), each from a single evaluation, with each successive addition decided by
+observing the same official test set (<a href="#s9">&sect;9.3</a>). A small number of repeated runs
+(three seeds on a handful of configurations) would directly test several of this report's conclusions
+rather than leaving them as plausible-but-unverified; see <a href="#s13">Section&nbsp;13</a>.</li>
 <li>SAM2's decoder fine-tuning (<a href="#s8-5">&sect;8.5</a>) used only GraSP's official training
 cases and has not been checked for cross-dataset generalization &mdash; directly relevant given the
 project's still-pending generalizability validation step (<a href="#s13">Section&nbsp;13</a>).</li>
@@ -1686,8 +1795,9 @@ report was assembled (<a href="#appC">Appendix C</a>).</li>
 Box-then-mask Mask R-CNN, MobileNetV3-Large-FPN backbone (warm-started box detector + trained mask
 head), 21.6M params.<br><br>
 AP50_segm = <b>0.8101</b> (official, 8.8pt gap to TAPIS)<br>
-Detection stage: &sim;22ms/frame, 309MB peak VRAM (Titan Xp)<br>
-Mask-stage latency not separately benchmarked (Limitation #7)<br><br>
+Full model (box + mask head): 84.8ms median, 902MB peak VRAM (Titan Xp, from &sect;8.7's ensemble
+latency breakdown) &mdash; &sim;11.8fps, past the 33ms/30fps budget used elsewhere in this report. The
+box-detection stage alone is &sim;22ms and would fit that budget; the added mask head does not.<br><br>
 Major remaining limitation: heavy-occlusion recall (0.672) still trails isolated-instance recall
 (0.909) by &sim;24 points, though this gap is far smaller than the detection-only architecture's
 (&sim;25&ndash;30 points, <a href="#s6-4">&sect;6.4</a>).
@@ -1711,11 +1821,14 @@ landing in the same 0.606&ndash;0.666 heavy-occlusion recall band (<a href="#s6-
 <li>Region classification with a lightweight model outperforms whole-frame multi-label classification
 with the heaviest model tried, on exactly the classes that whole-frame classification struggles with
 &mdash; the rare-class problem was partly a task-framing problem (<a href="#s5">Section&nbsp;5</a>).</li>
-<li>Architecture family, more than capacity, appears to have been the binding constraint for
-instance-level segmentation:
-a 5.88M-param model with the right architecture (box-then-mask) beat a fundamentally different but
-larger-capacity 2.1M&rarr;5.88M-param centroid/offset model by over 40 AP50_segm points
-(<a href="#s7">Section&nbsp;7</a>).</li>
+<li>Capacity alone was not sufficient for instance-level segmentation, within the centroid/offset
+architecture family: nearly tripling backbone capacity (2.1M&rarr;5.88M params, same architecture)
+moved AP50_segm from &sim;0.10&ndash;0.12 to only 0.38 &mdash; a real gain, but still a 52-point gap to
+TAPIS. Switching to a proposal-based architecture (box-then-mask, 21.6M params) on top of that capacity
+closed most of the remaining gap (AP50_segm 0.38&rarr;0.81). Because that second step changed capacity
+and architecture family together, it does not in isolation prove architecture family was the sole
+cause &mdash; but combined with the capacity-alone result plateauing far short, architecture family is
+the more likely explanation than capacity (<a href="#s7">Section&nbsp;7</a>).</li>
 <li>Ensembling architecturally different models (different backbones, different pretraining regimes,
 or a structurally different foundation-model pipeline) produces real, additive gains at near-zero
 extra training cost; ensembling the same architecture on disjoint data subsets does not
@@ -1753,21 +1866,37 @@ beyond the diagnostic latency measurement in <a href="#s8-7">&sect;8.7</a>.</p>
 COCO-ResNet50 result, and the 0.8594 ensemble on a second, independent surgical-instrument dataset
 before treating any of them as "the" accuracy number for this approach. Candidate datasets have been
 researched but not yet acted on.</li>
+<li><b>Measure run-to-run variance.</b> No result in this report has been repeated across seeds
+(<a href="#s11">Section&nbsp;11</a>). Three seeds on a handful of key configurations &mdash; the
+weighted-loss detection change, the copy-paste comparison, and at minimum the two-model ensemble step
+&mdash; is a few GPU-hours and would directly confirm or remove several of this report's smaller
+claimed effects, most of which are currently asserted from single runs.</li>
 <li><b>Decide deliberately, not by default, whether to pursue a fifth ensemble member or a stronger
 backbone.</b> Diminishing returns are already visible by the fourth member
 (<a href="#s8-6">&sect;8.6</a>); this should be a conscious cost/benefit call, not an assumed next
 step.</li>
-<li><b>Re-derive the ensemble build-up decision under a properly held-out protocol</b> (fold1/fold2
-rather than official) to produce a cleaner estimate of whether each addition would have been chosen
-without official-test feedback, addressing the <a href="#s9-3">&sect;9.3</a> methodological tension
-directly rather than only disclosing it.</li>
+<li><b>The &sect;9.3 methodological tension does not have a cheap fix.</b> An earlier draft of this
+recommendation proposed re-deriving the ensemble build-up decision on fold1/fold2 instead of official
+test. On inspection this is not executable as a re-evaluation: every ensemble member (both MobileNetV3
+Mask R-CNNs, the COCO ResNet-50, and the SAM2 decoder) was trained on all 8 official-train cases, so
+evaluating those same checkpoints on fold1 would repeat the exact training-set-reuse leakage caught
+and killed in <a href="#s7-6">&sect;7.6</a>. Doing this properly would mean retraining all four members
+fold-scoped &mdash; including the 4.8 GPU-hour COCO ResNet-50 run and a fresh SAM2 decoder fine-tune,
+twice each, once per fold &mdash; and the result would be a different set of models from the one
+reported here, not a cleaner estimate of the same one. This is flagged as a real, uncosted piece of
+future work rather than a quick follow-up.</li>
 <li><b>Only after 1&ndash;3 are satisfied, begin the efficiency pass (priority 3):</b> quantization,
 pruning, distillation, or a smaller SAM2 checkpoint, targeting first the 398ms SAM2 image-encoder
 bottleneck identified in <a href="#s8-7">&sect;8.7</a>, and evaluating parallel (rather than
 sequential) execution of the ensemble's four members across processes/GPUs.</li>
-<li><b>Measure the box-then-mask model's own speed/size independently</b> (still not done, Limitation
-#7) &mdash; and consider retraining its box-drawing component from scratch as a check that the inherited
-box accuracy is not hiding a blind spot.</li>
+<li><b>Prioritize box localization quality over further mask-head work.</b> The gap decomposition in
+<a href="#s7-8">&sect;7.8</a> shows the mask head already retains &sim;96.8% of the box detector's own
+quality, so most of the remaining 8.8-point gap to TAPIS likely sits in box localization, not masking.
+Concretely: revisit backbone/pretraining strength for the box stage specifically (as
+<a href="#s8-2">&sect;8.2</a> did for the whole pipeline), rather than continuing to iterate on the mask
+head alone.</li>
+<li>Measure ONNX/CPU latency for the box-then-mask model specifically (still missing, Limitation #7;
+GPU latency is already known: 84.8ms, <a href="#s8-7">&sect;8.7</a>).</li>
 <li><b>One final combined accuracy-vs-cost chart</b> spanning every model in this report (classification,
 detection, segmentation, single models and the ensemble) once the above are complete.</li>
 </ol>
@@ -1843,6 +1972,7 @@ than repeated here.</p>
 <tr><td>Primary workstation CPU/RAM</td><td>i5, 32GB RAM, Ubuntu</td></tr>
 <tr><td>Secondary dev machine</td><td>Windows laptop, RTX 4060 8GB, Ada Lovelace &mdash; verified independently, used for CPU-only dataloader benchmarking and lighter jobs</td></tr>
 <tr><td>Dataset</td><td>GraSP, arXiv 2401.11174, github.com/BCV-Uniandes/GraSP</td></tr>
+<tr><td>TAPIS reference model and evaluation code</td><td>Same repository (github.com/BCV-Uniandes/GraSP) as the dataset. Not run against this project's predictions &mdash; see the verification caveat in <a href="#s11">Section&nbsp;11</a>.</td></tr>
 <tr><td>Native resolution</td><td>1280&times;800, all splits</td></tr>
 <tr><td>Total annotated frames</td><td>3449 (2324 train + 1125 test), integrity-checked, 0 corrupt</td></tr>
 <tr><td>Dataloader throughput, uncached (CPU, dev laptop)</td><td>58.2 img/s (0 workers) &rarr; 388.8 img/s (8 workers)</td></tr>
