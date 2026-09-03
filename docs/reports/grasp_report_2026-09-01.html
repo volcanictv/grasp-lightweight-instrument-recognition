@@ -94,18 +94,37 @@ a fixed baseline, and reported honestly including when it didn't work.
 <tr><td>Per-instance, 2-checkpoint ensemble (MobileNetV3)</td><td class="num">0.848</td><td class="num">0.889</td><td class="small">averaging two already-trained models, no extra training</td></tr>
 <tr><td>Per-instance, single model (ResNet-50, 224px)</td><td class="num">0.870</td><td class="num">0.914</td><td class="small">heavier backbone, same crop preprocessing — see below</td></tr>
 <tr><td>Per-instance, single model (ResNet-50, 320px)</td><td class="num">0.876</td><td class="num">0.920</td><td class="small">resolution helps once capacity is sufficient (it didn't on its own)</td></tr>
-<tr class="hi"><td>Per-instance, 4-checkpoint ensemble (2x ResNet-50 + 2x MobileNetV3)</td><td class="num">0.893</td><td class="num">0.927</td><td class="small">current best — still no extra training beyond the four component models</td></tr>
+<tr class="hi"><td>Per-instance, 4-checkpoint ensemble, flat average (current best)</td><td class="num">0.893</td><td class="num">0.927</td><td class="small">2x ResNet-50 + 2x MobileNetV3, no extra training — confirmed on a held-out split, see below</td></tr>
 </table>
+<p class="small">
+<b>A number this report briefly reported and then walked back, on purpose
+— the process is the point.</b> A follow-up weighting scheme (favoring the
+strongest single model, resnet50_320, at 0.40 instead of a flat 0.25 each)
+looked like a further improvement on the official test set (macro-F1
+0.9031, a broad-looking sweep optimum). Before trusting it, all four
+models were retrained from scratch on a genuinely separate data split
+(fold1) and the same weight sweep was repeated on that held-out fold.
+<b>It did not replicate</b> — the held-out fold actually favored flat
+weighting slightly over 0.40. That specific weight value had been tuned
+to the official test set's particular composition, not a real
+generalizing improvement, so it was reverted. The underlying architecture
+choices (ResNet-50, the resolution increase, the letterbox crop) were
+checked the same way and did generalize — every individual model's
+held-out result lands within about a point of its official-test number.
+0.893/0.927 (flat weighting) is the number that survived that check, and
+is reported here for that reason, not because it was the highest number
+seen this round.
+</p>
 <p class="small">
 GPU cost of the current best (4 models combined): ~17ms per instance,
 negligible. CPU cost is a real, honest trade-off — ResNet-50 is
 substantially slower than MobileNetV3-Small on CPU specifically
 (MobileNetV3's whole design point is CPU efficiency; ResNet-50 doesn't have
-that advantage). The exact CPU multiplier has an unresolved measurement
-discrepancy between two benchmarking runs (6-49x depending on which run is
-trusted) — flagged rather than picked, and worth a controlled re-check
-before quoting a precise number. Either way, still far from prohibitive for
-an offline pipeline, but not the free upgrade the GPU number alone suggests.
+that advantage), on the order of 10-20x based on a clean, uncontended
+benchmark (an earlier reading of up to 49x turned out to be measurement
+contention from other jobs running on the same machine at the time, not a
+real hardware difference). Still far from prohibitive for an offline
+pipeline, but not the free upgrade the GPU number alone suggests.
 </p>
 
 <h2>Rare-class performance</h2>
@@ -179,16 +198,32 @@ visual similarity to chase next, not a diffuse weakness.
 <ul>
 <li><b>A handful of visually similar instrument pairs</b> (Bipolar Forceps / Prograsp Forceps; Large Needle Driver / Monopolar Curved Scissors) account for most of the remaining confusion. This shows up identically in two separately-trained models, which is why it reads as a real property of the data rather than one model's quirk.</li>
 <li><b>Elongated crops lose their most informative region under a fixed-size resize.</b> Preserving the crop's true proportions instead of stretching it fixed several of the confused pairs directly and measurably.</li>
-<li><b>The two rarest classes are fragile in a specific way: they get worse whenever a fix reallocates decision weight toward other classes, and better only when the model gets more capacity to work with.</b> Five different reallocation-style fixes (reweighting, tighter crops, restricted crops, thresholds) all made them worse — a heavier backbone is what actually helped, and it helped every class, not just these two.</li>
+<li><b>The two rarest classes are fragile in a specific way: they get worse whenever a fix reallocates decision weight toward other classes, and better only when the model gets more capacity to work with.</b> Six different reallocation-style fixes (reweighting, tighter crops, restricted crops, thresholds, and a fine-tuned ensemble weight — see the overfitting check below) all made them worse or didn't hold up — a heavier backbone is what actually helped, and it helped every class, not just these two.</li>
+<li><b>The one substantial confusion left (Laparoscopic Grasper / Suction Instrument) has a specific, confirmed physical cause, not vague similarity.</b> Checked real misclassified crops directly: when this instrument's jaws are closed, it's a smooth featureless shaft indistinguishable from a suction tube — there's no visual information left to tell them apart. Correctly-classified examples clearly show an open jaw. Tested whether looking at nearby video frames finds a moment the jaws open (even a wide, ~13-second search) — it doesn't, for the specific cases checked; this isn't fixable by looking harder at the same kind of information.</li>
 </ul>
+
+<h2>An overfitting check that caught something real</h2>
+<p>
+This round tried ~15-20 configurations, all selected by scoring against the
+same official test set repeatedly. Rather than trust that, the full winning
+recipe was retrained from scratch on a separate data split (fold1) and
+re-evaluated on that split's own held-out cases. The architecture choices —
+ResNet-50, the resolution increase, the letterbox crop — <b>all
+generalized cleanly</b>, landing within about a point of their official-test
+numbers. But a follow-up fine-tuned ensemble weight, which had looked like
+a further real improvement on official test, <b>did not replicate</b> on
+the held-out split — it was reverted, and the flat-averaged ensemble
+(0.893/0.927) is what's reported above as a result. This is the process
+working as intended: a specific, over-fit number was caught and corrected
+before being reported as real, rather than after.
+</p>
 
 <h2>Plan forward</h2>
 <ol>
 <li>Treat upstream localization (detection/segmentation) as a given input, not something to redesign — keep the existing code there working, but it isn't the focus.</li>
-<li>Capacity turned out to be a real, live lever for the confused pairs and the rare classes both, not just a framing/data problem as initially assumed, and resolution compounds with it once capacity is sufficient — checked directly rather than assumed, both paid off. Whether a further capacity step keeps paying off, or this is now past the point of diminishing returns, is the next open question, not assumed either way.</li>
-<li>Get a properly held-out calibration set (not the training data itself) before trusting per-class decision thresholds beyond the one already validated — there's real headroom, but it isn't trustworthy yet for the rarest classes.</li>
-<li>Laparoscopic Grasper's remaining errors concentrate specifically on confusion with Suction Instrument, not a diffuse weakness — worth chasing that specific pair directly next, rather than another general-purpose technique.</li>
-<li>Resolve the CPU-latency benchmark discrepancy (two runs of the same architecture disagreed by 6-49x) before quoting a precise deployment-cost number in anything more formal than this page.</li>
+<li>Laparoscopic Grasper vs. Suction Instrument's closed-jaw ambiguity is a genuine ceiling for single-frame, single-video-window classification given what's been tried — the next real lever is more training examples of this specific confusion, not another technique applied to the same information.</li>
+<li>Get a properly held-out calibration set before trusting per-class decision thresholds beyond the one already validated.</li>
+<li>A once-open item, now closed: the CPU-latency discrepancy (two runs of the same architecture had disagreed by 6-49x) turned out to be ordinary system load on a shared 4-core machine, not a benchmarking bug — confirmed with a clean, idle re-measurement.</li>
 </ol>
 
 </div>
