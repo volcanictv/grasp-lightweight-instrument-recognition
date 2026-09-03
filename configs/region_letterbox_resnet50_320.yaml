@@ -1,0 +1,24 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 320 # one-variable ablation vs region_letterbox_resnet50.yaml (224
+                   # there) -- see docs/DECISIONS.md 2026-09-02. Resolution alone
+                   # (same MobileNetV3 backbone) was negative; ResNet-50 alone (224px)
+                   # was the biggest single-model win this session. This tests
+                   # whether resolution adds anything now that capacity isn't the
+                   # bottleneck, rather than assuming either result generalizes.
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
