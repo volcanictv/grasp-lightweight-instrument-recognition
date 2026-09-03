@@ -49,3 +49,7 @@ SAR-RARP50/
 # Generated error-gallery crops + built page (scripts/generate_error_gallery.py,
 # scripts/build_error_gallery_page.py) -- reproducible output, not source.
 error_gallery/
+
+# ONNX exports from scripts/evaluate_int8_quantization.py -- reproducible
+# output (240MB, fp32 + int8 per model), not source.
+onnx_export/
