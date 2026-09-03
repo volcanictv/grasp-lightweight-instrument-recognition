@@ -59,16 +59,22 @@ def evaluate_checkpoint(checkpoint: Path, ds, class_names, device, image_size) -
 
 
 def find_hard_example_probs(checkpoint: Path, ds, class_names, device, hard_example: str):
-    idx = next((i for i, (fn, *_r) in enumerate(ds.instances) if hard_example in fn), None)
-    if idx is None:
+    """A frame can hold multiple annotated instruments -- return every
+    instance whose file matches, not just the first, so the caller can
+    identify which one is the actually-diagnosed Grasper/Suction case."""
+    indices = [i for i, (fn, *_r) in enumerate(ds.instances) if hard_example in fn]
+    if not indices:
         return None
     model = build_model("resnet50", num_classes=len(class_names), pretrained=False, freeze_backbone=False).to(device)
     model.load_state_dict(torch.load(checkpoint, map_location=device), strict=False)
     model.eval()
-    image, label = ds[idx]
-    with torch.no_grad():
-        probs = torch.softmax(model(image.unsqueeze(0).to(device)), dim=1)[0].cpu().numpy()
-    return probs, label.item()
+    results = []
+    for idx in indices:
+        image, label = ds[idx]
+        with torch.no_grad():
+            probs = torch.softmax(model(image.unsqueeze(0).to(device)), dim=1)[0].cpu().numpy()
+        results.append((probs, label.item()))
+    return results
 
 
 def main() -> None:
@@ -94,14 +100,14 @@ def main() -> None:
         print(f"true Grasper -> pred Suction: {cm[grasper_idx, suction_idx]} / {cm[grasper_idx].sum()} true Grasper instances")
         print(f"true Suction -> pred Grasper: {cm[suction_idx, grasper_idx]} / {cm[suction_idx].sum()} true Suction instances")
 
-        result = find_hard_example_probs(checkpoint, ds, class_names, device, args.hard_example)
-        if result is None:
+        results = find_hard_example_probs(checkpoint, ds, class_names, device, args.hard_example)
+        if results is None:
             print(f"hard example {args.hard_example} not found in {args.split} split")
         else:
-            probs, true_label = result
-            pred_label = class_names[probs.argmax()]
-            print(f"hard example {args.hard_example}: true={class_names[true_label]} pred={pred_label} "
-                  f"P(Grasper)={probs[grasper_idx]:.3f} P(Suction)={probs[suction_idx]:.3f}")
+            for probs, true_label in results:
+                pred_label = class_names[probs.argmax()]
+                print(f"hard example {args.hard_example} [true={class_names[true_label]}]: pred={pred_label} "
+                      f"P(Grasper)={probs[grasper_idx]:.3f} P(Suction)={probs[suction_idx]:.3f}")
 
 
 if __name__ == "__main__":
