@@ -1,0 +1,27 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 320 # one-variable ablation vs region_letterbox_crop.yaml (224 there) --
+                   # see docs/DECISIONS.md 2026-09-02. Letterboxing fixed the
+                   # crop's *distortion*, not its *resolution* -- the tip can
+                   # still be a small number of absolute pixels even when
+                   # correctly proportioned. Motivated by the crop-size error
+                   # analysis (docs/error_analysis.md): smallest-quartile
+                   # instances already show 3x the error rate of the largest
+                   # quartile at 224px, suggesting resolution itself is a live
+                   # lever, not just aspect ratio.
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

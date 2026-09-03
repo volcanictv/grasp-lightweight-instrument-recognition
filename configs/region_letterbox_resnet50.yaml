@@ -1,0 +1,26 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2
+  image_size: 224 # kept at 224 deliberately -- isolates capacity as the one
+                   # variable vs region_letterbox_crop.yaml, separate from the
+                   # resolution question tested in region_letterbox_crop_320.yaml.
+                   # See docs/DECISIONS.md 2026-09-02, case-3 plan step 2: is the
+                   # genuine-similarity confusion (Laparoscopic Grasper / Suction
+                   # Instrument) a resolution problem or a capacity problem --
+                   # Task A's backbone sweep showed capacity helps overall but
+                   # was never isolated for these specific hard pairs.
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
