@@ -1,0 +1,36 @@
+# Task B inference-time ensemble config -- not a training config (no
+# training/loss/model sections in the usual sense), just the set of
+# already-trained checkpoints to combine and how to weight them.
+#
+# weight_resnet50_320 default is 0.40, kept as the operational default by
+# deliberate choice (2026-09-03) even though the fold1/fold2 confirmatory
+# check found it does not clearly beat flat weighting on held-out data --
+# see docs/DECISIONS.md, "Fold1/fold2 confirmatory check" entry. The
+# validated, reported-as-best number for this project is the flat ensemble
+# (weight 0.25 each, macro-F1 0.8929); 0.40 is what's actually run
+# operationally, disclosed as a choice, not a re-claim that it's proven
+# better. Change this single value to test a different weight -- the
+# remaining three members always split (1 - weight_resnet50_320) equally.
+weight_resnet50_320: 0.40
+
+members:
+  - checkpoint: experiments/region_letterbox_resnet50_320_20260902-234246/best.pt
+    model: resnet50
+    image_size: 320
+    letterbox: true
+    label: resnet50_320
+  - checkpoint: experiments/region_letterbox_resnet50_20260902-225519/best.pt
+    model: resnet50
+    image_size: 224
+    letterbox: true
+    label: resnet50_224
+  - checkpoint: experiments/region_baseline_20260831-182451/best.pt
+    model: mobilenet_v3_small
+    image_size: 224
+    letterbox: false
+    label: baseline
+  - checkpoint: experiments/region_letterbox_crop_20260902-152750/best.pt
+    model: mobilenet_v3_small
+    image_size: 224
+    letterbox: true
+    label: letterbox_crop

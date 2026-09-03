@@ -1,21 +1,22 @@
-"""Weighted 4-model Task B ensemble (2x ResNet-50 + 2x MobileNetV3),
-favoring resnet50_320 over a flat average. Motivated by a specific failure
-found checking known hard examples against the flat-averaged ensemble
-(docs/DECISIONS.md, 2026-09-03): resnet50_320 alone confidently got a
-Bipolar-Forceps-as-Prograsp-Forceps case right, but got outvoted 3-to-1 by
-weaker models under flat 1/4-each averaging. Swept a fixed weight on the
-full official test set rather than per-instance confidence weighting
-(confidence weighting was shown, in an earlier ensemble, to favor whichever
-model is more confident even when that model is wrong -- not what's
-wanted here).
+"""Weighted Task B ensemble, driven by configs/region_ensemble.yaml (the
+member checkpoints and default weight) instead of hardcoded values, so the
+weight can be changed on the fly for testing without touching code --
+requested directly, 2026-09-03, after the fold1/fold2 confirmatory check
+found the fine-tuned weight (0.40) doesn't clearly beat flat weighting on
+held-out data (docs/DECISIONS.md). 0.40 is kept as the operational
+default by deliberate choice, not because it's confirmed to generalize --
+see the config file's own comment for the full disclosure. The validated,
+reported-as-best number for this project is the flat ensemble (weight
+0.25 each, macro-F1 0.8929); this script's default is what's actually run
+day to day.
 
---weight-320 default (0.40) was chosen by a sweep against the official
-test set -- see docs/DECISIONS.md's overfitting-risk entry, same date,
-for the important caveat that this makes it a test-set-selected value,
-not yet confirmed on an independent held-out split.
+--weight-320 overrides the config's default for a quick one-off test
+without editing the file. Pass 0.25 to reproduce flat averaging exactly.
 
 Usage:
-    python scripts/evaluate_region_ensemble_weighted.py --weight-320 0.40
+    python scripts/evaluate_region_ensemble_weighted.py
+    python scripts/evaluate_region_ensemble_weighted.py --weight-320 0.25
+    python scripts/evaluate_region_ensemble_weighted.py --config configs/region_ensemble.yaml --split fold1
 """
 from __future__ import annotations
 
@@ -29,23 +30,18 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import numpy as np
 import torch
+import yaml
 from sklearn.metrics import f1_score, precision_recall_fscore_support
 
 from surgical_ai.data.region_dataset import GraspRegionDataset
 from surgical_ai.data.transforms import build_transforms
 from surgical_ai.models import build_model
 
-DEFAULT_MEMBERS = [
-    ("experiments/region_letterbox_resnet50_320_20260902-234246/best.pt", "resnet50", 320, True),
-    ("experiments/region_letterbox_resnet50_20260902-225519/best.pt", "resnet50", 224, True),
-    ("experiments/region_baseline_20260831-182451/best.pt", "mobilenet_v3_small", 224, False),
-    ("experiments/region_letterbox_crop_20260902-152750/best.pt", "mobilenet_v3_small", 224, True),
-]
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--weight-320", type=float, default=0.40, help="weight for resnet50_320; remainder split equally across the other three")
+    parser.add_argument("--config", type=Path, default=REPO_ROOT / "configs" / "region_ensemble.yaml")
+    parser.add_argument("--weight-320", type=float, default=None, help="override the config's weight for resnet50_320; remainder split equally across the other members")
     parser.add_argument("--split", default="test")
     parser.add_argument(
         "--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSp"))
@@ -57,19 +53,25 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     device = torch.device(args.device)
-    print(f"device: {device}, weight(resnet50_320)={args.weight_320}")
+    ensemble_config = yaml.safe_load(args.config.read_text())
+    members = ensemble_config["members"]
+    weight_320 = args.weight_320 if args.weight_320 is not None else ensemble_config["weight_resnet50_320"]
+    print(f"device: {device}, config={args.config}, weight(resnet50_320)={weight_320}")
 
     class_names = None
     y_true = None
     all_probs = []
-    for ckpt, model_name, image_size, letterbox in DEFAULT_MEMBERS:
-        ds = GraspRegionDataset(args.data_root, args.split, transform=build_transforms(image_size, train=False), letterbox=letterbox)
+    for member in members:
+        ds = GraspRegionDataset(
+            args.data_root, args.split, transform=build_transforms(member["image_size"], train=False),
+            letterbox=member["letterbox"],
+        )
         if class_names is None:
             class_names = ds.class_names_ordered()
             y_true = np.array([lbl for _fn, _seg, _box, lbl in ds.instances])
 
-        model = build_model(model_name, num_classes=len(class_names), pretrained=False, freeze_backbone=False).to(device)
-        model.load_state_dict(torch.load(REPO_ROOT / ckpt, map_location=device), strict=False)
+        model = build_model(member["model"], num_classes=len(class_names), pretrained=False, freeze_backbone=False).to(device)
+        model.load_state_dict(torch.load(REPO_ROOT / member["checkpoint"], map_location=device), strict=False)
         model.eval()
 
         loader = torch.utils.data.DataLoader(ds, batch_size=32, shuffle=False, num_workers=4)
@@ -78,10 +80,14 @@ def main() -> None:
             for images, _labels in loader:
                 logits = model(images.to(device))
                 probs.append(torch.softmax(logits, dim=1).cpu().numpy())
-        all_probs.append(np.concatenate(probs))
+        probs = np.concatenate(probs)
+        all_probs.append(probs)
+        print(f"  {member['label']}: standalone accuracy={(probs.argmax(axis=1)==y_true).mean():.4f}")
 
-    w_rest = (1 - args.weight_320) / (len(DEFAULT_MEMBERS) - 1)
-    avg = args.weight_320 * all_probs[0] + w_rest * sum(all_probs[1:])
+    # first config entry is the weighted member; the rest split the remainder equally
+    n_rest = len(members) - 1
+    w_rest = (1 - weight_320) / n_rest
+    avg = weight_320 * all_probs[0] + w_rest * sum(all_probs[1:])
     y_pred = avg.argmax(axis=1)
 
     acc = (y_pred == y_true).mean()
