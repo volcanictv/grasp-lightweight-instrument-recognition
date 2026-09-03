@@ -62,14 +62,20 @@ def main() -> None:
 
     specs = []
     for m in args.members:
-        ckpt, model_name, crop_mode = m.rsplit(":", 2)
-        specs.append((Path(ckpt), model_name, crop_mode == "letterbox"))
+        parts = m.split(":")
+        if len(parts) == 4:
+            ckpt, model_name, crop_mode, image_size = parts
+            image_size = int(image_size)
+        else:
+            ckpt, model_name, crop_mode = parts
+            image_size = args.image_size
+        specs.append((Path(ckpt), model_name, crop_mode == "letterbox", image_size))
 
     class_names = None
     y_true = None
     all_probs = []
-    for ckpt, model_name, letterbox in specs:
-        ds = GraspRegionDataset(args.data_root, args.split, transform=build_transforms(args.image_size, train=False), letterbox=letterbox)
+    for ckpt, model_name, letterbox, image_size in specs:
+        ds = GraspRegionDataset(args.data_root, args.split, transform=build_transforms(image_size, train=False), letterbox=letterbox)
         if class_names is None:
             class_names = ds.class_names_ordered()
             y_true = np.array([lbl for _fn, _seg, _box, lbl in ds.instances])
