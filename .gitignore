@@ -40,3 +40,8 @@ docs/generalization_datasets.md
 docs/*.log
 docs/figures/
 docs/samples/
+
+# Generalization test datasets -- not redistributed via git, tens of GB.
+EndoVis2017/
+EndoVis2018/
+SAR-RARP50/
