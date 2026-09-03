@@ -1,0 +1,20 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # see region_letterbox_resnet50_fold1.yaml -- same reasoning, this is the
+               # 320px variant's fold1 counterpart.
+  image_size: 320
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

@@ -1,0 +1,19 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # fold1 counterpart of region_letterbox_crop.yaml -- see docs/DECISIONS.md 2026-09-03.
+  image_size: 224
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

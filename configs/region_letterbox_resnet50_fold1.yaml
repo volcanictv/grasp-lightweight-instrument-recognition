@@ -1,0 +1,22 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # confirmatory check, not official -- see docs/DECISIONS.md 2026-09-03's
+               # overfitting-risk entry. Identical recipe to region_letterbox_resnet50.yaml
+               # (the official-test-selected winner), trained on fold1 so fold2 can be used
+               # as a genuinely held-out check before trusting the official-test result.
+  image_size: 224
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
