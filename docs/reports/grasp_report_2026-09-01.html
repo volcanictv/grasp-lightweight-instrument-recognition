@@ -55,33 +55,33 @@ a { color: var(--blue); }
 <h1>Surgical Instrument Classification on GraSP</h1>
 <div class="subtitle">Status — 2026-09-03</div>
 
-<h2>What we set out to do</h2>
+<h2>What was set out to do</h2>
 <p>
 Given a surgical video frame from GraSP, identify which of 7 instruments is
 present (Bipolar Forceps, Prograsp Forceps, Large Needle Driver, Monopolar
 Curved Scissors, Suction Instrument, Clip Applier, Laparoscopic Grasper).
-This is scoped to <b>classification only</b>. Once accuracy was solid, we
-also wanted to know whether the classifier had actually learned to
-recognize instruments, or just memorized GraSP's own footage — so we
-tested it against surgical video it had never seen (EndoVis 2017 and
-2018, two independent public datasets).
+This is scoped to <b>classification only</b>. Once accuracy was solid,
+whether the classifier had actually learned to recognize instruments, or
+just memorized GraSP's own footage, was also investigated — it was tested
+against surgical video it had never seen (EndoVis 2017 and 2018, two
+independent public datasets).
 </p>
 
-<h2>How we approached it</h2>
+<h2>How it was approached</h2>
 <p>
 GraSP frames routinely contain 2-3 instruments at once, and the instrument
 mix is heavily imbalanced (the rarest class has ~25x fewer examples than
-the most common). We classify each instrument individually, given its
+the most common). Each instrument is classified individually, given its
 location, rather than trying to describe a whole frame at once — this
-alone resolved most of the rare-class problem. From there we scaled up
-model capacity and resolution, fixed a crop-preprocessing issue that was
-compressing an instrument's most distinctive part, and combined multiple
-trained models into an ensemble. Every change was tested in isolation
-against a fixed baseline, changing one variable at a time so we could
-tell exactly which change caused which result. Every reported number was
-also re-checked by retraining the full recipe from scratch on a separate
-held-out data split and re-evaluating there, not just scored against the
-same test set each time.
+alone resolved most of the rare-class problem. From there, model capacity
+and resolution were scaled up, a crop-preprocessing issue that was
+compressing an instrument's most distinctive part was fixed, and multiple
+trained models were combined into an ensemble. Every change was tested in
+isolation against a fixed baseline, changing one variable at a time to
+isolate exactly which change caused which result. Every reported number
+was also re-checked by retraining the full recipe from scratch on a
+separate held-out data split and re-evaluating there, not just scored
+against the same test set each time.
 </p>
 
 <h2>Results</h2>
@@ -153,7 +153,7 @@ misclassified test case is browsable directly:
 <h2>Does it generalize beyond GraSP?</h2>
 <p>
 A model that only works on the exact dataset it was trained on isn't
-that useful. We ran the classifier, completely unmodified and with no
+that useful. The classifier was run, completely unmodified and with no
 retraining, against two independent public surgical video datasets
 (EndoVis 2017 and 2018) that share part of GraSP's instrument set.
 </p>
@@ -168,16 +168,16 @@ retraining, against two independent public surgical video datasets
 The three bulkiest, most visually distinct instruments transferred well
 (F1 0.45–0.73) on camera setups and instrument hardware the model had
 never seen. Two thinner instruments did not transfer on at least one of
-the two datasets — we checked why and traced it to hardware differences
-between datasets (a different instrument generation/manufacturer), not a
+the two datasets — this was investigated and traced to hardware
+differences between datasets (a different instrument generation/manufacturer), not a
 flaw in the model: the same class that failed on one external dataset
 scored well on the other, with the identical unmodified classifier.
 </p>
 
 <h2>Efficiency</h2>
 <p>
-We checked whether the model could be made faster or smaller without
-losing accuracy, and the standard first technique (INT8 quantization) was
+Whether the model could be made faster or smaller without losing accuracy
+was investigated, and the standard first technique (INT8 quantization) was
 tested directly rather than assumed to help — it made the model
 measurably slower on standard CPU hardware and cost real accuracy: 1-4
 points off the two ResNet-50 models, and 63-74 points off the two
@@ -195,12 +195,12 @@ pipeline:
 <a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
 </p>
 
-<h2>Limitations, and what we're doing about them</h2>
+<h2>Limitations, and what's being done about them</h2>
 <div class="callout">
 <p><b>Laparoscopic Grasper vs. Suction Instrument.</b> When this
 instrument's jaws are closed, it's a smooth, featureless shaft —
-visually identical to a suction tube in a single still frame. We ruled
-out four different approaches: a narrow (~20-frame) and a wide
+visually identical to a suction tube in a single still frame. Four
+different approaches were ruled out: a narrow (~20-frame) and a wide
 (~200-frame, ~13-second) search across nearby video frames for a moment
 the jaws open, checking GraSP's own action-state labels as a non-visual
 signal, and a targeted fine-tune explicitly pushing the two classes'
