@@ -41,6 +41,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint-a", type=Path, required=True)
     parser.add_argument("--checkpoint-b", type=Path, required=True)
+    parser.add_argument("--model-a", default="mobilenet_v3_small")
+    parser.add_argument("--model-b", default="mobilenet_v3_small")
     parser.add_argument("--num-classes", type=int, default=7)
     parser.add_argument("--image-size", type=int, default=224)
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
@@ -79,8 +81,8 @@ def benchmark_combined_gpu_latency(
     return float(np.median(times_ms)), float(np.percentile(times_ms, 95)), peak_vram
 
 
-def load_model(checkpoint: Path, num_classes: int, device: torch.device) -> torch.nn.Module:
-    model = build_model("mobilenet_v3_small", num_classes=num_classes, pretrained=False, freeze_backbone=False).to(device)
+def load_model(checkpoint: Path, model_name: str, num_classes: int, device: torch.device) -> torch.nn.Module:
+    model = build_model(model_name, num_classes=num_classes, pretrained=False, freeze_backbone=False).to(device)
     model.load_state_dict(torch.load(checkpoint, map_location=device), strict=False)
     model.eval()
     return model
@@ -90,14 +92,16 @@ def main() -> None:
     args = parse_args()
     device = torch.device(args.device)
 
-    model_a = load_model(args.checkpoint_a, args.num_classes, device)
-    model_b = load_model(args.checkpoint_b, args.num_classes, device)
+    model_a = load_model(args.checkpoint_a, args.model_a, args.num_classes, device)
+    model_b = load_model(args.checkpoint_b, args.model_b, args.num_classes, device)
 
-    macs, params = count_macs_params(model_a, args.image_size, device)
+    macs_a, params_a = count_macs_params(model_a, args.image_size, device)
+    macs_b, params_b = count_macs_params(model_b, args.image_size, device)
     size_a = model_file_size_bytes(args.checkpoint_a)
     size_b = model_file_size_bytes(args.checkpoint_b)
-    print(f"per-model: params={params} macs={macs} size_a={size_a/1024/1024:.2f}MB size_b={size_b/1024/1024:.2f}MB")
-    print(f"combined (2 models): params={2*params} size={(size_a+size_b)/1024/1024:.2f}MB\n")
+    print(f"model A ({args.model_a}): params={params_a} macs={macs_a} size={size_a/1024/1024:.2f}MB")
+    print(f"model B ({args.model_b}): params={params_b} macs={macs_b} size={size_b/1024/1024:.2f}MB")
+    print(f"combined (2 models): params={params_a+params_b} size={(size_a+size_b)/1024/1024:.2f}MB\n")
 
     stats_a, vram_a = benchmark_gpu_latency(model_a, device, args.image_size)
     print(f"Model A alone: median={stats_a.median_ms:.3f}ms p95={stats_a.p95_ms:.3f}ms peak_vram={vram_a:.1f}MB")
