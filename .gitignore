@@ -45,3 +45,7 @@ docs/samples/
 EndoVis2017/
 EndoVis2018/
 SAR-RARP50/
+
+# Generated error-gallery crops + built page (scripts/generate_error_gallery.py,
+# scripts/build_error_gallery_page.py) -- reproducible output, not source.
+error_gallery/
