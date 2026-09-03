@@ -519,6 +519,39 @@ are exactly the kind of thing that only shows up once stages are actually
 connected -- neither would be visible from the individual-stage numbers
 this project had before.
 
+### Same pipeline, the project's actual best segmentation result (4-way ensemble)
+
+The run above used the single official MobileNetV3 Mask R-CNN for
+detect+segment, not this project's best available result -- flagged
+directly and corrected: `scripts/evaluate_end_to_end_pipeline_full_ensemble.py`
+wires the same Task B classification stage onto the actual 4-way ensemble
+(3 Mask R-CNN checkpoints + fine-tuned SAM2, `weighted_fusion_merge`,
+AP50_segm 0.8594) instead, discarding the ensemble's own fused class label
+the same way. Measured on the same 100 real official-test frames:
+
+| stage | median | p95 |
+|---|---|---|
+| Detect + segment (4-way ensemble, fused) | 604.39ms | 636.89ms |
+| Classification (all instances) | 47.49ms | 90.79ms |
+| **Total per frame** | **651.16ms** | **731.86ms** |
+
+Classification accuracy on the 217 real TP-matched instances: **0.8802** --
+notably higher than the single-model pipeline's 0.8493, and closer to Task
+B's oracle-box accuracy (0.889). This makes sense: the 4-way ensemble's
+better localization and mask quality (AP50_segm 0.8594 vs. 0.8101) gives
+the classifier cleaner crops, so more of the oracle-box accuracy survives
+contact with real detections.
+
+The obvious tradeoff: ~604ms vs. ~31ms for detect+segment, ~19x slower,
+almost entirely SAM2's image encoder (previously measured standalone at
+~398ms/frame). This is the real accuracy/latency choice this project's
+components currently offer for a full pipeline -- not a hypothetical one:
+0.8493 accuracy at 67ms/frame (~15fps-equivalent workload, still 2x over
+the 33ms budget) vs. 0.8802 accuracy at 651ms/frame (~1.5fps-equivalent,
+~20x over budget). Neither is real-time yet; closing that gap is squarely
+Milestone 10's (deferred efficiency phase) territory, not something to
+solve by picking a bigger model.
+
 ## Negative result: tip-crop is worse than both the plain crop and the letterbox crop
 
 `configs/region_tip_crop.yaml` (`crop_mode: tip`, `tip_crop_frac: 0.45`) --
