@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Surgical Instrument Classification — Status</title>
+<title>Surgical Instrument Classification: Status</title>
 <style>
 :root {
   --navy: #1f3a5f;
@@ -53,7 +53,7 @@ a { color: var(--blue); }
 <div class="wrap">
 
 <h1>Surgical Instrument Classification on GraSP</h1>
-<div class="subtitle">Status — 2026-09-03</div>
+<div class="subtitle">Status: 2026-09-03</div>
 
 <h2>What was set out to do</h2>
 <p>
@@ -62,7 +62,7 @@ present (Bipolar Forceps, Prograsp Forceps, Large Needle Driver, Monopolar
 Curved Scissors, Suction Instrument, Clip Applier, Laparoscopic Grasper).
 This is scoped to <b>classification only</b>. Once accuracy was solid,
 whether the classifier had actually learned to recognize instruments, or
-just memorized GraSP's own footage, was also investigated — it was tested
+just memorized GraSP's own footage, was also investigated. It was tested
 against surgical video it had never seen (EndoVis 2017 and 2018, two
 independent public datasets).
 </p>
@@ -72,7 +72,7 @@ independent public datasets).
 GraSP frames routinely contain 2-3 instruments at once, and the instrument
 mix is heavily imbalanced (the rarest class has ~25x fewer examples than
 the most common). Each instrument is classified individually, given its
-location, rather than trying to describe a whole frame at once — this
+location, rather than trying to describe a whole frame at once. This
 alone resolved most of the rare-class problem. From there, model capacity
 and resolution were scaled up, a crop-preprocessing issue that was
 compressing an instrument's most distinctive part was fixed, and multiple
@@ -88,7 +88,7 @@ against the same test set each time.
 <div class="tablewrap">
 <table>
 <tr><th>configuration</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
-<tr><td>Whole-frame baseline (all instruments in a frame at once)</td><td class="num">0.708</td><td class="num">—</td></tr>
+<tr><td>Whole-frame baseline (all instruments in a frame at once)</td><td class="num">0.708</td><td class="num">n/a</td></tr>
 <tr><td>Per-instrument classifier, single lightweight model</td><td class="num">0.827</td><td class="num">0.882</td></tr>
 <tr><td>Per-instrument, heavier backbone (ResNet-50)</td><td class="num">0.876</td><td class="num">0.920</td></tr>
 <tr class="hi"><td>Per-instrument, 4-model ensemble (current)</td><td class="num">0.903</td><td class="num">0.934</td></tr>
@@ -98,8 +98,8 @@ against the same test set each time.
 Current model: an ensemble of two ResNet-50 checkpoints and two
 MobileNetV3 checkpoints. Runs in ~17ms/instance on GPU and ~61ms/instance
 on CPU (measured on a current laptop CPU, not the project's older
-reference workstation — the two ResNet-50 members account for nearly all
-of that cost; the two lightweight members cost under 2ms each).
+reference workstation; the two ResNet-50 members account for nearly all
+of that cost, and the two lightweight members cost under 2ms each).
 </p>
 
 <h3>Rare-class performance</h3>
@@ -107,7 +107,7 @@ of that cost; the two lightweight members cost under 2ms each).
 These two classes have very few test examples and are where earlier,
 simpler fixes tended to backfire: stronger class reweighting raised
 recall but collapsed precision, and cropping in tighter around just the
-instrument tip discarded context both classes needed — both made results
+instrument tip discarded context both classes needed. Both made results
 worse, not better.
 </p>
 <div class="tablewrap">
@@ -142,7 +142,7 @@ these numbers by several points.
 </div>
 <p class="small">
 Two patterns account for nearly all of it: a few instrument pairs that
-look alike (Bipolar/Prograsp Forceps, Needle Driver/Monopolar Scissors —
+look alike (Bipolar/Prograsp Forceps, Needle Driver/Monopolar Scissors,
 confirmed by checking that independently-trained models make the exact
 same mistakes on the exact same pairs), and Laparoscopic Grasper vs.
 Suction Instrument, addressed under Limitations below. Every
@@ -168,7 +168,7 @@ retraining, against two independent public surgical video datasets
 The three bulkiest, most visually distinct instruments transferred well
 (F1 0.45–0.73) on camera setups and instrument hardware the model had
 never seen. Two thinner instruments did not transfer on at least one of
-the two datasets — this was investigated and traced to hardware
+the two datasets. This was investigated and traced to hardware
 differences between datasets (a different instrument generation/manufacturer), not a
 flaw in the model: the same class that failed on one external dataset
 scored well on the other, with the identical unmodified classifier.
@@ -178,7 +178,7 @@ scored well on the other, with the identical unmodified classifier.
 <p>
 Whether the model could be made faster or smaller without losing accuracy
 was investigated, and the standard first technique (INT8 quantization) was
-tested directly rather than assumed to help — it made the model
+tested directly rather than assumed to help. It made the model
 measurably slower on standard CPU hardware and cost real accuracy: 1-4
 points off the two ResNet-50 models, and 63-74 points off the two
 lightweight models, which collapsed to near-random. Not adopted. The
@@ -188,8 +188,8 @@ ResNet-50 checkpoints requires new training.
 
 <h2>Handoff</h2>
 <p>
-A clean, integration-ready package — the trained ensemble plus a single
-<code>predict()</code> call, no training or experiment code — is ready for
+A clean, integration-ready package (the trained ensemble plus a single
+<code>predict()</code> call, no training or experiment code) is ready for
 another team to integrate against their own detection/localization
 pipeline:
 <a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
@@ -198,8 +198,8 @@ pipeline:
 <h2>Limitations, and what's being done about them</h2>
 <div class="callout">
 <p><b>Laparoscopic Grasper vs. Suction Instrument.</b> When this
-instrument's jaws are closed, it's a smooth, featureless shaft —
-visually identical to a suction tube in a single still frame. Four
+instrument's jaws are closed, it's a smooth, featureless shaft, visually
+identical to a suction tube in a single still frame. Four
 different approaches were ruled out: a narrow (~20-frame) and a wide
 (~200-frame, ~13-second) search across nearby video frames for a moment
 the jaws open, checking GraSP's own action-state labels as a non-visual
