@@ -1,0 +1,23 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold2 # fold2 counterpart of region_context_expand_fold1.yaml -- confirmatory check
+               # per this project's standing fold1/fold2 discipline before adopting anything.
+  image_size: 320
+  augmentation: default # default | strong
+  letterbox_crop: true
+  context_expand: true
+  context_area_threshold: 0.04
+  context_expand_factor: 2.0
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
