@@ -111,23 +111,39 @@ def plot_confusion_matrices(
 
 
 def plot_multiclass_confusion_matrix(
-    cm: np.ndarray, class_names: list[str], out_path: Path
+    cm: np.ndarray, class_names: list[str], out_path: Path, normalize: bool = False
 ) -> None:
-    """cm: (N, N) counts, rows=true, cols=pred (Task B, single-label)."""
+    """cm: (N, N) counts, rows=true, cols=pred (Task B, single-label).
+
+    `normalize=True` divides each row by its true-class total, so cells read
+    as % of that class's instances rather than raw counts -- raw counts
+    conflate a class's confusion rate with its support (Monopolar Curved
+    Scissors has ~5x Clip Applier's instance count, so equal-looking count
+    cells mean very different error rates). A class with zero support keeps
+    its row at zero rather than dividing by zero.
+    """
+    display = cm.astype(np.float64)
+    if normalize:
+        row_sums = display.sum(axis=1, keepdims=True)
+        display = np.divide(display, row_sums, out=np.zeros_like(display), where=row_sums > 0)
+
     fig, ax = plt.subplots(figsize=(6, 5.5))
-    ax.imshow(cm, cmap="Blues")
+    ax.imshow(display, cmap="Blues", vmin=0, vmax=1 if normalize else None)
     ax.set_xticks(range(len(class_names)))
     ax.set_yticks(range(len(class_names)))
     ax.set_xticklabels(class_names, rotation=45, ha="right")
     ax.set_yticklabels(class_names)
     ax.set_xlabel("predicted")
     ax.set_ylabel("true")
+    threshold = (1.0 if normalize else display.max()) / 2
     for i in range(len(class_names)):
         for j in range(len(class_names)):
+            label = f"{display[i, j] * 100:.1f}%" if normalize else str(int(display[i, j]))
             ax.text(
-                j, i, str(cm[i, j]), ha="center", va="center",
-                color="white" if cm[i, j] > cm.max() / 2 else "black", fontsize=8,
+                j, i, label, ha="center", va="center",
+                color="white" if display[i, j] > threshold else "black", fontsize=8,
             )
+    ax.set_title("row-normalized: % of each true class" if normalize else None)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
