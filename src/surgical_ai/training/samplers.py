@@ -5,6 +5,7 @@ baseline configs leave it "none".
 
 from __future__ import annotations
 
+import numpy as np
 import torch
 from torch.utils.data import Sampler, WeightedRandomSampler
 
@@ -28,3 +29,29 @@ def build_sampler(mode: str, samples: list[tuple[str, torch.Tensor]]) -> Sampler
     label_counts = labels.sum(dim=0)
     weights = compute_sample_weights(labels, label_counts)
     return WeightedRandomSampler(weights, num_samples=len(samples), replacement=True)
+
+
+def compute_area_oversample_weights(
+    area_fracs: np.ndarray, threshold: float, boost: float
+) -> np.ndarray:
+    """Binary weight keyed on instance mask area (not class frequency): every
+    instance below `threshold` (same area-fraction definition used by the
+    class-conditional abstention gate, `docs/DECISIONS.md` 2026-09-04) gets
+    `boost`x the sampling weight of everything else. Distinct axis from
+    `compute_sample_weights` above -- this is Task B's per-instance area, not
+    Task A's per-frame class rarity -- and deliberately uniform across
+    classes so it stays a one-variable change against the class-conditional
+    area-gate finding rather than compounding two hypotheses in one run.
+    """
+    weights = np.ones_like(area_fracs, dtype=np.float64)
+    weights[area_fracs < threshold] = boost
+    return weights
+
+
+def build_region_area_sampler(
+    area_fracs: np.ndarray, threshold: float, boost: float
+) -> WeightedRandomSampler:
+    weights = compute_area_oversample_weights(area_fracs, threshold, boost)
+    return WeightedRandomSampler(
+        torch.from_numpy(weights), num_samples=len(weights), replacement=True
+    )

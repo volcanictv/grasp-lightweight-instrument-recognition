@@ -72,7 +72,7 @@ from surgical_ai.training.losses import (  # noqa: E402
     compute_class_weights,  # also used for detection's box-classification loss
     compute_pos_weight,
 )
-from surgical_ai.training.samplers import build_sampler  # noqa: E402
+from surgical_ai.training.samplers import build_region_area_sampler, build_sampler  # noqa: E402
 from surgical_ai.training.trainer import (  # noqa: E402
     collect_detections,
     count_parameters,
@@ -207,9 +207,14 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
     letterbox_min_aspect = config["data"].get("letterbox_min_aspect", 1.0)
     crop_mode = config["data"].get("crop_mode", "bbox")
     tip_crop_frac = config["data"].get("tip_crop_frac", 0.45)
+    context_expand = config["data"].get("context_expand", False)
+    context_area_threshold = config["data"].get("context_area_threshold", 0.04)
+    context_expand_factor = config["data"].get("context_expand_factor", 2.0)
     region_kwargs = dict(
         letterbox=letterbox, letterbox_min_aspect=letterbox_min_aspect,
         crop_mode=crop_mode, tip_crop_frac=tip_crop_frac,
+        context_expand=context_expand, context_area_threshold=context_area_threshold,
+        context_expand_factor=context_expand_factor,
     )
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
@@ -222,9 +227,30 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
     )
     class_names = train_ds.class_names_ordered()
 
+    sampling = config["data"].get("sampling", "none")
+    sampler = None
+    if sampling == "area_weighted":
+        # Distinct axis from Task A's class-frequency `weighted` sampler --
+        # keyed on each instance's own mask area fraction (same definition
+        # as the class-conditional area-abstention gate, docs/DECISIONS.md
+        # 2026-09-04), not its class label. See samplers.py docstring.
+        area_oversample_threshold = config["data"].get("area_oversample_threshold", 0.04)
+        area_oversample_factor = config["data"].get("area_oversample_factor", 3.0)
+        area_fracs = np.array(
+            [
+                decode_instance_mask(seg).sum() / (seg["size"][0] * seg["size"][1])
+                for _fn, seg, _box, _label in train_ds.instances
+            ]
+        )
+        sampler = build_region_area_sampler(
+            area_fracs, area_oversample_threshold, area_oversample_factor
+        )
+    elif sampling != "none":
+        raise ValueError(f"unknown data.sampling '{sampling}'. Valid: none, area_weighted")
+
     train_loader = torch.utils.data.DataLoader(
-        train_ds, batch_size=config["training"]["batch_size"], shuffle=True,
-        num_workers=args.num_workers,
+        train_ds, batch_size=config["training"]["batch_size"],
+        shuffle=(sampler is None), sampler=sampler, num_workers=args.num_workers,
     )
     val_loader = torch.utils.data.DataLoader(
         val_ds, batch_size=config["training"]["batch_size"], shuffle=False,

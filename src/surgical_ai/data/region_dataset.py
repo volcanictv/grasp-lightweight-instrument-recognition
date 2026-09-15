@@ -55,6 +55,9 @@ class GraspRegionDataset(Dataset):
         letterbox_min_aspect: float = 1.0,
         crop_mode: str = "bbox",
         tip_crop_frac: float = 0.45,
+        context_expand: bool = False,
+        context_area_threshold: float = 0.04,
+        context_expand_factor: float = 2.0,
     ):
         """`letterbox=True` pads the mask-cropped instance to a square (zeros,
         matching the mask-zeroed background already used) before any resize
@@ -80,6 +83,27 @@ class GraspRegionDataset(Dataset):
         elongated crops is the follow-up meant to keep the fix's benefit
         while reducing how much of the fixed-size canvas becomes wasted
         black padding overall.
+
+        `context_expand=True` (only meaningful for `crop_mode="bbox"`)
+        targets the small-instance error population directly instead of
+        gating it: `docs/DECISIONS.md` 2026-09-04's area-abstention work
+        found the small-crop accuracy crater is a genuine "not enough
+        signal in the crop" problem for four classes, not something
+        confidence-based abstention alone should absorb when the coverage
+        floor is tighter than that gate can afford. When an instance's own
+        *mask* area (matching the same area-fraction definition the
+        abstention gate uses, not the bbox rectangle) is below
+        `context_area_threshold`, the bbox is expanded by
+        `context_expand_factor` around its center (clipped to the frame)
+        and cropped *without* the usual mask-multiply -- the point is to
+        hand the model surrounding tissue/scene context a tiny, empty-
+        background crop can't provide, so zeroing that same context back
+        out would defeat it. This deliberately reintroduces the risk the
+        mask-multiply step exists to prevent (a second, co-occurring
+        instrument leaking into a single-label sample) for exactly this
+        small population -- an explicit, testable trade, not an oversight.
+        Instances at or above the threshold are unaffected and keep the
+        normal mask-multiplied crop.
         """
         if crop_mode not in ("bbox", "tip"):
             raise ValueError(f"unknown crop_mode '{crop_mode}'. Valid: bbox, tip")
@@ -91,6 +115,9 @@ class GraspRegionDataset(Dataset):
         self.letterbox_min_aspect = letterbox_min_aspect
         self.crop_mode = crop_mode
         self.tip_crop_frac = tip_crop_frac
+        self.context_expand = context_expand
+        self.context_area_threshold = context_area_threshold
+        self.context_expand_factor = context_expand_factor
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -148,11 +175,15 @@ class GraspRegionDataset(Dataset):
         if self.crop_mode == "tip":
             crop = self._tip_crop(frame, mask, x, y, w, h, height, width)
         else:
-            # Clip defensively -- bbox rounding can push a coordinate 1px
-            # past the frame edge.
-            x0, y0 = max(0, x), max(0, y)
-            x1, y1 = min(width, x + w), min(height, y + h)
-            crop = (frame[y0:y1, x0:x1] * mask[y0:y1, x0:x1, None]).astype(np.uint8)
+            area_frac = mask.sum() / (height * width)
+            if self.context_expand and area_frac < self.context_area_threshold:
+                crop = self._context_crop(frame, x, y, w, h, height, width)
+            else:
+                # Clip defensively -- bbox rounding can push a coordinate 1px
+                # past the frame edge.
+                x0, y0 = max(0, x), max(0, y)
+                x1, y1 = min(width, x + w), min(height, y + h)
+                crop = (frame[y0:y1, x0:x1] * mask[y0:y1, x0:x1, None]).astype(np.uint8)
 
             if self.letterbox:
                 ch, cw = crop.shape[:2]
@@ -223,3 +254,18 @@ class GraspRegionDataset(Dataset):
         # non-square -- pad rather than let the downstream resize distort it,
         # same reasoning as the letterbox option above.
         return _pad_to_square(crop)
+
+    def _context_crop(
+        self, frame: np.ndarray, x: int, y: int, w: int, h: int, height: int, width: int,
+    ) -> np.ndarray:
+        """Expands the bbox by `context_expand_factor` around its center and
+        crops the raw frame -- no mask-multiply, unlike every other crop mode
+        here. See the class docstring's `context_expand` section for why.
+        """
+        cx, cy = x + w / 2.0, y + h / 2.0
+        half_w, half_h = (w * self.context_expand_factor) / 2.0, (h * self.context_expand_factor) / 2.0
+        x0 = max(0, int(round(cx - half_w)))
+        y0 = max(0, int(round(cy - half_h)))
+        x1 = min(width, int(round(cx + half_w)))
+        y1 = min(height, int(round(cy + half_h)))
+        return frame[y0:y1, x0:x1].astype(np.uint8)
