@@ -1,0 +1,25 @@
+task: region_classification
+model:
+  name: resnet101
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold2 # one-variable capacity ablation vs region_letterbox_resnet50_320_fold1.yaml
+               # (2026-09-04): resolution (384px) and stronger augmentation both looked like
+               # real wins on fold1 and neither replicated on fold2 (docs/DECISIONS.md).
+               # Capacity is the other well-motivated, untried lever -- Grad-CAM found several
+               # genuine-similarity mistakes where attention is already correctly placed on the
+               # tip and the model is still wrong, which resolution didn't fix; this tests
+               # whether more backbone capacity (not more input pixels) resolves any of that.
+  image_size: 320
+  augmentation: default
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

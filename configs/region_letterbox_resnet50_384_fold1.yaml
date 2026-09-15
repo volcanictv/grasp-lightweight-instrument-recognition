@@ -1,0 +1,26 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # one-variable resolution ablation vs region_letterbox_resnet50_320_fold1.yaml
+               # (2026-09-04): the residual, member-disagreement errors left after the area/
+               # confidence abstention gates concentrate in the jawed-forceps and thin-shaft
+               # families; Grad-CAM found several of these are genuine fine-grained similarity
+               # with attention already correctly placed on the tip, not a preprocessing bug --
+               # this tests whether more input resolution resolves any of that, isolated from
+               # every other variable (same seed, same fold, same augmentation/loss).
+  image_size: 384
+  augmentation: default
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32 # kept identical to the 320px baseline -- resolution is the only intended
+                  # variable; only drop this if 384px genuinely doesn't fit in 12GB.
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

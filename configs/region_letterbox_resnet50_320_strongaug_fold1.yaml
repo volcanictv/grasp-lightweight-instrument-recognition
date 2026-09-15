@@ -1,0 +1,24 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # one-variable ablation vs region_letterbox_resnet50_320_fold1.yaml
+               # (2026-09-04): "strong" augmentation (data/transforms.py) has never
+               # been tried for Task B/region classification -- only tested for
+               # detection, where it regressed both mAPs (docs/DECISIONS.md,
+               # 2026-08-31). Testing here rather than assuming that result
+               # transfers to a different task and architecture.
+  image_size: 320
+  augmentation: strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
