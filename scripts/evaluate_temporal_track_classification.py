@@ -154,10 +154,13 @@ def main() -> None:
 
         sorted_local_idxs = sorted(track_masks)
         crops = []
+        frame_area_fracs = []
         for local_idx in sorted_local_idxs:
             frame = np.array(Image.open(tmp_dir / f"{local_idx:05d}.jpg").convert("RGB"))
-            crop = crop_from_mask(frame, track_masks[local_idx], letterbox=True, letterbox_min_aspect=args.letterbox_min_aspect)
+            mask = track_masks[local_idx]
+            crop = crop_from_mask(frame, mask, letterbox=True, letterbox_min_aspect=args.letterbox_min_aspect)
             crops.append(transform(Image.fromarray(crop)) if crop is not None else None)
+            frame_area_fracs.append(float(mask.sum() / (mask.shape[0] * mask.shape[1])))
 
         valid = [(i, c) for i, c in enumerate(crops) if c is not None]
         if not valid:
@@ -176,11 +179,22 @@ def main() -> None:
         avg_softmax_pred = int(probs.mean(axis=0).argmax())
 
         results.append({
-            "case": case, "frame": frame_stem, "true": class_names[label], "area_pct": float(area_fracs[idx] * 100),
-            "track_len": len(valid),
+            "case": case, "frame": frame_stem, "true": class_names[label], "true_idx": int(label),
+            "area_pct": float(area_fracs[idx] * 100), "track_len": len(valid),
             "single_frame_pred": class_names[single_pred], "single_frame_correct": single_pred == label,
             "majority_vote_pred": class_names[majority_pred], "majority_vote_correct": majority_pred == label,
             "avg_softmax_pred": class_names[avg_softmax_pred], "avg_softmax_correct": avg_softmax_pred == label,
+            # per-frame data for training a learnable aggregator downstream (docs/DECISIONS.md 2026-09-15):
+            # offset is real frame distance from the GT center frame, softmax/area_frac let an aggregator
+            # learn per-frame reliability instead of the fixed uniform-average rule used above.
+            "frames": [
+                {
+                    "offset": sorted_local_idxs[li] - center_idx,
+                    "area_frac": frame_area_fracs[li],
+                    "softmax": probs[i].tolist(),
+                }
+                for i, (li, _c) in enumerate(valid)
+            ],
         })
         print(f"[{n}] {case}/{frame_stem} {class_names[label]} (area={area_fracs[idx]*100:.2f}%, track_len={len(valid)}): "
               f"single={'OK' if single_pred == label else class_names[single_pred]} "
