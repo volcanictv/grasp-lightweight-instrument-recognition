@@ -1,0 +1,96 @@
+{
+  "run_id": "region_area_oversample_fold1_20260905-060854",
+  "config": {
+    "task": "region_classification",
+    "model": {
+      "name": "resnet50",
+      "pretrained": true,
+      "freeze_backbone": false
+    },
+    "data": {
+      "split": "fold1",
+      "image_size": 320,
+      "augmentation": "default",
+      "letterbox_crop": true,
+      "sampling": "area_weighted",
+      "area_oversample_threshold": 0.04,
+      "area_oversample_factor": 3.0
+    },
+    "loss": {
+      "type": "cross_entropy",
+      "class_weights": true
+    },
+    "training": {
+      "batch_size": 32,
+      "epochs": 20,
+      "lr": 0.001,
+      "backbone_lr": 0.0001,
+      "seed": 42
+    }
+  },
+  "config_path": "configs\\region_area_oversample_fold1.yaml",
+  "git": {
+    "commit": null,
+    "dirty": null,
+    "note": "not a git repository"
+  },
+  "seed": 42,
+  "split_files": {
+    "fold2": {
+      "path": "C:\\Users\\aryan\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold2.json",
+      "sha256": "05720a1edafa7f7d571c5fda0c9d9c82d734765f306c2e0313ba9d13b4c564aa"
+    },
+    "fold1": {
+      "path": "C:\\Users\\aryan\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold1.json",
+      "sha256": "7301b6ee9c2a8ea5e511800b6adf19c8bc43345827d832aa2018d09935255cbc"
+    }
+  },
+  "package_versions": {
+    "python": "3.14.6",
+    "torch": "2.13.0+cu126",
+    "torchvision": "0.28.0+cu126"
+  },
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "driver_capability": [
+      8,
+      9
+    ],
+    "torch_cuda_build": "12.6"
+  },
+  "trainable_params": 23522375,
+  "total_params": 23522375,
+  "wall_clock_seconds": 4484.374470233917,
+  "best_checkpoint": "C:\\Users\\aryan\\Classification Surgurical Tools\\experiments\\region_area_oversample_fold1_20260905-060854\\best.pt",
+  "final_metrics": {
+    "accuracy": 0.9044822256568779,
+    "macro_f1": 0.87414637512392,
+    "per_class_f1": {
+      "Bipolar Forceps": 0.8962264150943396,
+      "Prograsp Forceps": 0.8412903225806452,
+      "Large Needle Driver": 0.875,
+      "Monopolar Curved Scissors": 0.9650273224043716,
+      "Suction Instrument": 0.9306431273644389,
+      "Clip Applier": 0.896551724137931,
+      "Laparoscopic Grasper": 0.7142857142857143
+    },
+    "per_class_precision": {
+      "Bipolar Forceps": 0.926829268292683,
+      "Prograsp Forceps": 0.8380462724935732,
+      "Large Needle Driver": 0.8120915032679739,
+      "Monopolar Curved Scissors": 0.9650273224043716,
+      "Suction Instrument": 0.9510309278350515,
+      "Clip Applier": 0.8666666666666667,
+      "Laparoscopic Grasper": 0.8024691358024691
+    },
+    "per_class_recall": {
+      "Bipolar Forceps": 0.867579908675799,
+      "Prograsp Forceps": 0.844559585492228,
+      "Large Needle Driver": 0.9484732824427481,
+      "Monopolar Curved Scissors": 0.9650273224043716,
+      "Suction Instrument": 0.9111111111111111,
+      "Clip Applier": 0.9285714285714286,
+      "Laparoscopic Grasper": 0.6435643564356436
+    }
+  }
+}
