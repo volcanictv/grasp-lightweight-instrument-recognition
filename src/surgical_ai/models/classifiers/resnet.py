@@ -6,7 +6,14 @@ for why ResNet-50 specifically was picked over e.g. a ViT or TAPIS itself.
 from __future__ import annotations
 
 import torch.nn as nn
-from torchvision.models import ResNet18_Weights, ResNet50_Weights, resnet18, resnet50
+from torchvision.models import (
+    ResNet18_Weights,
+    ResNet50_Weights,
+    ResNet101_Weights,
+    resnet18,
+    resnet50,
+    resnet101,
+)
 
 from surgical_ai.models.classifiers.common import freeze_all_except, set_head
 from surgical_ai.models.registry import register_model
@@ -36,3 +43,8 @@ def build_resnet18(num_classes: int, pretrained: bool, freeze_backbone: bool) ->
 @register_model("resnet50")
 def build_resnet50(num_classes: int, pretrained: bool, freeze_backbone: bool) -> nn.Module:
     return _build_resnet(resnet50, ResNet50_Weights, num_classes, pretrained, freeze_backbone)
+
+
+@register_model("resnet101")
+def build_resnet101(num_classes: int, pretrained: bool, freeze_backbone: bool) -> nn.Module:
+    return _build_resnet(resnet101, ResNet101_Weights, num_classes, pretrained, freeze_backbone)
