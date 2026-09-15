@@ -1,0 +1,177 @@
+<title>Where the Box Comes From</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #182225;
+  --sub: #5c6b6f;
+  --bg: #f6f7f6;
+  --panel: #ffffff;
+  --border: #dbe1e0;
+  --train: #2f6f6a;
+  --train-soft: #e6f0ee;
+  --deploy: #a8622d;
+  --deploy-soft: #f6ece1;
+  --shared: #3a5a78;
+  --shared-soft: #e7edf2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e7ece9;
+    --sub: #9db0a9;
+    --bg: #10171a;
+    --panel: #16201f;
+    --border: #2a3634;
+    --train: #6cbdb2;
+    --train-soft: #16302c;
+    --deploy: #e0975e;
+    --deploy-soft: #33260f;
+    --shared: #7fa6c9;
+    --shared-soft: #1c2733;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e7ece9;
+  --sub: #9db0a9;
+  --bg: #10171a;
+  --panel: #16201f;
+  --border: #2a3634;
+  --train: #6cbdb2;
+  --train-soft: #16302c;
+  --deploy: #e0975e;
+  --deploy-soft: #33260f;
+  --shared: #7fa6c9;
+  --shared-soft: #1c2733;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "IBM Plex Sans", Arial, sans-serif;
+  font-size: 15px; line-height: 1.5;
+}
+.wrap { max-width: 900px; margin: 0 auto; padding: 36px 24px 60px; }
+h1 { font-size: 1.5rem; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+.subtitle { color: var(--sub); font-size: 0.92rem; margin-bottom: 2em; max-width: 62ch; }
+
+.cols {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;
+}
+.col-head {
+  font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em; text-align: center;
+  padding-bottom: 10px; margin-bottom: 4px;
+}
+.col-head.train { color: var(--train); }
+.col-head.deploy { color: var(--deploy); }
+
+.box {
+  border-radius: 10px; border: 1px solid var(--border); padding: 12px 16px;
+  font-size: 0.92rem; text-align: center;
+}
+.box .label { font-weight: 600; display: block; margin-bottom: 3px; }
+.box .detail { color: var(--sub); font-size: 0.8rem; }
+.box.train { background: var(--train-soft); border-color: color-mix(in srgb, var(--train) 35%, var(--border)); }
+.box.deploy { background: var(--deploy-soft); border-color: color-mix(in srgb, var(--deploy) 35%, var(--border)); }
+.box.shared {
+  grid-column: 1 / 3; background: var(--shared-soft);
+  border-color: color-mix(in srgb, var(--shared) 35%, var(--border));
+}
+.box.shared .label { color: var(--shared); }
+
+.arrow-row { display: flex; justify-content: center; align-items: center; margin: 4px 0; grid-column: 1 / 2; }
+.arrow-row.right { grid-column: 2 / 3; }
+.arrow-row.full { grid-column: 1 / 3; }
+.arrow {
+  font-family: "IBM Plex Mono", monospace; color: var(--sub); font-size: 1.1rem;
+}
+.merge-note {
+  grid-column: 1 / 3; text-align: center; font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem; color: var(--shared); text-transform: uppercase; letter-spacing: 0.05em;
+  margin: 2px 0;
+}
+
+.grid5 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+
+.legend {
+  display: flex; gap: 20px; margin-top: 2.2em; padding-top: 1em; border-top: 1px solid var(--border);
+  font-size: 0.85rem; color: var(--sub); flex-wrap: wrap;
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.swatch.train { background: var(--train); }
+.swatch.deploy { background: var(--deploy); }
+.swatch.shared { background: var(--shared); }
+</style>
+
+<div class="wrap">
+  <h1>Where the Box Comes From</h1>
+  <div class="subtitle">
+    The classifier's own steps never change. The only difference between
+    training/evaluation and real deployment is who draws the box around
+    the instrument before that crop reaches it.
+  </div>
+
+  <div class="grid5">
+    <div class="col-head train">Training &amp; evaluation</div>
+    <div class="col-head deploy">Deployment</div>
+
+    <div class="box train">
+      <span class="label">Annotated GraSP frame</span>
+      <span class="detail">a frame a person has labeled</span>
+    </div>
+    <div class="box deploy">
+      <span class="label">Raw video frame</span>
+      <span class="detail">any frame, never annotated</span>
+    </div>
+
+    <div class="arrow-row"><span class="arrow">↓</span></div>
+    <div class="arrow-row right"><span class="arrow">↓</span></div>
+
+    <div class="box train">
+      <span class="label">Human-drawn box + mask</span>
+      <span class="detail">the ground truth</span>
+    </div>
+    <div class="box deploy">
+      <span class="label">Detector/segmenter's predicted box + mask</span>
+      <span class="detail">a separate trained model's guess</span>
+    </div>
+
+    <div class="arrow-row"><span class="arrow">↓</span></div>
+    <div class="arrow-row right"><span class="arrow">↓</span></div>
+
+    <div class="merge-note">↓ same process either way, from here down ↓</div>
+
+    <div class="box shared">
+      <span class="label">Crop the instrument region</span>
+      <span class="detail">mask zeroes out anything else in the box</span>
+    </div>
+
+    <div class="arrow-row full"><span class="arrow">↓</span></div>
+
+    <div class="box shared">
+      <span class="label">Classifier</span>
+      <span class="detail">the same 4-model ensemble, either way</span>
+    </div>
+
+    <div class="arrow-row"><span class="arrow">↓</span></div>
+    <div class="arrow-row right"><span class="arrow">↓</span></div>
+
+    <div class="box train">
+      <span class="label">Compare to the true label</span>
+      <span class="detail">this is how accuracy (0.934) gets measured</span>
+    </div>
+    <div class="box deploy">
+      <span class="label">Predicted class, used downstream</span>
+      <span class="detail">no ground truth exists to check it against</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="swatch train"></span> ground truth (needs a human label)</span>
+    <span><span class="swatch deploy"></span> a model's own prediction (no human involved)</span>
+    <span><span class="swatch shared"></span> identical in both paths</span>
+  </div>
+</div>
