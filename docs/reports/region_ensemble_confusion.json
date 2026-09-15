@@ -1,0 +1,138 @@
+{
+  "class_names": [
+    "Bipolar Forceps",
+    "Prograsp Forceps",
+    "Large Needle Driver",
+    "Monopolar Curved Scissors",
+    "Suction Instrument",
+    "Clip Applier",
+    "Laparoscopic Grasper"
+  ],
+  "confusion_matrix": [
+    [
+      765,
+      17,
+      13,
+      6,
+      5,
+      0,
+      3
+    ],
+    [
+      36,
+      266,
+      5,
+      3,
+      9,
+      1,
+      10
+    ],
+    [
+      16,
+      7,
+      418,
+      3,
+      2,
+      2,
+      1
+    ],
+    [
+      2,
+      2,
+      0,
+      823,
+      15,
+      0,
+      2
+    ],
+    [
+      0,
+      6,
+      0,
+      1,
+      301,
+      0,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      2,
+      2,
+      34,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      10,
+      1,
+      66
+    ]
+  ],
+  "top_confused_pairs": [
+    {
+      "true": "Prograsp Forceps",
+      "predicted": "Bipolar Forceps",
+      "count": 36,
+      "pct_of_true_class": 10.909090909090908
+    },
+    {
+      "true": "Bipolar Forceps",
+      "predicted": "Prograsp Forceps",
+      "count": 17,
+      "pct_of_true_class": 2.1013597033374536
+    },
+    {
+      "true": "Large Needle Driver",
+      "predicted": "Bipolar Forceps",
+      "count": 16,
+      "pct_of_true_class": 3.5634743875278394
+    },
+    {
+      "true": "Monopolar Curved Scissors",
+      "predicted": "Suction Instrument",
+      "count": 15,
+      "pct_of_true_class": 1.7772511848341233
+    },
+    {
+      "true": "Bipolar Forceps",
+      "predicted": "Large Needle Driver",
+      "count": 13,
+      "pct_of_true_class": 1.6069221260815822
+    },
+    {
+      "true": "Prograsp Forceps",
+      "predicted": "Laparoscopic Grasper",
+      "count": 10,
+      "pct_of_true_class": 3.0303030303030303
+    },
+    {
+      "true": "Laparoscopic Grasper",
+      "predicted": "Suction Instrument",
+      "count": 10,
+      "pct_of_true_class": 12.345679012345679
+    },
+    {
+      "true": "Prograsp Forceps",
+      "predicted": "Suction Instrument",
+      "count": 9,
+      "pct_of_true_class": 2.727272727272727
+    },
+    {
+      "true": "Large Needle Driver",
+      "predicted": "Prograsp Forceps",
+      "count": 7,
+      "pct_of_true_class": 1.55902004454343
+    },
+    {
+      "true": "Bipolar Forceps",
+      "predicted": "Monopolar Curved Scissors",
+      "count": 6,
+      "pct_of_true_class": 0.7416563658838072
+    }
+  ]
+}
