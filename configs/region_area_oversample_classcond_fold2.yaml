@@ -1,0 +1,26 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold2 # fold2 counterpart of region_area_oversample_classcond_fold1.yaml -- confirmatory
+               # check per this project's standing fold1/fold2 discipline before adopting anything.
+  image_size: 320
+  augmentation: default # default | strong
+  letterbox_crop: true
+  sampling: area_weighted_classcond
+  area_oversample_threshold: 0.04
+  area_oversample_factor: 3.0
+  area_oversample_classes:
+    - Bipolar Forceps
+    - Prograsp Forceps
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

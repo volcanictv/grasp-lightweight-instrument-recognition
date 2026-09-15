@@ -72,7 +72,11 @@ from surgical_ai.training.losses import (  # noqa: E402
     compute_class_weights,  # also used for detection's box-classification loss
     compute_pos_weight,
 )
-from surgical_ai.training.samplers import build_region_area_sampler, build_sampler  # noqa: E402
+from surgical_ai.training.samplers import (  # noqa: E402
+    build_region_area_sampler,
+    build_region_area_sampler_classcond,
+    build_sampler,
+)
 from surgical_ai.training.trainer import (  # noqa: E402
     collect_detections,
     count_parameters,
@@ -245,8 +249,32 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
         sampler = build_region_area_sampler(
             area_fracs, area_oversample_threshold, area_oversample_factor
         )
+    elif sampling == "area_weighted_classcond":
+        # Class-conditional follow-up to area_weighted above (docs/DECISIONS.md
+        # 2026-09-05): the uniform boost helped Bipolar/Prograsp Forceps but
+        # cost Large Needle Driver/Monopolar Curved Scissors on the same
+        # small-area subset, so this restricts the boost to a named class
+        # list instead of every class below the threshold.
+        area_oversample_threshold = config["data"].get("area_oversample_threshold", 0.04)
+        area_oversample_factor = config["data"].get("area_oversample_factor", 3.0)
+        target_classes = config["data"]["area_oversample_classes"]
+        target_idx = {class_names.index(c) for c in target_classes}
+        area_fracs = np.array(
+            [
+                decode_instance_mask(seg).sum() / (seg["size"][0] * seg["size"][1])
+                for _fn, seg, _box, _label in train_ds.instances
+            ]
+        )
+        target_class_mask = np.array(
+            [label in target_idx for _fn, _seg, _box, label in train_ds.instances]
+        )
+        sampler = build_region_area_sampler_classcond(
+            area_fracs, target_class_mask, area_oversample_threshold, area_oversample_factor
+        )
     elif sampling != "none":
-        raise ValueError(f"unknown data.sampling '{sampling}'. Valid: none, area_weighted")
+        raise ValueError(
+            f"unknown data.sampling '{sampling}'. Valid: none, area_weighted, area_weighted_classcond"
+        )
 
     train_loader = torch.utils.data.DataLoader(
         train_ds, batch_size=config["training"]["batch_size"],

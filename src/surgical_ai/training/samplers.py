@@ -55,3 +55,31 @@ def build_region_area_sampler(
     return WeightedRandomSampler(
         torch.from_numpy(weights), num_samples=len(weights), replacement=True
     )
+
+
+def compute_class_conditional_area_oversample_weights(
+    area_fracs: np.ndarray, target_class_mask: np.ndarray, threshold: float, boost: float
+) -> np.ndarray:
+    """Same area-threshold rule as `compute_area_oversample_weights`, but the
+    boost is restricted to instances whose class is in `target_class_mask`.
+    `docs/DECISIONS.md` 2026-09-05's uniform version helped Bipolar Forceps
+    and Prograsp Forceps on the small-area subset but consistently cost
+    Large Needle Driver and Monopolar Curved Scissors on the same subset --
+    this restricts the boost to the classes it actually helped, leaving
+    everything else (including other small-area instances) at normal
+    sampling weight, as the untried follow-up flagged there.
+    """
+    weights = np.ones_like(area_fracs, dtype=np.float64)
+    weights[(area_fracs < threshold) & target_class_mask] = boost
+    return weights
+
+
+def build_region_area_sampler_classcond(
+    area_fracs: np.ndarray, target_class_mask: np.ndarray, threshold: float, boost: float
+) -> WeightedRandomSampler:
+    weights = compute_class_conditional_area_oversample_weights(
+        area_fracs, target_class_mask, threshold, boost
+    )
+    return WeightedRandomSampler(
+        torch.from_numpy(weights), num_samples=len(weights), replacement=True
+    )
