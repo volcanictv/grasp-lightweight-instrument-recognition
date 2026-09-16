@@ -53,158 +53,52 @@ a { color: var(--blue); }
 <div class="wrap">
 
 <h1>Surgical Instrument Classification on GraSP</h1>
-<div class="subtitle">Status: 2026-09-04</div>
+<div class="subtitle">Status: 2026-09-16</div>
 
-<h2>What was set out to do</h2>
 <p>
-Given a surgical video frame from GraSP, identify which of 7 instruments is
-present (Bipolar Forceps, Prograsp Forceps, Large Needle Driver, Monopolar
-Curved Scissors, Suction Instrument, Clip Applier, Laparoscopic Grasper).
-This is scoped to <b>classification only</b>. Once accuracy was solid,
-whether the classifier had actually learned to recognize instruments, or
-just memorized GraSP's own footage, was also investigated. It was tested
-against surgical video it had never seen (EndoVis 2017 and 2018, two
-independent public datasets).
-</p>
-
-<h2>How it was approached</h2>
-<p>
-GraSP frames routinely contain 2-3 instruments at once, and the instrument
-mix is heavily imbalanced (the rarest class has ~25x fewer examples than
-the most common). Each instrument is classified individually, given its
-location, rather than trying to describe a whole frame at once. This
-alone resolved most of the rare-class problem. From there, model capacity
-and resolution were scaled up, a crop-preprocessing issue that was
-compressing an instrument's most distinctive part was fixed, and multiple
-trained models were combined into an ensemble. Every change was tested in
-isolation against a fixed baseline, changing one variable at a time to
-isolate exactly which change caused which result. Every reported number
-was also re-checked by retraining the full recipe from scratch on a
-separate held-out data split and re-evaluating there, not just scored
-against the same test set each time.
+Identifies which of 7 instruments (Bipolar Forceps, Prograsp Forceps, Large
+Needle Driver, Monopolar Curved Scissors, Suction Instrument, Clip Applier,
+Laparoscopic Grasper) is present in a GraSP video frame, classified
+per-instrument rather than per-frame, since frames routinely hold 2-3
+instruments and the class mix is imbalanced (rarest class has ~25x fewer
+examples than the most common). Tested against two public datasets never
+seen during training (EndoVis 2017, 2018), to confirm the model learned
+instrument appearance rather than GraSP's own footage.
 </p>
 
 <h2>Results</h2>
 <div class="tablewrap">
 <table>
 <tr><th>configuration</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
-<tr><td>Whole-frame baseline (all instruments in a frame at once)</td><td class="num">0.708</td><td class="num">n/a</td></tr>
-<tr><td>Per-instrument classifier, single lightweight model</td><td class="num">0.827</td><td class="num">0.882</td></tr>
-<tr><td>Per-instrument, heavier backbone (ResNet-50)</td><td class="num">0.876</td><td class="num">0.920</td></tr>
-<tr class="hi"><td>Per-instrument, 4-model ensemble (current)</td><td class="num">0.894 &plusmn; 0.008</td><td class="num">0.926 &plusmn; 0.005</td></tr>
+<tr><td>Whole-frame baseline</td><td class="num">0.708</td><td class="num">n/a</td></tr>
+<tr><td>Per-instrument, single lightweight model</td><td class="num">0.827</td><td class="num">0.882</td></tr>
+<tr><td>Per-instrument, ResNet-50</td><td class="num">0.876</td><td class="num">0.920</td></tr>
+<tr class="hi"><td>4-model ensemble</td><td class="num">0.894 &plusmn; 0.008</td><td class="num">0.926 &plusmn; 0.005</td></tr>
 </table>
 </div>
 <p class="small">
-Ensemble row is mean &plusmn; SD across 5 independently retrained
-random seeds, not a single run. Current model: two ResNet-50
-checkpoints and two MobileNetV3 checkpoints. Runs in ~17ms/instance on
-GPU and ~61ms/instance on CPU (measured on a current laptop CPU, not
-the project's older reference workstation; the two ResNet-50 members
-account for nearly all of that cost, and the two lightweight members
-cost under 2ms each).
+Ensemble row: mean &plusmn; SD across 5 retrained seeds. Two ResNet-50 +
+two MobileNetV3 checkpoints, ~17ms/instance GPU, ~61ms/instance CPU. The
+specific checkpoint set used below and for temporal tracking scores
+0.9343 standalone, within this range but on the high side of it.
+Weakest classes: Laparoscopic Grasper (n=81) 0.800 F1, Clip Applier
+(n=38) 0.895 F1 &mdash; both got worse under stronger class reweighting
+and tighter tip-cropping, so neither was adopted. Full confusion
+breakdown: <a href="error_gallery_2026-09-03.html">error gallery</a>.
 </p>
 
-<h3>Rare-class performance</h3>
+<h2>Temporal tracking</h2>
 <p>
-These two classes have very few test examples and are where earlier,
-simpler fixes tended to backfire: stronger class reweighting raised
-recall but collapsed precision, and cropping in tighter around just the
-instrument tip discarded context both classes needed. Both made results
-worse, not better.
-</p>
-<div class="tablewrap">
-<table>
-<tr><th>class</th><th class="num">n (test)</th><th class="num">baseline</th><th class="num">+ ResNet-50</th><th class="num">final ensemble</th></tr>
-<tr><td>Monopolar Curved Scissors</td><td class="num">844</td><td class="num">0.939</td><td class="num">0.973</td><td class="num">0.978</td></tr>
-<tr><td>Bipolar Forceps</td><td class="num">809</td><td class="num">0.859</td><td class="num">0.926</td><td class="num">0.939</td></tr>
-<tr><td>Large Needle Driver</td><td class="num">449</td><td class="num">0.830</td><td class="num">0.924</td><td class="num">0.943</td></tr>
-<tr><td>Prograsp Forceps</td><td class="num">330</td><td class="num">0.727</td><td class="num">0.796</td><td class="num">0.846</td></tr>
-<tr><td>Suction Instrument</td><td class="num">310</td><td class="num">0.847</td><td class="num">0.885</td><td class="num">0.920</td></tr>
-<tr class="rare"><td><b>Laparoscopic Grasper</b></td><td class="num">81</td><td class="num">0.713</td><td class="num">0.726</td><td class="num"><b>0.800</b></td></tr>
-<tr class="rare"><td><b>Clip Applier</b></td><td class="num">38</td><td class="num">0.861</td><td class="num">0.864</td><td class="num"><b>0.895</b></td></tr>
-</table>
-</div>
-<p class="small">
-With only 38 and 81 test examples, a handful of flipped predictions moves
-these numbers by several points.
-</p>
-
-<h3>Where the remaining errors come from</h3>
-<div class="tablewrap">
-<table>
-<tr><th>true \ predicted</th><th class="num">Bipolar</th><th class="num">Prograsp</th><th class="num">Needle Dr.</th><th class="num">Monopolar</th><th class="num">Suction</th><th class="num">Clip App.</th><th class="num">Laparo.</th></tr>
-<tr><td>Bipolar Forceps (n=809)</td><td class="num cm-diag">94.6%</td><td class="num cm-off">2.1%</td><td class="num cm-off">1.6%</td><td class="num cm-off">0.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.4%</td></tr>
-<tr><td>Prograsp Forceps (n=330)</td><td class="num cm-off">10.9%</td><td class="num cm-diag">80.6%</td><td class="num cm-off">1.5%</td><td class="num cm-off">0.9%</td><td class="num cm-off">2.7%</td><td class="num cm-off">0.3%</td><td class="num cm-off">3.0%</td></tr>
-<tr><td>Large Needle Driver (n=449)</td><td class="num cm-off">3.6%</td><td class="num cm-off">1.6%</td><td class="num cm-diag">93.1%</td><td class="num cm-off">0.7%</td><td class="num cm-off">0.4%</td><td class="num cm-off">0.4%</td><td class="num cm-off">0.2%</td></tr>
-<tr><td>Monopolar Curved Scissors (n=844)</td><td class="num cm-off">0.2%</td><td class="num cm-off">0.2%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">97.5%</td><td class="num cm-off">1.8%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.2%</td></tr>
-<tr><td>Suction Instrument (n=310)</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.9%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.3%</td><td class="num cm-diag">97.1%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.6%</td></tr>
-<tr class="rare"><td>Clip Applier (n=38)</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">5.3%</td><td class="num cm-off">5.3%</td><td class="num cm-diag">89.5%</td><td class="num cm-off">0.0%</td></tr>
-<tr class="rare"><td>Laparoscopic Grasper (n=81)</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">12.3%</td><td class="num cm-off">1.2%</td><td class="num cm-diag">81.5%</td></tr>
-</table>
-</div>
-<p class="small">
-Each row is normalized to % of that true class's test instances, not raw
-counts, so a class's own confusion rate isn't hidden behind its support
-count (Monopolar Curved Scissors has about 5x Clip Applier's instance
-count; comparing raw cells would understate Clip Applier's error rate).
-Two patterns account for nearly all of it: a few instrument pairs that
-look alike (Bipolar/Prograsp Forceps, Needle Driver/Monopolar Scissors,
-confirmed by checking that independently-trained models make the exact
-same mistakes on the exact same pairs), and Laparoscopic Grasper vs.
-Suction Instrument, addressed under Limitations below. Every
-misclassified test case is browsable directly:
-<a href="error_gallery_2026-09-03.html">error gallery</a>.
-</p>
-
-<h3>What the model is looking at, for the largest single confusion pair</h3>
-<p>
-Grad-CAM (attention visualization) was run on the largest single
-confusion pair by count, Prograsp Forceps misclassified as Bipolar
-Forceps (36 of 330 Prograsp Forceps instances, 10.9%), to check what
-part of the crop is driving the wrong prediction rather than guessing.
-Two distinct causes were found within this one named pair, confirmed
-against 6 actual mistakes:
-</p>
-<ul>
-<li>About a third of the mistakes show a crop where the instrument's
-jawed tip is compressed out of frame entirely by the fixed-size resize
-of a long, diagonally-held instrument. Attention has nothing useful to
-land on in these cases.</li>
-<li>The remaining mistakes show the jaw clearly, with attention
-correctly concentrated right on it, same as correctly classified
-examples. The model is looking in the right place; the two classes'
-jaws genuinely look alike in these instances at the resolution the
-model sees them at. This is a resolution/capacity limit, not a
-preprocessing bug.</li>
-</ul>
-<p class="small">
-Practical takeaway: existing crop-preprocessing fixes (letterbox
-padding, tip-cropping) only address the first cause. The second, larger
-cause needs more model capacity or resolution, not a preprocessing
-change -- consistent with resolution/backbone-capacity being the more
-promising lever going forward.
-</p>
-
-<h2>Post-hoc error correction via temporal tracking</h2>
-<p>
-The ensemble above classifies each instrument from a single frame. A
-separate technique was tested on top of it, without retraining: for a
-given instance, its annotated mask is propagated forward and backward
-across nearby video frames with SAM2, the same trained ensemble scores
-every propagated frame, and the resulting predictions are combined. The
-underlying hypothesis is that a single frame can lack usable signal (a
-small crop, motion blur, a moment of partial occlusion) even when
-neighboring frames of the same instrument do not.
-</p>
-<p>
-Applying this to every instance was tested and rejected: propagation
-carries a measured 9.8% chance of turning an already-correct, low-
-confidence prediction wrong, which outweighs its benefit once applied
-indiscriminately across the whole test set. A confidence-gated rule was
-used instead, limiting the technique to instances where the ensemble's
-own prediction confidence falls below 0.80 (17.3% of the test set). A
-learned version of the frame-combination step was also tested and did
-not outperform the simpler fixed rule, so the simpler rule was kept.
+Post-hoc correction on top of the ensemble, no retraining: an instance's
+annotated mask is propagated forward and backward across nearby video
+frames with SAM2, the ensemble scores every propagated frame, and the
+predictions are combined. Applying this to every instance was tested and
+rejected &mdash; propagation has a measured 9.8% chance of turning an
+already-correct low-confidence prediction wrong, which costs more than it
+gains once applied indiscriminately. A confidence-gated rule is used
+instead: only instances where ensemble confidence is below 0.80 (17.3%
+of test) get tracked. A learned version of the frame-combination step
+did not beat this fixed rule.
 </p>
 <div class="tablewrap">
 <table>
@@ -214,36 +108,17 @@ not outperform the simpler fixed rule, so the simpler rule was kept.
 </table>
 </div>
 <p class="small">
-Measured directly on the full official test set (2,861 instances), not
-projected from a sample. The gated subset alone: single-frame accuracy
-69.7%, recovering to 82.6% after aggregation. Every remaining
-misclassification is browsable: <a href="error_gallery_2026-09-16.html">updated
-error gallery</a>.
-</p>
-<p>
-This does not resolve genuine visual ambiguity. Laparoscopic Grasper
-misclassified as Suction Instrument remains one of the largest confusion
-pairs after correction, consistent with the Limitations section below:
-the technique recovers cases where the one frame shown lacked usable
-signal, not cases where the instrument's identity is ambiguous even in a
-clear view.
-</p>
-<p>
-The technique is not suited to real-time use, on any hardware. SAM2's
-own per-frame encoding cost alone was measured at 398ms on the project's
-reference GPU, well over a 33ms real-time budget before mask decoding or
-classification even run. This is an offline, batch-applied correction
-step, consistent with this project's efficiency work being deferred
-until accuracy work is settled.
+Measured on the full official test set (2,861 instances). Does not
+resolve identical-looking instruments &mdash; Laparoscopic Grasper vs.
+Suction Instrument remains one of the largest confusion pairs after
+correction, since the technique recovers missing signal, not
+indistinguishable appearance. Not suited to real-time use on any hardware: SAM2's
+own per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
+budget. Offline, batch-applied only. Updated
+<a href="error_gallery_2026-09-16.html">error gallery</a>.
 </p>
 
-<h2>Does it generalize beyond GraSP?</h2>
-<p>
-A model that only works on the exact dataset it was trained on isn't
-that useful. The classifier was run, completely unmodified and with no
-retraining, against two independent public surgical video datasets
-(EndoVis 2017 and 2018) that share part of GraSP's instrument set.
-</p>
+<h2>Generalization</h2>
 <div class="tablewrap">
 <table>
 <tr><th>external dataset</th><th class="num">accuracy</th><th class="num">macro-F1</th><th class="small">shared classes</th></tr>
@@ -251,106 +126,56 @@ retraining, against two independent public surgical video datasets
 <tr><td>EndoVis 2017</td><td class="num">0.567</td><td class="num">0.596</td><td class="small">4 of 7</td></tr>
 </table>
 </div>
-<p>
-The three bulkiest, most visually distinct instruments transferred well
-(F1 0.45–0.73) on camera setups and instrument hardware the model had
-never seen. Two thinner instruments did not transfer on at least one of
-the two datasets. This was investigated and traced to hardware
-differences between datasets (a different instrument generation/manufacturer), not a
-flaw in the model: the same class that failed on one external dataset
-scored well on the other, with the identical unmodified classifier.
+<p class="small">
+Run unmodified, no retraining. The three bulkiest instruments
+transferred (F1 0.45-0.73) to camera setups and hardware never seen in
+training; two thinner instruments did not transfer on at least one
+dataset, traced to a different instrument generation/manufacturer, not a
+model flaw (the same class scored well on the other external dataset).
 </p>
 
 <h2>Efficiency</h2>
 <p>
-Whether the model could be made faster or smaller without losing accuracy
-was investigated, and the standard first technique (INT8 quantization) was
-tested directly rather than assumed to help. It made the model
-measurably slower on standard CPU hardware and cost real accuracy: 1-4
-points off the two ResNet-50 models, and 63-74 points off the two
-lightweight models, which collapsed to near-random. Not adopted. The
-current model ships as-is; a cheaper replacement for one of the two
-ResNet-50 checkpoints requires new training.
+INT8 quantization was tested directly rather than assumed to help. It
+made the model slower on CPU and cost 1-4 points of accuracy on the
+ResNet-50 models, 63-74 points on the lightweight models. Not adopted;
+current model ships as-is.
 </p>
 
-<h2>Handoff</h2>
-<p>
-A clean, integration-ready package (the trained ensemble plus a single
-<code>predict()</code> call, no training or experiment code) is ready for
-another team to integrate against their own detection/localization
-pipeline:
-<a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
-</p>
-
-<h2>Limitations, and what's being done about them</h2>
-<div class="callout">
-<p><b>Laparoscopic Grasper vs. Suction Instrument.</b> When this
-instrument's jaws are closed, it's a smooth, featureless shaft, visually
-identical to a suction tube in a single still frame. Four
-different approaches were ruled out: a narrow (~20-frame) and a wide
-(~200-frame, ~13-second) search across nearby video frames for a moment
-the jaws open, checking GraSP's own action-state labels as a non-visual
-signal, and a targeted fine-tune explicitly pushing the two classes'
-learned representations apart. None found a fix. <b>This is a limitation
-of single-frame classification, not a training gap.</b></p>
-</div>
-<div class="callout">
-<p><b>The closed-jaw ambiguity isn't unique to Grasper/Suction.</b>
-Attention visualization on the next two largest confusion pairs
-(Bipolar Forceps vs. Large Needle Driver, Monopolar Curved Scissors vs.
-Suction Instrument) found the exact same mechanism: a distinguishing
-feature (open-jaw texture, or a small marking near the tip) that is
-sometimes simply not visible in frame, at which point the instrument
-looks identical to a different class's plain shaft. At least three
-separate class pairs share this same single-frame information ceiling,
-accounting for roughly 30 of the 188 current mistakes. No amount of
-resolution or training fixes this by construction -- the distinguishing
-detail is not present in the frame to learn from.</p>
-</div>
-<div class="callout">
-<p><b>Three candidate fixes for the remaining confusable cases were
-tested and ruled out.</b> Higher input resolution (384px vs. 320px) and
-stronger data augmentation each looked like real improvements when
-tested once -- then were re-tested on a second, independent data split
-before being trusted, per this project's standing practice. Neither
-result held up: the resolution change reversed from a solid gain to a
-small loss, and the augmentation change went from a small gain to
-roughly flat. A third change, a larger backbone (ResNet-101 in place of
-ResNet-50), did hold up across both independent splits -- but its
-standalone accuracy on the actual test set came in slightly below the
-existing model, and adding it into the ensemble scored below what's
-already shipping. A real effect in isolation that didn't carry through
-to a better system once tested where it actually counts. All three are
-recorded as negative results, not adopted. One consistent side effect
-survived every one of the three checks: Laparoscopic Grasper improved
-under all three changes, across every split tested, suggesting it may
-simply benefit from more training signal in general -- a lead for a
-future, targeted attempt, not yet tested on its own.</p>
-</div>
-<div class="callout">
-<p><b>The ensemble's exact weighting is still being finalized.</b> The
-current version favors its strongest model; a simpler, equally-tested
-alternative scores about 1 point lower overall and is available as a
-fallback.</p>
-</div>
+<h2>Limitations</h2>
+<ul>
+<li><b>Laparoscopic Grasper vs. Suction Instrument.</b> Closed jaws look
+identical to a suction tube in a still frame. Four fixes were ruled out
+(narrow and wide temporal search, action-state labels, targeted
+fine-tuning) &mdash; a single-frame information limit, not a training gap.</li>
+<li><b>Same ceiling affects two more pairs</b> (Bipolar vs. Needle
+Driver, Monopolar vs. Suction): a distinguishing feature is sometimes
+just not visible in frame. Accounts for ~30 of 188 pre-tracking mistakes
+and cannot be trained around.</li>
+<li><b>Resolution and augmentation changes didn't hold up</b> on a second
+independent split after looking promising once; a larger backbone
+(ResNet-101) held up alone but didn't beat the shipping ensemble. All
+three logged as negative results. Laparoscopic Grasper improved under
+all three regardless &mdash; a lead worth testing on its own.</li>
+<li>Ensemble weighting still being finalized; a simpler alternative
+scores ~1 point lower and is available as a fallback.</li>
+</ul>
 
 <h3>Next steps</h3>
 <ol class="steps">
-<li><b>Grasper/Suction confusion:</b> collect and label additional training
-examples specifically covering this closed-jaw ambiguity.</li>
-<li><b>The genuinely open ~32% of remaining mistakes:</b> resolution,
-augmentation, and backbone capacity were all tested and none carried
-through to a better shipped system; the next reasonable candidates are
-more targeted data collection for the exact confused pairs, or a
-smarter way of folding the larger backbone into the ensemble (it showed
-a real effect alone, just not yet a way to use that effect profitably)
--- tested the same way each time: one variable, confirmed on a second
-data split before being trusted.</li>
-<li><b>Efficiency:</b> train a lighter backbone (ResNet-18 or
-EfficientNet-B0) as a drop-in replacement for one of the two ResNet-50
-ensemble members, to test whether most of its accuracy contribution can
-be kept at a fraction of the compute cost.</li>
+<li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
+<li>Targeted data collection for the remaining confused pairs, or a way
+to fold ResNet-101's isolated gain into the ensemble profitably.</li>
+<li>Lighter backbone (ResNet-18 / EfficientNet-B0) as a drop-in
+replacement for one ResNet-50 ensemble member.</li>
 </ol>
+
+<h2>Handoff</h2>
+<p>
+Integration-ready package (trained ensemble + a single
+<code>predict()</code> call, no training/experiment code):
+<a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
+</p>
 
 </div>
 </body>
