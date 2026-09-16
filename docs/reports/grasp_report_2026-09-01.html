@@ -150,10 +150,11 @@ Ensemble row: mean &plusmn; SD across 5 retrained seeds. Two ResNet-50 +
 two MobileNetV3 checkpoints, ~17ms/instance GPU, ~61ms/instance CPU. The
 specific checkpoint set used below and for temporal tracking scores
 0.9343 standalone, within this range but on the high side of it.
-Weakest classes: Laparoscopic Grasper (n=81) 0.800 F1, Clip Applier
-(n=38) 0.895 F1 &mdash; both got worse under stronger class reweighting
-and tighter tip-cropping, so neither was adopted. Full confusion
-breakdown: <a href="error_gallery_2026-09-03.html">error gallery</a>.
+Laparoscopic Grasper and Clip Applier are the weakest classes; both got
+worse under stronger class reweighting and tighter tip-cropping, so
+neither was adopted. Per-class numbers and full confusion breakdown
+below reflect the current (tracking-corrected) system, not this row
+alone.
 </p>
 
 <h2>Temporal tracking</h2>
