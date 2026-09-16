@@ -68,7 +68,29 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def crop_from_box(frame: np.ndarray, mask: np.ndarray, box: tuple[int, int, int, int], letterbox: bool, letterbox_min_aspect: float = 1.0) -> np.ndarray | None:
+    """Center-frame crop only -- matches GraspRegionDataset's own bbox+mask
+    convention exactly (the annotated box, not the mask's own pixel extent),
+    so the single-frame prediction used as this script's baseline is
+    identical to the official evaluation's, not a different crop
+    methodology (docs/DECISIONS.md 2026-09-16 -- a real, measured 4.6%
+    disagreement rate came from this mismatch before the fix)."""
+    x, y, w, h = box
+    height, width = frame.shape[:2]
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(width, x + w), min(height, y + h)
+    crop = (frame[y0:y1, x0:x1] * mask[y0:y1, x0:x1, None]).astype(np.uint8)
+    if letterbox:
+        ch, cw = crop.shape[:2]
+        aspect = max(ch, cw) / max(1, min(ch, cw))
+        if aspect >= letterbox_min_aspect:
+            crop = _pad_to_square(crop)
+    return crop
+
+
 def crop_from_mask(frame: np.ndarray, mask: np.ndarray, letterbox: bool, letterbox_min_aspect: float = 1.0) -> np.ndarray | None:
+    """Propagated (non-center) frames only -- no original annotation box
+    exists for these, so the mask's own pixel extent is the only option."""
     if not mask.any():
         return None
     ys, xs = np.nonzero(mask)
@@ -169,7 +191,10 @@ def main() -> None:
         def get_crop(local_idx: int, letterbox: bool) -> np.ndarray | None:
             key = (local_idx, letterbox)
             if key not in crop_cache:
-                crop_cache[key] = crop_from_mask(frame_arrays[local_idx], track_masks[local_idx], letterbox)
+                if local_idx == center_idx:
+                    crop_cache[key] = crop_from_box(frame_arrays[local_idx], track_masks[local_idx], box, letterbox)
+                else:
+                    crop_cache[key] = crop_from_mask(frame_arrays[local_idx], track_masks[local_idx], letterbox)
             return crop_cache[key]
 
         valid_local_idxs = [li for li in sorted_local_idxs if get_crop(li, True) is not None]
@@ -197,7 +222,7 @@ def main() -> None:
         avg_softmax_pred = int(per_frame_ensemble_probs.mean(axis=0).argmax())
 
         results.append({
-            "case": case, "frame": frame_stem, "true": class_names[label], "area_pct": area_pct,
+            "index": idx, "case": case, "frame": frame_stem, "true": class_names[label], "area_pct": area_pct,
             "track_len": len(valid_local_idxs),
             "single_frame_pred": class_names[single_pred], "single_frame_correct": single_pred == label,
             "majority_vote_pred": class_names[majority_pred], "majority_vote_correct": majority_pred == label,
