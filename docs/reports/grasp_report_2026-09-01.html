@@ -47,6 +47,15 @@ code { background: var(--panel); padding: 1px 5px; border-radius: 3px; font-size
 .callout p { margin: 0.4em 0; }
 a { color: var(--blue); }
 .steps li { margin-bottom: 0.8em; }
+.diagram { margin: 1em 0; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram .box rect { fill: var(--panel); stroke: var(--border); }
+.diagram .box.final rect { fill: #eaf3ee; stroke: var(--good); }
+.diagram .box text { fill: var(--ink); font-family: Georgia, "Times New Roman", serif; }
+.diagram .decision polygon { fill: #fff; stroke: var(--navy); }
+.diagram .decision text { fill: var(--navy); font-family: Georgia, "Times New Roman", serif; }
+.diagram .arrow { stroke: var(--sub); stroke-width: 1.4; fill: none; marker-end: url(#arrowhead); }
+.diagram .branch-label { fill: var(--sub); font-size: 11px; font-family: Georgia, "Times New Roman", serif; }
 </style>
 </head>
 <body>
@@ -64,6 +73,66 @@ instruments and the class mix is imbalanced (rarest class has ~25x fewer
 examples than the most common). Tested against two public datasets never
 seen during training (EndoVis 2017, 2018), to confirm the model learned
 instrument appearance rather than GraSP's own footage.
+</p>
+
+<h2>How it works</h2>
+<div class="diagram">
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If confidence is at least 0.80, the ensemble prediction is final. Otherwise SAM2 propagates the mask across nearby frames, the ensemble scores every frame, and the predictions are combined into the final prediction.">
+<defs>
+<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+<path d="M0,0 L6,3 L0,6 Z" fill="#475569"></path>
+</marker>
+</defs>
+
+<g class="box"><rect x="8" y="20" width="118" height="50" rx="6"></rect>
+<text x="67" y="40" text-anchor="middle" font-size="12"><tspan x="67">Video frame</tspan><tspan x="67" dy="15">+ instance mask</tspan></text></g>
+
+<path class="arrow" d="M126,45 H166"></path>
+
+<g class="box"><rect x="166" y="20" width="118" height="50" rx="6"></rect>
+<text x="225" y="40" text-anchor="middle" font-size="12"><tspan x="225">Per-instrument</tspan><tspan x="225" dy="15">crop</tspan></text></g>
+
+<path class="arrow" d="M284,45 H324"></path>
+
+<g class="box"><rect x="324" y="20" width="118" height="50" rx="6"></rect>
+<text x="383" y="40" text-anchor="middle" font-size="12"><tspan x="383">4-model</tspan><tspan x="383" dy="15">ensemble</tspan></text></g>
+
+<path class="arrow" d="M442,45 H478"></path>
+
+<g class="decision">
+<polygon points="478,45 543,10 608,45 543,80"></polygon>
+<text x="543" y="41" text-anchor="middle" font-size="11"><tspan x="543">confidence</tspan><tspan x="543" dy="13">&ge; 0.80?</tspan></text>
+</g>
+
+<path class="arrow" d="M608,45 C650,45 650,90 690,113"></path>
+<text class="branch-label" x="618" y="60">yes, 82.7%</text>
+
+<path class="arrow" d="M543,80 V150"></path>
+<text class="branch-label" x="551" y="118">no, 17.3%</text>
+
+<g class="box final"><rect x="630" y="88" width="120" height="50" rx="6"></rect>
+<text x="690" y="108" text-anchor="middle" font-size="12"><tspan x="690">Final</tspan><tspan x="690" dy="15">prediction</tspan></text></g>
+
+<g class="box"><rect x="324" y="150" width="140" height="50" rx="6"></rect>
+<text x="394" y="170" text-anchor="middle" font-size="12"><tspan x="394">SAM2 propagates mask</tspan><tspan x="394" dy="15">&plusmn;10 frames</tspan></text></g>
+
+<path class="arrow" d="M464,175 H484"></path>
+
+<g class="box"><rect x="484" y="150" width="140" height="50" rx="6"></rect>
+<text x="554" y="170" text-anchor="middle" font-size="12"><tspan x="554">Ensemble scores</tspan><tspan x="554" dy="15">every frame</tspan></text></g>
+
+<path class="arrow" d="M624,175 H660"></path>
+
+<g class="box"><rect x="630" y="180" width="120" height="45" rx="6"></rect>
+<text x="690" y="197" text-anchor="middle" font-size="11"><tspan x="690">Combine</tspan><tspan x="690" dy="13">(avg softmax)</tspan></text></g>
+
+<path class="arrow" d="M690,180 V138"></path>
+</svg>
+</div>
+<p class="small">
+The ensemble's own confidence gates whether the more expensive tracking
+step runs at all &mdash; see Temporal tracking below for why blanket
+tracking on every instance was tested and rejected.
 </p>
 
 <h2>Results</h2>
@@ -118,6 +187,40 @@ appearance. Not suited to real-time use on any hardware: SAM2's own
 per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
 budget. Offline, batch-applied only. Updated
 <a href="error_gallery_2026-09-16.html">error gallery</a>.
+</p>
+
+<h3>Per-class breakdown (combined pipeline)</h3>
+<div class="tablewrap">
+<table>
+<tr><th>class</th><th class="num">n (test)</th><th class="num">precision</th><th class="num">recall</th><th class="num">F1</th></tr>
+<tr><td>Monopolar Curved Scissors</td><td class="num">844</td><td class="num">0.988</td><td class="num">0.994</td><td class="num">0.991</td></tr>
+<tr><td>Large Needle Driver</td><td class="num">449</td><td class="num">0.974</td><td class="num">0.984</td><td class="num">0.979</td></tr>
+<tr><td>Bipolar Forceps</td><td class="num">809</td><td class="num">0.944</td><td class="num">0.962</td><td class="num">0.953</td></tr>
+<tr><td>Clip Applier</td><td class="num">38</td><td class="num">0.947</td><td class="num">0.947</td><td class="num">0.947</td></tr>
+<tr><td>Suction Instrument</td><td class="num">310</td><td class="num">0.906</td><td class="num">0.990</td><td class="num">0.946</td></tr>
+<tr><td>Prograsp Forceps</td><td class="num">330</td><td class="num">0.941</td><td class="num">0.827</td><td class="num">0.881</td></tr>
+<tr class="rare"><td><b>Laparoscopic Grasper</b></td><td class="num">81</td><td class="num">0.925</td><td class="num">0.765</td><td class="num"><b>0.838</b></td></tr>
+</table>
+</div>
+
+<h3>Normalized confusion matrix (combined pipeline)</h3>
+<div class="tablewrap">
+<table>
+<tr><th>true \ predicted</th><th class="num">Bipolar</th><th class="num">Prograsp</th><th class="num">Needle Dr.</th><th class="num">Monopolar</th><th class="num">Suction</th><th class="num">Clip App.</th><th class="num">Laparo.</th></tr>
+<tr><td>Bipolar Forceps</td><td class="num cm-diag">96.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.1%</td><td class="num cm-off">0.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td></tr>
+<tr><td>Prograsp Forceps</td><td class="num cm-off">12.1%</td><td class="num cm-diag">82.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.6%</td><td class="num cm-off">2.7%</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.2%</td></tr>
+<tr><td>Large Needle Driver</td><td class="num cm-off">0.9%</td><td class="num cm-off">0.4%</td><td class="num cm-diag">98.4%</td><td class="num cm-off">0.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
+<tr><td>Monopolar Curved Scissors</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">99.4%</td><td class="num cm-off">0.5%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
+<tr><td>Suction Instrument</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">99.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
+<tr class="rare"><td>Clip Applier</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">2.6%</td><td class="num cm-off">2.6%</td><td class="num cm-diag">94.7%</td><td class="num cm-off">0.0%</td></tr>
+<tr class="rare"><td>Laparoscopic Grasper</td><td class="num cm-off">2.5%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">16.0%</td><td class="num cm-off">2.5%</td><td class="num cm-diag">76.5%</td></tr>
+</table>
+</div>
+<p class="small">
+Each row normalized to % of that true class's instances. Laparoscopic
+Grasper's 16.0% into Suction Instrument is the closed-jaw ceiling
+discussed under Limitations; Prograsp Forceps' 12.1% into Bipolar
+Forceps is the largest single confusion pair overall.
 </p>
 
 <h2>Generalization</h2>
