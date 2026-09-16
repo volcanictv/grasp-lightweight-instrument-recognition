@@ -45,6 +45,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--display-member", default="resnet50_320", help="which ensemble member's crop style to save for display")
+    parser.add_argument("--triage-flagged-json", type=Path, default=None,
+                         help="docs/reports/triage_flagged_080.json -- if given, overrides the plain single-frame "
+                              "prediction with the confidence-gated SAM2 temporal-track result for flagged instances "
+                              "(docs/DECISIONS.md 2026-09-16), reflecting the combined pipeline's actual output")
+    parser.add_argument("--triage-results-json", type=Path, default=None,
+                         help="docs/reports/temporal_track_triage_080_v2.json -- required with --triage-flagged-json")
     return parser.parse_args()
 
 
@@ -86,6 +92,16 @@ def main() -> None:
     avg = weight_320 * all_probs[0] + w_rest * sum(all_probs[1:])
     y_pred = avg.argmax(axis=1)
 
+    tracked_source = np.array(["single_frame"] * len(y_pred), dtype=object)
+    if args.triage_flagged_json is not None:
+        flagged_indices = [e["index"] for e in json.loads(args.triage_flagged_json.read_text())["errors"]]
+        triage_instances = json.loads(args.triage_results_json.read_text())["instances"]
+        assert len(flagged_indices) == len(triage_instances), "flagged indices and triage results must correspond positionally"
+        for idx, r in zip(flagged_indices, triage_instances):
+            y_pred[idx] = class_names.index(r["avg_softmax_pred"])
+            tracked_source[idx] = "sam2_tracked"
+        print(f"overrode {len(flagged_indices)} predictions with the confidence-gated tracked result")
+
     display_member = next(m for m in members if m["label"] == args.display_member)
     display_ds = GraspRegionDataset(args.data_root, args.split, transform=None, letterbox=display_member["letterbox"])
 
@@ -110,12 +126,13 @@ def main() -> None:
             "file_name": file_names[idx],
             "true_class": true_name,
             "pred_class": pred_name,
-            "pred_confidence": float(avg[idx, y_pred[idx]]),
+            "pred_confidence": float(avg[idx, y_pred[idx]]) if tracked_source[idx] == "single_frame" else None,
             "true_confidence": float(avg[idx, y_true[idx]]),
+            "prediction_source": str(tracked_source[idx]),
             "image_path": str(out_path.relative_to(args.out_dir)).replace("\\", "/"),
         })
 
-    manifest.sort(key=lambda m: (m["true_class"], m["pred_class"], -m["pred_confidence"]))
+    manifest.sort(key=lambda m: (m["true_class"], m["pred_class"], -(m["pred_confidence"] or 0)))
     (args.out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
     from collections import Counter

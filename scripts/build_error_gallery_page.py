@@ -84,13 +84,18 @@ def main() -> None:
         cards = []
         for m in items:
             src = img_data_uri(args.gallery_dir / m["image_path"])
+            source = m.get("prediction_source", "single_frame")
+            if source == "sam2_tracked":
+                conf_html = '<span class="conf tracked">SAM2 temporal-track prediction (confidence-gated, docs/DECISIONS.md 2026-09-16)</span>'
+            else:
+                conf_html = f'<span class="conf">P(pred)={m["pred_confidence"]:.2f} &middot; P(true)={m["true_confidence"]:.2f}</span>'
             cards.append(f'''
         <figure class="card">
           <img src="{src}" alt="{html.escape(t)} misclassified as {html.escape(p)}" loading="lazy">
           <figcaption>
             <span class="tag true">true: {html.escape(t)}</span>
             <span class="tag pred">pred: {html.escape(p)}</span>
-            <span class="conf">P(pred)={m['pred_confidence']:.2f} &middot; P(true)={m['true_confidence']:.2f}</span>
+            {conf_html}
             <span class="src">{html.escape(m['file_name'])}</span>
           </figcaption>
         </figure>''')
@@ -201,6 +206,7 @@ td.num, th.num {{ text-align: right; font-family: "IBM Plex Mono", monospace; fo
 .card img {{ width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #0b0b0b; display: block; }}
 .card figcaption {{ padding: 8px 9px 10px; display: flex; flex-direction: column; gap: 4px; }}
 .card .conf {{ font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; color: var(--sub); }}
+.card .conf.tracked {{ color: #2a7; font-weight: 600; }}
 .card .src {{ font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; color: var(--sub); opacity: 0.75; overflow-wrap: anywhere; }}
 a {{ color: var(--accent); }}
 </style>
