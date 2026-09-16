@@ -1,0 +1,14 @@
+{
+  "train_fold1_eval_fold2": {
+    "eval_uniform_avg_softmax_accuracy": 0.892485549132948,
+    "eval_learned_weight_accuracy": 0.8901734104046243,
+    "delta": -0.0023121387283236983,
+    "final_train_loss": 0.3860470652580261
+  },
+  "train_fold2_eval_fold1": {
+    "eval_uniform_avg_softmax_accuracy": 0.8866090712742981,
+    "eval_learned_weight_accuracy": 0.8952483801295896,
+    "delta": 0.008639308855291516,
+    "final_train_loss": 0.3462141752243042
+  }
+}
