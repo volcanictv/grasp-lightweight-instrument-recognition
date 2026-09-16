@@ -1,0 +1,23 @@
+{
+  "n_runs": 20,
+  "window": 10,
+  "frame_io_ms": {
+    "median": 3.2635175084578805,
+    "p95": 16.88578905814211
+  },
+  "sam2_propagation_ms": {
+    "median": 12402.620490007394,
+    "p95": 12432.321066105214
+  },
+  "ensemble_classification_ms": {
+    "median": 1068.6426285028574,
+    "p95": 1267.4698382426868
+  },
+  "total_per_instance_ms": {
+    "median": 13488.045402504213,
+    "p95": 13825.330773341557
+  },
+  "mean_track_len": 20.5,
+  "peak_vram_mb": 2014.11865234375,
+  "per_frame_ensemble_forward_ms": 20.243342507455964
+}
