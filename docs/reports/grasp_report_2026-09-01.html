@@ -185,6 +185,58 @@ change -- consistent with resolution/backbone-capacity being the more
 promising lever going forward.
 </p>
 
+<h2>Post-hoc error correction via temporal tracking</h2>
+<p>
+The ensemble above classifies each instrument from a single frame. A
+separate technique was tested on top of it, without retraining: for a
+given instance, its annotated mask is propagated forward and backward
+across nearby video frames with SAM2, the same trained ensemble scores
+every propagated frame, and the resulting predictions are combined. The
+underlying hypothesis is that a single frame can lack usable signal (a
+small crop, motion blur, a moment of partial occlusion) even when
+neighboring frames of the same instrument do not.
+</p>
+<p>
+Applying this to every instance was tested and rejected: propagation
+carries a measured 9.8% chance of turning an already-correct, low-
+confidence prediction wrong, which outweighs its benefit once applied
+indiscriminately across the whole test set. A confidence-gated rule was
+used instead, limiting the technique to instances where the ensemble's
+own prediction confidence falls below 0.80 (17.3% of the test set). A
+learned version of the frame-combination step was also tested and did
+not outperform the simpler fixed rule, so the simpler rule was kept.
+</p>
+<div class="tablewrap">
+<table>
+<tr><th>configuration</th><th class="num">accuracy</th></tr>
+<tr><td>4-model ensemble alone</td><td class="num">0.9343</td></tr>
+<tr class="hi"><td>+ confidence-gated temporal tracking</td><td class="num">0.9567</td></tr>
+</table>
+</div>
+<p class="small">
+Measured directly on the full official test set (2,861 instances), not
+projected from a sample. The gated subset alone: single-frame accuracy
+69.7%, recovering to 82.6% after aggregation. Every remaining
+misclassification is browsable: <a href="error_gallery_2026-09-16.html">updated
+error gallery</a>.
+</p>
+<p>
+This does not resolve genuine visual ambiguity. Laparoscopic Grasper
+misclassified as Suction Instrument remains one of the largest confusion
+pairs after correction, consistent with the Limitations section below:
+the technique recovers cases where the one frame shown lacked usable
+signal, not cases where the instrument's identity is ambiguous even in a
+clear view.
+</p>
+<p>
+The technique is not suited to real-time use, on any hardware. SAM2's
+own per-frame encoding cost alone was measured at 398ms on the project's
+reference GPU, well over a 33ms real-time budget before mask decoding or
+classification even run. This is an offline, batch-applied correction
+step, consistent with this project's efficiency work being deferred
+until accuracy work is settled.
+</p>
+
 <h2>Does it generalize beyond GraSP?</h2>
 <p>
 A model that only works on the exact dataset it was trained on isn't
