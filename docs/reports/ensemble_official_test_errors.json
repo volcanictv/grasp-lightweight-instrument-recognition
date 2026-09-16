@@ -1,0 +1,2639 @@
+{
+  "n_total": 2861,
+  "n_errors": 188,
+  "accuracy": 0.9342887102411744,
+  "errors": [
+    {
+      "index": 4,
+      "file": "CASE041/00035.jpg",
+      "box": [
+        0,
+        208,
+        220,
+        71
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.34219783678418025,
+      "area_pct": 0.8727539062499999
+    },
+    {
+      "index": 58,
+      "file": "CASE041/00910.jpg",
+      "box": [
+        1231,
+        528,
+        48,
+        134
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5385423384141177,
+      "area_pct": 0.42841796874999993
+    },
+    {
+      "index": 90,
+      "file": "CASE041/01260.jpg",
+      "box": [
+        0,
+        182,
+        446,
+        617
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.4936167071573436,
+      "area_pct": 11.34169921875
+    },
+    {
+      "index": 91,
+      "file": "CASE041/01470.jpg",
+      "box": [
+        1,
+        757,
+        409,
+        42
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.36996463061950635,
+      "area_pct": 1.0538085937500001
+    },
+    {
+      "index": 98,
+      "file": "CASE041/01400.jpg",
+      "box": [
+        0,
+        655,
+        297,
+        144
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.7356534059326805,
+      "area_pct": 2.12177734375
+    },
+    {
+      "index": 128,
+      "file": "CASE041/02170.jpg",
+      "box": [
+        0,
+        721,
+        220,
+        78
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.5514498213306069,
+      "area_pct": 1.39111328125
+    },
+    {
+      "index": 140,
+      "file": "CASE041/02240.jpg",
+      "box": [
+        0,
+        46,
+        1137,
+        350
+      ],
+      "true": "Suction Instrument",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.5933125540614128,
+      "area_pct": 10.3052734375
+    },
+    {
+      "index": 142,
+      "file": "CASE041/02240.jpg",
+      "box": [
+        1127,
+        150,
+        152,
+        131
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.6246201545000076,
+      "area_pct": 0.8802734375
+    },
+    {
+      "index": 148,
+      "file": "CASE041/02450.jpg",
+      "box": [
+        271,
+        0,
+        205,
+        209
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.39665229758247733,
+      "area_pct": 2.31279296875
+    },
+    {
+      "index": 165,
+      "file": "CASE041/02625.jpg",
+      "box": [
+        0,
+        309,
+        84,
+        69
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6564269326627254,
+      "area_pct": 0.3490234375
+    },
+    {
+      "index": 168,
+      "file": "CASE041/02695.jpg",
+      "box": [
+        112,
+        0,
+        855,
+        191
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Suction Instrument",
+      "confidence": 0.6726067140698433,
+      "area_pct": 6.32529296875
+    },
+    {
+      "index": 169,
+      "file": "CASE041/02695.jpg",
+      "box": [
+        0,
+        88,
+        433,
+        282
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.4728660711552948,
+      "area_pct": 3.3876953125
+    },
+    {
+      "index": 170,
+      "file": "CASE041/02730.jpg",
+      "box": [
+        0,
+        105,
+        543,
+        232
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5638402327895164,
+      "area_pct": 6.1036132812499995
+    },
+    {
+      "index": 189,
+      "file": "CASE041/03010.jpg",
+      "box": [
+        961,
+        152,
+        318,
+        276
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.42523688450455666,
+      "area_pct": 3.91640625
+    },
+    {
+      "index": 193,
+      "file": "CASE041/03080.jpg",
+      "box": [
+        400,
+        430,
+        878,
+        369
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.5453138092561858,
+      "area_pct": 9.5640625
+    },
+    {
+      "index": 196,
+      "file": "CASE041/03080.jpg",
+      "box": [
+        171,
+        770,
+        246,
+        28
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.7864232258871198,
+      "area_pct": 0.38447265625
+    },
+    {
+      "index": 199,
+      "file": "CASE041/03115.jpg",
+      "box": [
+        0,
+        700,
+        116,
+        99
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.7497565262019634,
+      "area_pct": 0.7766601562500001
+    },
+    {
+      "index": 221,
+      "file": "CASE041/03500.jpg",
+      "box": [
+        0,
+        12,
+        621,
+        395
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.4261208929819986,
+      "area_pct": 5.94990234375
+    },
+    {
+      "index": 226,
+      "file": "CASE041/03605.jpg",
+      "box": [
+        0,
+        458,
+        547,
+        263
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.4895344616379589,
+      "area_pct": 8.375292968750001
+    },
+    {
+      "index": 229,
+      "file": "CASE041/03640.jpg",
+      "box": [
+        0,
+        511,
+        647,
+        281
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.8641237244009972,
+      "area_pct": 12.0298828125
+    },
+    {
+      "index": 232,
+      "file": "CASE041/03675.jpg",
+      "box": [
+        0,
+        602,
+        624,
+        196
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.8102065026760101,
+      "area_pct": 8.65517578125
+    },
+    {
+      "index": 270,
+      "file": "CASE041/04130.jpg",
+      "box": [
+        4,
+        29,
+        866,
+        301
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.950160026550293,
+      "area_pct": 12.086328125
+    },
+    {
+      "index": 272,
+      "file": "CASE041/04165.jpg",
+      "box": [
+        1,
+        2,
+        941,
+        249
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6467978470027447,
+      "area_pct": 6.4458984375
+    },
+    {
+      "index": 282,
+      "file": "CASE041/04305.jpg",
+      "box": [
+        4,
+        2,
+        858,
+        434
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6156301572918892,
+      "area_pct": 9.87109375
+    },
+    {
+      "index": 291,
+      "file": "CASE041/04375.jpg",
+      "box": [
+        0,
+        1,
+        715,
+        368
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.714786559343338,
+      "area_pct": 10.42890625
+    },
+    {
+      "index": 292,
+      "file": "CASE041/04270.jpg",
+      "box": [
+        0,
+        1,
+        562,
+        440
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.8169939145445824,
+      "area_pct": 8.50966796875
+    },
+    {
+      "index": 309,
+      "file": "CASE041/04585.jpg",
+      "box": [
+        911,
+        408,
+        364,
+        204
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.6810306012630463,
+      "area_pct": 2.07666015625
+    },
+    {
+      "index": 311,
+      "file": "CASE041/04410.jpg",
+      "box": [
+        0,
+        683,
+        246,
+        116
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.9660246819257736,
+      "area_pct": 2.21240234375
+    },
+    {
+      "index": 334,
+      "file": "CASE041/04830.jpg",
+      "box": [
+        1,
+        1,
+        211,
+        43
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4438897166401148,
+      "area_pct": 0.5380859375
+    },
+    {
+      "index": 364,
+      "file": "CASE041/05110.jpg",
+      "box": [
+        957,
+        500,
+        322,
+        159
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.9320437908172607,
+      "area_pct": 2.93505859375
+    },
+    {
+      "index": 365,
+      "file": "CASE041/05145.jpg",
+      "box": [
+        0,
+        0,
+        279,
+        142
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.521812004968524,
+      "area_pct": 1.8015625
+    },
+    {
+      "index": 366,
+      "file": "CASE041/05145.jpg",
+      "box": [
+        0,
+        196,
+        683,
+        400
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.9021910279989243,
+      "area_pct": 13.447949218749999
+    },
+    {
+      "index": 374,
+      "file": "CASE041/05285.jpg",
+      "box": [
+        0,
+        474,
+        868,
+        299
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.7554840568918735,
+      "area_pct": 14.73212890625
+    },
+    {
+      "index": 383,
+      "file": "CASE041/05390.jpg",
+      "box": [
+        0,
+        327,
+        182,
+        111
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.5444295233537559,
+      "area_pct": 1.4944335937500002
+    },
+    {
+      "index": 404,
+      "file": "CASE041/05565.jpg",
+      "box": [
+        683,
+        2,
+        312,
+        17
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4770629402119084,
+      "area_pct": 0.30507812500000003
+    },
+    {
+      "index": 414,
+      "file": "CASE041/05705.jpg",
+      "box": [
+        0,
+        497,
+        793,
+        301
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9968673139810562,
+      "area_pct": 9.69443359375
+    },
+    {
+      "index": 458,
+      "file": "CASE041/06230.jpg",
+      "box": [
+        144,
+        684,
+        33,
+        51
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.7895435467362404,
+      "area_pct": 0.11376953125
+    },
+    {
+      "index": 469,
+      "file": "CASE041/06300.jpg",
+      "box": [
+        0,
+        398,
+        170,
+        180
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.5880086892284453,
+      "area_pct": 2.22080078125
+    },
+    {
+      "index": 471,
+      "file": "CASE041/06405.jpg",
+      "box": [
+        1,
+        447,
+        599,
+        306
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9975361973047256,
+      "area_pct": 8.083203125
+    },
+    {
+      "index": 480,
+      "file": "CASE041/06580.jpg",
+      "box": [
+        2,
+        159,
+        62,
+        91
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.40455758408643305,
+      "area_pct": 0.43808593749999997
+    },
+    {
+      "index": 505,
+      "file": "CASE041/07035.jpg",
+      "box": [
+        715,
+        395,
+        564,
+        199
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5462422806303948,
+      "area_pct": 5.369140625
+    },
+    {
+      "index": 516,
+      "file": "CASE041/07175.jpg",
+      "box": [
+        461,
+        415,
+        817,
+        349
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Clip Applier",
+      "confidence": 0.7862498089671135,
+      "area_pct": 9.23154296875
+    },
+    {
+      "index": 556,
+      "file": "CASE041/07630.jpg",
+      "box": [
+        1,
+        1,
+        316,
+        91
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4818815588951111,
+      "area_pct": 1.8754882812499998
+    },
+    {
+      "index": 560,
+      "file": "CASE041/07945.jpg",
+      "box": [
+        806,
+        572,
+        236,
+        227
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.3426587302237749,
+      "area_pct": 2.54794921875
+    },
+    {
+      "index": 576,
+      "file": "CASE041/08225.jpg",
+      "box": [
+        1086,
+        328,
+        193,
+        470
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.5169811361993197,
+      "area_pct": 5.6426757812499995
+    },
+    {
+      "index": 585,
+      "file": "CASE041/08400.jpg",
+      "box": [
+        155,
+        0,
+        452,
+        71
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6604435173794627,
+      "area_pct": 1.9630859375
+    },
+    {
+      "index": 602,
+      "file": "CASE051/00280.jpg",
+      "box": [
+        0,
+        47,
+        209,
+        107
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.3576036235317588,
+      "area_pct": 1.4541015625
+    },
+    {
+      "index": 603,
+      "file": "CASE051/00280.jpg",
+      "box": [
+        504,
+        0,
+        635,
+        236
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5172892911359668,
+      "area_pct": 5.6984375
+    },
+    {
+      "index": 607,
+      "file": "CASE051/00175.jpg",
+      "box": [
+        94,
+        0,
+        207,
+        30
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5634758528321981,
+      "area_pct": 0.39599609375
+    },
+    {
+      "index": 685,
+      "file": "CASE051/01295.jpg",
+      "box": [
+        525,
+        651,
+        142,
+        148
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5114888329990208,
+      "area_pct": 0.50888671875
+    },
+    {
+      "index": 700,
+      "file": "CASE051/01435.jpg",
+      "box": [
+        617,
+        617,
+        78,
+        75
+      ],
+      "true": "Suction Instrument",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.38159597385674715,
+      "area_pct": 0.17724609375
+    },
+    {
+      "index": 715,
+      "file": "CASE051/01610.jpg",
+      "box": [
+        0,
+        211,
+        385,
+        189
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5978952087461948,
+      "area_pct": 3.88212890625
+    },
+    {
+      "index": 719,
+      "file": "CASE051/01645.jpg",
+      "box": [
+        41,
+        245,
+        330,
+        554
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.8569349721074104,
+      "area_pct": 11.2673828125
+    },
+    {
+      "index": 744,
+      "file": "CASE051/02030.jpg",
+      "box": [
+        534,
+        0,
+        149,
+        78
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9872568398714066,
+      "area_pct": 0.66298828125
+    },
+    {
+      "index": 751,
+      "file": "CASE051/02100.jpg",
+      "box": [
+        27,
+        0,
+        505,
+        63
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.38309647887945175,
+      "area_pct": 0.837890625
+    },
+    {
+      "index": 759,
+      "file": "CASE051/02205.jpg",
+      "box": [
+        0,
+        382,
+        226,
+        333
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.7398157194256783,
+      "area_pct": 2.78837890625
+    },
+    {
+      "index": 760,
+      "file": "CASE051/02205.jpg",
+      "box": [
+        377,
+        234,
+        902,
+        562
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.5859300382435322,
+      "area_pct": 31.668359374999998
+    },
+    {
+      "index": 761,
+      "file": "CASE051/02240.jpg",
+      "box": [
+        530,
+        747,
+        112,
+        52
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.494310655631125,
+      "area_pct": 0.29501953124999997
+    },
+    {
+      "index": 762,
+      "file": "CASE051/02240.jpg",
+      "box": [
+        1069,
+        0,
+        210,
+        260
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6953741759061813,
+      "area_pct": 3.7584960937500003
+    },
+    {
+      "index": 772,
+      "file": "CASE051/02380.jpg",
+      "box": [
+        0,
+        520,
+        262,
+        160
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.4060882837511599,
+      "area_pct": 1.6353515625
+    },
+    {
+      "index": 773,
+      "file": "CASE051/02380.jpg",
+      "box": [
+        2,
+        0,
+        1171,
+        317
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.7214875500649214,
+      "area_pct": 25.0265625
+    },
+    {
+      "index": 777,
+      "file": "CASE051/02450.jpg",
+      "box": [
+        640,
+        682,
+        140,
+        117
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.6014447601696062,
+      "area_pct": 0.7071289062499999
+    },
+    {
+      "index": 781,
+      "file": "CASE051/02485.jpg",
+      "box": [
+        561,
+        398,
+        718,
+        353
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.9996681958436966,
+      "area_pct": 13.340234375000001
+    },
+    {
+      "index": 810,
+      "file": "CASE053/00385.jpg",
+      "box": [
+        947,
+        584,
+        191,
+        215
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.887550562620163,
+      "area_pct": 1.580859375
+    },
+    {
+      "index": 817,
+      "file": "CASE053/00490.jpg",
+      "box": [
+        841,
+        483,
+        435,
+        314
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.5483122756704688,
+      "area_pct": 4.9141601562499995
+    },
+    {
+      "index": 819,
+      "file": "CASE053/00560.jpg",
+      "box": [
+        358,
+        701,
+        388,
+        97
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5125189777463675,
+      "area_pct": 1.24052734375
+    },
+    {
+      "index": 833,
+      "file": "CASE053/00770.jpg",
+      "box": [
+        466,
+        657,
+        96,
+        142
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6524109095335007,
+      "area_pct": 0.46269531250000007
+    },
+    {
+      "index": 907,
+      "file": "CASE053/01890.jpg",
+      "box": [
+        3,
+        1,
+        229,
+        92
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.4052340090274811,
+      "area_pct": 0.952734375
+    },
+    {
+      "index": 911,
+      "file": "CASE053/01925.jpg",
+      "box": [
+        0,
+        84,
+        255,
+        271
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.7818507785614202,
+      "area_pct": 1.88251953125
+    },
+    {
+      "index": 918,
+      "file": "CASE053/01960.jpg",
+      "box": [
+        758,
+        710,
+        186,
+        88
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.4941886384040117,
+      "area_pct": 0.78779296875
+    },
+    {
+      "index": 920,
+      "file": "CASE053/01960.jpg",
+      "box": [
+        592,
+        1,
+        687,
+        568
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.5252225352451205,
+      "area_pct": 17.978320312500003
+    },
+    {
+      "index": 935,
+      "file": "CASE053/02310.jpg",
+      "box": [
+        599,
+        334,
+        680,
+        465
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.6516338791698217,
+      "area_pct": 10.775
+    },
+    {
+      "index": 973,
+      "file": "CASE053/02835.jpg",
+      "box": [
+        157,
+        303,
+        308,
+        119
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.5301702937358641,
+      "area_pct": 1.67626953125
+    },
+    {
+      "index": 974,
+      "file": "CASE053/02835.jpg",
+      "box": [
+        0,
+        135,
+        664,
+        198
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.3959768222121056,
+      "area_pct": 8.496484375
+    },
+    {
+      "index": 990,
+      "file": "CASE053/03115.jpg",
+      "box": [
+        185,
+        733,
+        276,
+        66
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6475263442844152,
+      "area_pct": 1.0310546875
+    },
+    {
+      "index": 1016,
+      "file": "CASE053/03640.jpg",
+      "box": [
+        1122,
+        1,
+        155,
+        37
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5461875684559345,
+      "area_pct": 0.28251953124999996
+    },
+    {
+      "index": 1017,
+      "file": "CASE053/03640.jpg",
+      "box": [
+        562,
+        628,
+        171,
+        171
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5780735984444618,
+      "area_pct": 1.31845703125
+    },
+    {
+      "index": 1055,
+      "file": "CASE053/04165.jpg",
+      "box": [
+        532,
+        351,
+        504,
+        443
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.9951813071966171,
+      "area_pct": 4.82255859375
+    },
+    {
+      "index": 1065,
+      "file": "CASE053/04410.jpg",
+      "box": [
+        1151,
+        496,
+        128,
+        95
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5249631516635418,
+      "area_pct": 0.7372070312500001
+    },
+    {
+      "index": 1072,
+      "file": "CASE053/04550.jpg",
+      "box": [
+        657,
+        320,
+        621,
+        478
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.8816190659999847,
+      "area_pct": 6.62255859375
+    },
+    {
+      "index": 1082,
+      "file": "CASE053/04655.jpg",
+      "box": [
+        209,
+        532,
+        359,
+        267
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.9990898668766022,
+      "area_pct": 3.7017578125
+    },
+    {
+      "index": 1088,
+      "file": "CASE053/04760.jpg",
+      "box": [
+        453,
+        595,
+        153,
+        204
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.6696657472157312,
+      "area_pct": 1.5062499999999999
+    },
+    {
+      "index": 1111,
+      "file": "CASE053/05075.jpg",
+      "box": [
+        526,
+        699,
+        187,
+        100
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.8806778565049171,
+      "area_pct": 1.01123046875
+    },
+    {
+      "index": 1112,
+      "file": "CASE053/05075.jpg",
+      "box": [
+        549,
+        493,
+        431,
+        306
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.5139275165274739,
+      "area_pct": 6.31337890625
+    },
+    {
+      "index": 1131,
+      "file": "CASE053/05390.jpg",
+      "box": [
+        354,
+        473,
+        385,
+        326
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.5893438579514623,
+      "area_pct": 6.69033203125
+    },
+    {
+      "index": 1135,
+      "file": "CASE053/05425.jpg",
+      "box": [
+        358,
+        450,
+        491,
+        349
+      ],
+      "true": "Clip Applier",
+      "pred": "Suction Instrument",
+      "confidence": 0.5807541715912521,
+      "area_pct": 6.630078125
+    },
+    {
+      "index": 1140,
+      "file": "CASE053/05530.jpg",
+      "box": [
+        302,
+        0,
+        176,
+        39
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5321624926291406,
+      "area_pct": 0.274609375
+    },
+    {
+      "index": 1172,
+      "file": "CASE053/05915.jpg",
+      "box": [
+        696,
+        75,
+        583,
+        116
+      ],
+      "true": "Clip Applier",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.44871812779456377,
+      "area_pct": 3.70546875
+    },
+    {
+      "index": 1196,
+      "file": "CASE053/06195.jpg",
+      "box": [
+        0,
+        416,
+        776,
+        375
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.7477773725986481,
+      "area_pct": 21.2873046875
+    },
+    {
+      "index": 1197,
+      "file": "CASE053/06230.jpg",
+      "box": [
+        0,
+        0,
+        354,
+        42
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.632631778717041,
+      "area_pct": 0.8239257812499999
+    },
+    {
+      "index": 1198,
+      "file": "CASE053/06230.jpg",
+      "box": [
+        988,
+        417,
+        291,
+        120
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.37955610430799425,
+      "area_pct": 2.76796875
+    },
+    {
+      "index": 1202,
+      "file": "CASE053/06300.jpg",
+      "box": [
+        1008,
+        424,
+        271,
+        82
+      ],
+      "true": "Suction Instrument",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.4069498684257269,
+      "area_pct": 1.2275390625
+    },
+    {
+      "index": 1224,
+      "file": "CASE053/06685.jpg",
+      "box": [
+        268,
+        243,
+        125,
+        43
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.9665833413600922,
+      "area_pct": 0.2783203125
+    },
+    {
+      "index": 1227,
+      "file": "CASE053/06720.jpg",
+      "box": [
+        1,
+        2,
+        377,
+        217
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.654527124017477,
+      "area_pct": 4.0472656250000005
+    },
+    {
+      "index": 1229,
+      "file": "CASE053/06720.jpg",
+      "box": [
+        1098,
+        565,
+        181,
+        146
+      ],
+      "true": "Clip Applier",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.291371691506356,
+      "area_pct": 2.0333984375
+    },
+    {
+      "index": 1246,
+      "file": "CASE053/06965.jpg",
+      "box": [
+        263,
+        722,
+        551,
+        77
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.469327071972657,
+      "area_pct": 2.1904296875
+    },
+    {
+      "index": 1255,
+      "file": "CASE053/07000.jpg",
+      "box": [
+        868,
+        0,
+        411,
+        165
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.659076638519764,
+      "area_pct": 4.563671875
+    },
+    {
+      "index": 1258,
+      "file": "CASE053/07140.jpg",
+      "box": [
+        0,
+        327,
+        621,
+        471
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.6450036829337478,
+      "area_pct": 14.5078125
+    },
+    {
+      "index": 1262,
+      "file": "CASE053/07210.jpg",
+      "box": [
+        356,
+        769,
+        182,
+        30
+      ],
+      "true": "Clip Applier",
+      "pred": "Suction Instrument",
+      "confidence": 0.4812083002179861,
+      "area_pct": 0.30556640625
+    },
+    {
+      "index": 1286,
+      "file": "CASE053/07665.jpg",
+      "box": [
+        1,
+        198,
+        205,
+        88
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.39756559766829014,
+      "area_pct": 1.26630859375
+    },
+    {
+      "index": 1292,
+      "file": "CASE053/07735.jpg",
+      "box": [
+        0,
+        556,
+        446,
+        240
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Clip Applier",
+      "confidence": 0.6942491913214326,
+      "area_pct": 7.36494140625
+    },
+    {
+      "index": 1340,
+      "file": "CASE053/08610.jpg",
+      "box": [
+        736,
+        289,
+        540,
+        299
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Large Needle Driver",
+      "confidence": 0.4262234792113304,
+      "area_pct": 10.458105468749999
+    },
+    {
+      "index": 1344,
+      "file": "CASE053/08575.jpg",
+      "box": [
+        0,
+        2,
+        146,
+        124
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.3541730334982276,
+      "area_pct": 0.703515625
+    },
+    {
+      "index": 1360,
+      "file": "CASE053/09380.jpg",
+      "box": [
+        889,
+        0,
+        240,
+        344
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.6615837439894676,
+      "area_pct": 2.831640625
+    },
+    {
+      "index": 1361,
+      "file": "CASE047/00000.jpg",
+      "box": [
+        106,
+        159,
+        1171,
+        640
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.3747408001217991,
+      "area_pct": 13.145019531249998
+    },
+    {
+      "index": 1369,
+      "file": "CASE047/01715.jpg",
+      "box": [
+        0,
+        70,
+        499,
+        326
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.48878060541755985,
+      "area_pct": 5.6109375
+    },
+    {
+      "index": 1401,
+      "file": "CASE047/03255.jpg",
+      "box": [
+        0,
+        418,
+        238,
+        184
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Suction Instrument",
+      "confidence": 0.4193101697601378,
+      "area_pct": 2.8407226562499996
+    },
+    {
+      "index": 1417,
+      "file": "CASE047/03430.jpg",
+      "box": [
+        0,
+        296,
+        506,
+        203
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.823875330388546,
+      "area_pct": 5.6908203125
+    },
+    {
+      "index": 1463,
+      "file": "CASE047/04130.jpg",
+      "box": [
+        0,
+        622,
+        308,
+        176
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.9811041206121445,
+      "area_pct": 2.0705078125000003
+    },
+    {
+      "index": 1499,
+      "file": "CASE047/04515.jpg",
+      "box": [
+        466,
+        3,
+        162,
+        46
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.477188503369689,
+      "area_pct": 0.29677734375000003
+    },
+    {
+      "index": 1504,
+      "file": "CASE047/04550.jpg",
+      "box": [
+        314,
+        1,
+        964,
+        281
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.3125522745103808,
+      "area_pct": 15.666796875
+    },
+    {
+      "index": 1524,
+      "file": "CASE047/04900.jpg",
+      "box": [
+        2,
+        521,
+        483,
+        277
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.5015559550374746,
+      "area_pct": 7.65224609375
+    },
+    {
+      "index": 1539,
+      "file": "CASE047/05075.jpg",
+      "box": [
+        857,
+        573,
+        240,
+        226
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.496488461503759,
+      "area_pct": 2.9408203125
+    },
+    {
+      "index": 1546,
+      "file": "CASE047/05145.jpg",
+      "box": [
+        1,
+        524,
+        819,
+        274
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.7464385107159615,
+      "area_pct": 17.483496093750002
+    },
+    {
+      "index": 1548,
+      "file": "CASE047/05180.jpg",
+      "box": [
+        0,
+        592,
+        661,
+        206
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.9681840091943741,
+      "area_pct": 10.11083984375
+    },
+    {
+      "index": 1619,
+      "file": "CASE047/06475.jpg",
+      "box": [
+        411,
+        744,
+        244,
+        52
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.5800504830840509,
+      "area_pct": 0.851953125
+    },
+    {
+      "index": 1671,
+      "file": "CASE047/00700.jpg",
+      "box": [
+        725,
+        714,
+        554,
+        85
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.42072439892217517,
+      "area_pct": 1.6767578125000002
+    },
+    {
+      "index": 1701,
+      "file": "CASE047/01120.jpg",
+      "box": [
+        935,
+        0,
+        344,
+        106
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6774089969694614,
+      "area_pct": 1.8060546875
+    },
+    {
+      "index": 1734,
+      "file": "CASE047/02170.jpg",
+      "box": [
+        831,
+        231,
+        23,
+        13
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.25535042537376285,
+      "area_pct": 0.01962890625
+    },
+    {
+      "index": 1769,
+      "file": "CASE047/02765.jpg",
+      "box": [
+        205,
+        675,
+        333,
+        124
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5230126567184925,
+      "area_pct": 0.847265625
+    },
+    {
+      "index": 1771,
+      "file": "CASE047/02835.jpg",
+      "box": [
+        481,
+        683,
+        196,
+        83
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.49770019948482513,
+      "area_pct": 0.6470703125
+    },
+    {
+      "index": 1780,
+      "file": "CASE047/03080.jpg",
+      "box": [
+        0,
+        230,
+        136,
+        123
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.6828120071440935,
+      "area_pct": 1.02109375
+    },
+    {
+      "index": 1806,
+      "file": "CASE050/00035.jpg",
+      "box": [
+        152,
+        735,
+        171,
+        64
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.5403121877461672,
+      "area_pct": 0.61044921875
+    },
+    {
+      "index": 1819,
+      "file": "CASE050/00000.jpg",
+      "box": [
+        0,
+        703,
+        246,
+        96
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.8759972453117371,
+      "area_pct": 1.7458984375
+    },
+    {
+      "index": 1841,
+      "file": "CASE050/00420.jpg",
+      "box": [
+        1051,
+        595,
+        200,
+        204
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.7882949337363243,
+      "area_pct": 0.819140625
+    },
+    {
+      "index": 1851,
+      "file": "CASE050/00595.jpg",
+      "box": [
+        864,
+        196,
+        78,
+        50
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.3385572130791843,
+      "area_pct": 0.26181640625
+    },
+    {
+      "index": 1868,
+      "file": "CASE050/00875.jpg",
+      "box": [
+        1194,
+        536,
+        85,
+        187
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.42972506140358746,
+      "area_pct": 1.108984375
+    },
+    {
+      "index": 1871,
+      "file": "CASE050/00805.jpg",
+      "box": [
+        1105,
+        271,
+        172,
+        129
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.8207793086767197,
+      "area_pct": 0.44296874999999997
+    },
+    {
+      "index": 1874,
+      "file": "CASE050/00910.jpg",
+      "box": [
+        1202,
+        713,
+        77,
+        86
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.46158715710043907,
+      "area_pct": 0.5234375
+    },
+    {
+      "index": 1882,
+      "file": "CASE050/00980.jpg",
+      "box": [
+        0,
+        423,
+        305,
+        295
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.641067273914814,
+      "area_pct": 2.61767578125
+    },
+    {
+      "index": 1886,
+      "file": "CASE050/01050.jpg",
+      "box": [
+        1125,
+        358,
+        151,
+        117
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.6623767092823982,
+      "area_pct": 0.2685546875
+    },
+    {
+      "index": 1931,
+      "file": "CASE050/01645.jpg",
+      "box": [
+        433,
+        597,
+        195,
+        202
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.6772309690713882,
+      "area_pct": 1.6569335937499998
+    },
+    {
+      "index": 1954,
+      "file": "CASE050/01855.jpg",
+      "box": [
+        0,
+        296,
+        210,
+        114
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.621289499104023,
+      "area_pct": 1.2974609375
+    },
+    {
+      "index": 1965,
+      "file": "CASE050/02065.jpg",
+      "box": [
+        601,
+        539,
+        68,
+        258
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.5543739047134295,
+      "area_pct": 0.5787109375
+    },
+    {
+      "index": 2007,
+      "file": "CASE050/02380.jpg",
+      "box": [
+        0,
+        517,
+        197,
+        74
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.471793070435524,
+      "area_pct": 0.47402343750000003
+    },
+    {
+      "index": 2008,
+      "file": "CASE050/02380.jpg",
+      "box": [
+        0,
+        343,
+        734,
+        199
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9819129407405853,
+      "area_pct": 9.89775390625
+    },
+    {
+      "index": 2016,
+      "file": "CASE050/02590.jpg",
+      "box": [
+        0,
+        514,
+        454,
+        284
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.9577416926622391,
+      "area_pct": 2.609375
+    },
+    {
+      "index": 2069,
+      "file": "CASE050/03220.jpg",
+      "box": [
+        0,
+        269,
+        181,
+        153
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Monopolar Curved Scissors",
+      "confidence": 0.8629088401794434,
+      "area_pct": 0.9642578125000001
+    },
+    {
+      "index": 2099,
+      "file": "CASE050/03710.jpg",
+      "box": [
+        0,
+        269,
+        393,
+        186
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9997194558382034,
+      "area_pct": 3.3465820312499996
+    },
+    {
+      "index": 2100,
+      "file": "CASE050/03710.jpg",
+      "box": [
+        0,
+        247,
+        957,
+        552
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.8749144747853279,
+      "area_pct": 13.66875
+    },
+    {
+      "index": 2188,
+      "file": "CASE050/05110.jpg",
+      "box": [
+        413,
+        548,
+        208,
+        251
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6487041674554348,
+      "area_pct": 1.61435546875
+    },
+    {
+      "index": 2222,
+      "file": "CASE050/05565.jpg",
+      "box": [
+        540,
+        152,
+        482,
+        647
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.7038956037722528,
+      "area_pct": 14.363867187500002
+    },
+    {
+      "index": 2267,
+      "file": "CASE050/06090.jpg",
+      "box": [
+        383,
+        745,
+        93,
+        54
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.9697734415531158,
+      "area_pct": 0.41591796875000003
+    },
+    {
+      "index": 2270,
+      "file": "CASE050/06160.jpg",
+      "box": [
+        0,
+        602,
+        248,
+        197
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.32496483251452446,
+      "area_pct": 2.37451171875
+    },
+    {
+      "index": 2274,
+      "file": "CASE050/06230.jpg",
+      "box": [
+        0,
+        622,
+        279,
+        177
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.601759429089725,
+      "area_pct": 2.3587890625
+    },
+    {
+      "index": 2295,
+      "file": "CASE050/06370.jpg",
+      "box": [
+        338,
+        563,
+        393,
+        236
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5739557354208955,
+      "area_pct": 0.898046875
+    },
+    {
+      "index": 2309,
+      "file": "CASE050/06650.jpg",
+      "box": [
+        459,
+        666,
+        111,
+        133
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.7810497200116515,
+      "area_pct": 0.905859375
+    },
+    {
+      "index": 2322,
+      "file": "CASE050/06755.jpg",
+      "box": [
+        498,
+        724,
+        89,
+        75
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Suction Instrument",
+      "confidence": 0.8175055533647537,
+      "area_pct": 0.49482421875000004
+    },
+    {
+      "index": 2327,
+      "file": "CASE050/06790.jpg",
+      "box": [
+        802,
+        563,
+        444,
+        236
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Clip Applier",
+      "confidence": 0.5343138809839729,
+      "area_pct": 4.0977539062499995
+    },
+    {
+      "index": 2335,
+      "file": "CASE050/06965.jpg",
+      "box": [
+        0,
+        397,
+        525,
+        379
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.9998990148305893,
+      "area_pct": 10.4931640625
+    },
+    {
+      "index": 2340,
+      "file": "CASE050/06895.jpg",
+      "box": [
+        654,
+        495,
+        625,
+        304
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5706374188885093,
+      "area_pct": 6.13740234375
+    },
+    {
+      "index": 2345,
+      "file": "CASE050/07070.jpg",
+      "box": [
+        571,
+        374,
+        193,
+        130
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.7331800609827042,
+      "area_pct": 0.42060546875000004
+    },
+    {
+      "index": 2382,
+      "file": "CASE050/07665.jpg",
+      "box": [
+        0,
+        0,
+        677,
+        278
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.7641357034444809,
+      "area_pct": 14.723242187499999
+    },
+    {
+      "index": 2388,
+      "file": "CASE050/07700.jpg",
+      "box": [
+        3,
+        382,
+        515,
+        218
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Large Needle Driver",
+      "confidence": 0.4409601774532348,
+      "area_pct": 6.371875
+    },
+    {
+      "index": 2431,
+      "file": "CASE050/08155.jpg",
+      "box": [
+        3,
+        23,
+        640,
+        439
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.9284516870975494,
+      "area_pct": 12.20791015625
+    },
+    {
+      "index": 2435,
+      "file": "CASE050/08225.jpg",
+      "box": [
+        0,
+        57,
+        834,
+        669
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6463362090289593,
+      "area_pct": 19.13310546875
+    },
+    {
+      "index": 2446,
+      "file": "CASE050/08190.jpg",
+      "box": [
+        3,
+        0,
+        828,
+        447
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.670879635727033,
+      "area_pct": 14.61298828125
+    },
+    {
+      "index": 2465,
+      "file": "CASE050/08575.jpg",
+      "box": [
+        741,
+        0,
+        75,
+        30
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.43381260987371206,
+      "area_pct": 0.14375
+    },
+    {
+      "index": 2477,
+      "file": "CASE050/08645.jpg",
+      "box": [
+        360,
+        467,
+        271,
+        51
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.43340669851750135,
+      "area_pct": 1.07197265625
+    },
+    {
+      "index": 2510,
+      "file": "CASE050/08995.jpg",
+      "box": [
+        1,
+        0,
+        533,
+        96
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.3957622144371271,
+      "area_pct": 1.9884765624999998
+    },
+    {
+      "index": 2537,
+      "file": "CASE050/09310.jpg",
+      "box": [
+        312,
+        0,
+        405,
+        64
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.524080820439849,
+      "area_pct": 1.3465820312499999
+    },
+    {
+      "index": 2555,
+      "file": "CASE050/09520.jpg",
+      "box": [
+        538,
+        0,
+        167,
+        45
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4152408242225647,
+      "area_pct": 0.5107421875
+    },
+    {
+      "index": 2577,
+      "file": "CASE050/09800.jpg",
+      "box": [
+        0,
+        0,
+        380,
+        89
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.7344990819692612,
+      "area_pct": 2.105859375
+    },
+    {
+      "index": 2614,
+      "file": "CASE050/10255.jpg",
+      "box": [
+        0,
+        0,
+        821,
+        286
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6196508258581161,
+      "area_pct": 6.66240234375
+    },
+    {
+      "index": 2618,
+      "file": "CASE050/10290.jpg",
+      "box": [
+        690,
+        589,
+        45,
+        85
+      ],
+      "true": "Suction Instrument",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.9900570064783096,
+      "area_pct": 0.16689453125
+    },
+    {
+      "index": 2621,
+      "file": "CASE050/10325.jpg",
+      "box": [
+        478,
+        588,
+        118,
+        211
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.9700242131948471,
+      "area_pct": 1.0826171875000001
+    },
+    {
+      "index": 2641,
+      "file": "CASE050/11935.jpg",
+      "box": [
+        149,
+        383,
+        305,
+        414
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.7971129214274697,
+      "area_pct": 8.50380859375
+    },
+    {
+      "index": 2643,
+      "file": "CASE050/11970.jpg",
+      "box": [
+        2,
+        477,
+        891,
+        180
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5636544413864613,
+      "area_pct": 6.55498046875
+    },
+    {
+      "index": 2669,
+      "file": "CASE050/12390.jpg",
+      "box": [
+        0,
+        152,
+        169,
+        167
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4742239825427532,
+      "area_pct": 1.5106445312499999
+    },
+    {
+      "index": 2681,
+      "file": "CASE050/12600.jpg",
+      "box": [
+        1097,
+        475,
+        179,
+        104
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Clip Applier",
+      "confidence": 0.6345824198797345,
+      "area_pct": 1.1644531249999999
+    },
+    {
+      "index": 2683,
+      "file": "CASE050/12635.jpg",
+      "box": [
+        0,
+        201,
+        161,
+        261
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.6247378261759877,
+      "area_pct": 2.53046875
+    },
+    {
+      "index": 2690,
+      "file": "CASE050/12740.jpg",
+      "box": [
+        768,
+        183,
+        511,
+        337
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.7019868046045303,
+      "area_pct": 5.8241210937500005
+    },
+    {
+      "index": 2696,
+      "file": "CASE050/12810.jpg",
+      "box": [
+        0,
+        99,
+        469,
+        351
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.768221152247861,
+      "area_pct": 9.7525390625
+    },
+    {
+      "index": 2701,
+      "file": "CASE050/12915.jpg",
+      "box": [
+        403,
+        0,
+        435,
+        35
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.47441915422677994,
+      "area_pct": 0.56318359375
+    },
+    {
+      "index": 2708,
+      "file": "CASE050/13020.jpg",
+      "box": [
+        0,
+        31,
+        294,
+        309
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.4066810845397413,
+      "area_pct": 4.759765625
+    },
+    {
+      "index": 2716,
+      "file": "CASE050/13160.jpg",
+      "box": [
+        0,
+        137,
+        354,
+        398
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.4496431518346071,
+      "area_pct": 6.60419921875
+    },
+    {
+      "index": 2725,
+      "file": "CASE050/13335.jpg",
+      "box": [
+        420,
+        507,
+        859,
+        292
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5928075123811141,
+      "area_pct": 14.107617187499999
+    },
+    {
+      "index": 2748,
+      "file": "CASE050/13755.jpg",
+      "box": [
+        879,
+        216,
+        400,
+        195
+      ],
+      "true": "Large Needle Driver",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.38520074263215065,
+      "area_pct": 3.4312500000000004
+    },
+    {
+      "index": 2749,
+      "file": "CASE050/13755.jpg",
+      "box": [
+        560,
+        131,
+        715,
+        519
+      ],
+      "true": "Laparoscopic Grasper",
+      "pred": "Suction Instrument",
+      "confidence": 0.38594508171081543,
+      "area_pct": 12.216015625
+    },
+    {
+      "index": 2761,
+      "file": "CASE050/10430.jpg",
+      "box": [
+        1,
+        0,
+        596,
+        222
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.8742320835590363,
+      "area_pct": 7.392285156250001
+    },
+    {
+      "index": 2764,
+      "file": "CASE050/10465.jpg",
+      "box": [
+        0,
+        0,
+        475,
+        300
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.5222303438931704,
+      "area_pct": 9.1705078125
+    },
+    {
+      "index": 2783,
+      "file": "CASE050/10815.jpg",
+      "box": [
+        548,
+        444,
+        317,
+        355
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.8948849812150002,
+      "area_pct": 3.1643554687499997
+    },
+    {
+      "index": 2785,
+      "file": "CASE050/10850.jpg",
+      "box": [
+        956,
+        321,
+        323,
+        478
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Suction Instrument",
+      "confidence": 0.8979049175977707,
+      "area_pct": 10.147363281250001
+    },
+    {
+      "index": 2794,
+      "file": "CASE050/10920.jpg",
+      "box": [
+        0,
+        0,
+        784,
+        404
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6593120414763689,
+      "area_pct": 10.5025390625
+    },
+    {
+      "index": 2828,
+      "file": "CASE050/11305.jpg",
+      "box": [
+        0,
+        405,
+        274,
+        156
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.7290703020989895,
+      "area_pct": 1.46357421875
+    },
+    {
+      "index": 2831,
+      "file": "CASE050/11305.jpg",
+      "box": [
+        680,
+        592,
+        216,
+        207
+      ],
+      "true": "Bipolar Forceps",
+      "pred": "Prograsp Forceps",
+      "confidence": 0.8984308391809464,
+      "area_pct": 1.1181640625
+    },
+    {
+      "index": 2848,
+      "file": "CASE050/11585.jpg",
+      "box": [
+        1,
+        0,
+        638,
+        335
+      ],
+      "true": "Prograsp Forceps",
+      "pred": "Bipolar Forceps",
+      "confidence": 0.6013814011084833,
+      "area_pct": 9.62744140625
+    },
+    {
+      "index": 2856,
+      "file": "CASE050/11690.jpg",
+      "box": [
+        1011,
+        704,
+        268,
+        95
+      ],
+      "true": "Monopolar Curved Scissors",
+      "pred": "Laparoscopic Grasper",
+      "confidence": 0.7280543819069862,
+      "area_pct": 1.250390625
+    }
+  ]
+}
