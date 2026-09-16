@@ -102,18 +102,20 @@ did not beat this fixed rule.
 </p>
 <div class="tablewrap">
 <table>
-<tr><th>configuration</th><th class="num">accuracy</th></tr>
-<tr><td>4-model ensemble alone</td><td class="num">0.9343</td></tr>
-<tr class="hi"><td>+ confidence-gated temporal tracking</td><td class="num">0.9567</td></tr>
+<tr><th>configuration</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
+<tr><td>4-model ensemble alone</td><td class="num">0.903</td><td class="num">0.9343</td></tr>
+<tr class="hi"><td>+ confidence-gated temporal tracking</td><td class="num">0.934</td><td class="num">0.9567</td></tr>
 </table>
 </div>
 <p class="small">
-Measured on the full official test set (2,861 instances). Does not
-resolve identical-looking instruments &mdash; Laparoscopic Grasper vs.
-Suction Instrument remains one of the largest confusion pairs after
-correction, since the technique recovers missing signal, not
-indistinguishable appearance. Not suited to real-time use on any hardware: SAM2's
-own per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
+Measured on the full official test set (2,861 instances). Every class
+improves, including the two weakest: Laparoscopic Grasper 0.800 &rarr;
+0.838 F1, Clip Applier 0.895 &rarr; 0.947 F1. Does not resolve
+identical-looking instruments &mdash; Laparoscopic Grasper vs. Suction
+Instrument remains one of the largest confusion pairs after correction,
+since the technique recovers missing signal, not indistinguishable
+appearance. Not suited to real-time use on any hardware: SAM2's own
+per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
 budget. Offline, batch-applied only. Updated
 <a href="error_gallery_2026-09-16.html">error gallery</a>.
 </p>
