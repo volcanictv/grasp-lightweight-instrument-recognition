@@ -55,6 +55,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--window", type=int, default=10)
     parser.add_argument("--shard-id", type=int, default=0)
     parser.add_argument("--num-shards", type=int, default=1)
+    parser.add_argument("--error-cases-json", type=Path, default=None,
+                         help="restrict to the instance indices in this file's 'errors' list "
+                              "(scripts/find_ensemble_error_cases.py output) instead of sharding the whole split")
     parser.add_argument("--save-every", type=int, default=50)
     parser.add_argument("--sam2-checkpoint", type=Path, required=True)
     parser.add_argument("--sam2-config", type=str, required=True)
@@ -120,7 +123,11 @@ def main() -> None:
         weights.append(weight_320 if m["label"] == "resnet50_320" else w_rest)
     print(f"loaded {len(models)} ensemble members, weights={weights}")
 
-    indices = list(range(len(ds.instances)))[args.shard_id :: args.num_shards]
+    if args.error_cases_json is not None:
+        error_data = json.loads(args.error_cases_json.read_text())
+        indices = [e["index"] for e in error_data["errors"]]
+    else:
+        indices = list(range(len(ds.instances)))[args.shard_id :: args.num_shards]
     print(f"shard {args.shard_id}/{args.num_shards}: {len(indices)} of {len(ds.instances)} instances")
 
     predictor = build_sam2_video_predictor(args.sam2_config, str(args.sam2_checkpoint), device=str(device))
