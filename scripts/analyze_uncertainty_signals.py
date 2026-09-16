@@ -151,13 +151,14 @@ def main() -> None:
 
     results = {"n_total": int(len(y_true)), "n_errors": int(is_wrong.sum()), "baseline_accuracy": float(1 - is_wrong.mean()),
                "dropout_layer_counts": {m["label"]: n for m, n in zip(members_cfg, per_member_dropout_count)},
-               "auroc": {}}
+               "auroc": {}, "is_wrong": is_wrong.tolist(), "signal_scores": {}}
     print("\nAUROC for detecting real misclassifications (0.5 = no better than chance, 1.0 = perfect):")
     for name, values in signals.items():
         # for confidence, LOW confidence should predict error -> flip sign so higher score = more likely wrong, for every signal
         score = -values if name == "max_softmax_confidence" else values
         auroc = float(roc_auc_score(is_wrong, score))
         results["auroc"][name] = auroc
+        results["signal_scores"][name] = score.tolist()  # already sign-flipped so higher = more-likely-wrong for every signal, for direct ROC plotting
         print(f"  {name:<38} AUROC={auroc:.4f}")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
