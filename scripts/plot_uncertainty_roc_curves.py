@@ -10,6 +10,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -53,7 +54,11 @@ def _color_for(name: str, index: int) -> str:
 
 
 def main() -> None:
-    data = json.loads((REPO_ROOT / "docs" / "reports" / "uncertainty_signals.json").read_text())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=Path, default=REPO_ROOT / "docs" / "reports" / "uncertainty_signals.json")
+    parser.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "reports" / "figures" / "uncertainty_signals_roc.png")
+    args = parser.parse_args()
+    data = json.loads(args.data.read_text())
     is_wrong = np.array(data["is_wrong"])
 
     fig, ax = plt.subplots(figsize=(6.5, 6))
@@ -72,7 +77,7 @@ def main() -> None:
     ax.grid(alpha=0.25)
     fig.tight_layout()
 
-    out_path = REPO_ROOT / "docs" / "reports" / "figures" / "uncertainty_signals_roc.png"
+    out_path = args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
