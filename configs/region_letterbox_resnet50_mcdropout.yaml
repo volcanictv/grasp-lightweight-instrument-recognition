@@ -1,0 +1,21 @@
+task: region_classification
+model:
+  name: resnet50_mcdropout # one variable vs region_letterbox_resnet50.yaml: adds a
+                            # Dropout(0.2) before the final Linear -- see
+                            # region_letterbox_resnet50_320_mcdropout.yaml for why.
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # matches the deployed resnet50_224 member, a drop-in replacement for it.
+  image_size: 224
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42

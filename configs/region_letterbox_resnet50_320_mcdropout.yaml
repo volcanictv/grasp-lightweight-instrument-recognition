@@ -1,0 +1,24 @@
+task: region_classification
+model:
+  name: resnet50_mcdropout # one variable vs region_letterbox_resnet50_320.yaml: adds a
+                            # Dropout(0.2) before the final Linear (matching MobileNetV3's
+                            # own rate) so this member can actually do MC Dropout at
+                            # inference -- plain resnet50 has zero Dropout layers
+                            # (docs/DECISIONS.md 2026-09-16/17).
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: official # official | fold1 | fold2 -- matches the deployed resnet50_320 member,
+                   # this is meant as a drop-in replacement for it.
+  image_size: 320
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
