@@ -31,6 +31,8 @@ LABELS = {
     "ensemble_vote_disagreement": "Ensemble vote disagreement",
     "mc_dropout_variance_mobilenet_only": "MC Dropout variance (MobileNet only, 40% coverage)",
     "mc_dropout_variance": "MC Dropout variance (full ensemble)",
+    "mc_top_class_disagreement_mobilenet_only": "MC top-class disagreement (MobileNet only, 40% coverage)",
+    "mc_top_class_disagreement": "MC top-class disagreement (full ensemble)",
 }
 COLORS = {
     "max_softmax_confidence": "#1f3a5f",
@@ -39,6 +41,8 @@ COLORS = {
     "ensemble_vote_disagreement": "#c77b2e",
     "mc_dropout_variance_mobilenet_only": "#a13d4c",
     "mc_dropout_variance": "#a13d4c",
+    "mc_top_class_disagreement_mobilenet_only": "#7b4fa1",
+    "mc_top_class_disagreement": "#7b4fa1",
 }
 
 
