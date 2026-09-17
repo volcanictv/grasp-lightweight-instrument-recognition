@@ -1,0 +1,32 @@
+# Full-MC-Dropout-capable ensemble: the two ResNet-50 members are the
+# dropout-enabled variants (region_letterbox_resnet50_320_mcdropout.yaml /
+# region_letterbox_resnet50_mcdropout.yaml), so all 4 members now have a
+# Dropout layer and MC Dropout covers 100% of the ensemble's decision
+# weight, not just the two MobileNet members (docs/DECISIONS.md
+# 2026-09-16/17). Same weighting scheme as region_ensemble.yaml
+# (weight_resnet50_320=0.40, rest split equally) -- kept fixed rather than
+# re-optimized, since re-tuning ensemble weights for these new individual
+# checkpoints is a separate question from getting MC Dropout working.
+weight_resnet50_320: 0.40
+
+members:
+  - checkpoint: experiments/region_letterbox_resnet50_320_mcdropout_20260917-153925/best.pt
+    model: resnet50_mcdropout
+    image_size: 320
+    letterbox: true
+    label: resnet50_320
+  - checkpoint: experiments/region_letterbox_resnet50_mcdropout_20260917-154137/best.pt
+    model: resnet50_mcdropout
+    image_size: 224
+    letterbox: true
+    label: resnet50_224
+  - checkpoint: experiments/region_baseline_20260831-182451/best.pt
+    model: mobilenet_v3_small
+    image_size: 224
+    letterbox: false
+    label: baseline
+  - checkpoint: experiments/region_letterbox_crop_20260902-152750/best.pt
+    model: mobilenet_v3_small
+    image_size: 224
+    letterbox: true
+    label: letterbox_crop

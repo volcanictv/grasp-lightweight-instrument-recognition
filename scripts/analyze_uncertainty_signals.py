@@ -30,6 +30,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -60,12 +61,18 @@ def enable_mc_dropout(model: nn.Module) -> None:
 
 
 def main() -> None:
-    ensemble_config_path = REPO_ROOT / "configs" / "region_ensemble.yaml"
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--ensemble-config", type=Path, default=REPO_ROOT / "configs" / "region_ensemble.yaml")
+    parser.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "reports" / "uncertainty_signals.json")
+    parser.add_argument("--mc-samples", type=int, default=20)
+    args = parser.parse_args()
+
+    ensemble_config_path = args.ensemble_config
     data_root = Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSp"))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     split = "test"
-    mc_samples = 20
-    out_path = REPO_ROOT / "docs" / "reports" / "uncertainty_signals.json"
+    mc_samples = args.mc_samples
+    out_path = args.out
 
     ensemble_config = yaml.safe_load(ensemble_config_path.read_text())
     members_cfg = ensemble_config["members"]
@@ -120,11 +127,14 @@ def main() -> None:
     pred_class_probs = np.take_along_axis(per_member_probs, y_pred[None, :, None], axis=2)[:, :, 0]  # (M, N)
     signals["ensemble_variance"] = pred_class_probs.var(axis=0)  # higher = more disagreement on the chosen class
 
-    # MC Dropout: MobileNet members only (the two with real Dropout layers)
+    # MC Dropout: only members with a real Dropout layer contribute variance;
+    # a member with none is silently deterministic and excluded from the weighted sum.
     mc_variance = np.zeros(len(y_true))
     mc_members = [m for m, n in zip(members_cfg, per_member_dropout_count) if n > 0]
+    mc_coverage = sum(weights[members_cfg.index(m)] for m in mc_members)
     if mc_members:
-        print(f"\nrunning MC Dropout ({mc_samples} samples) on: {[m['label'] for m in mc_members]}")
+        print(f"\nrunning MC Dropout ({mc_samples} samples) on: {[m['label'] for m in mc_members]} "
+              f"(covers {mc_coverage*100:.0f}% of ensemble weight)")
         mc_weight_total = sum(weights[i] for i, m in enumerate(members_cfg) if m in mc_members)
         for m in mc_members:
             ds = GraspRegionDataset(
@@ -147,9 +157,11 @@ def main() -> None:
             member_pred_class_probs = np.take_along_axis(mc_samples_probs, y_pred[None, :, None], axis=2)[:, :, 0]
             member_weight = weights[members_cfg.index(m)]
             mc_variance += (member_weight / mc_weight_total) * member_pred_class_probs.var(axis=0)
-    signals["mc_dropout_variance_mobilenet_only"] = mc_variance
+    signal_name = "mc_dropout_variance" if mc_coverage > 0.99 else f"mc_dropout_variance_{int(round(mc_coverage*100))}pct_coverage"
+    signals[signal_name] = mc_variance
 
     results = {"n_total": int(len(y_true)), "n_errors": int(is_wrong.sum()), "baseline_accuracy": float(1 - is_wrong.mean()),
+               "mc_dropout_coverage": float(mc_coverage),
                "dropout_layer_counts": {m["label"]: n for m, n in zip(members_cfg, per_member_dropout_count)},
                "auroc": {}, "is_wrong": is_wrong.tolist(), "signal_scores": {}}
     print("\nAUROC for detecting real misclassifications (0.5 = no better than chance, 1.0 = perfect):")

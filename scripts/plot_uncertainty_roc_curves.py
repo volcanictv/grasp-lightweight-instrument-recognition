@@ -28,7 +28,8 @@ LABELS = {
     "predictive_entropy": "Predictive entropy",
     "ensemble_variance": "Ensemble variance",
     "ensemble_vote_disagreement": "Ensemble vote disagreement",
-    "mc_dropout_variance_mobilenet_only": "MC Dropout variance (MobileNet only)",
+    "mc_dropout_variance_mobilenet_only": "MC Dropout variance (MobileNet only, 40% coverage)",
+    "mc_dropout_variance": "MC Dropout variance (full ensemble)",
 }
 COLORS = {
     "max_softmax_confidence": "#1f3a5f",
@@ -36,7 +37,19 @@ COLORS = {
     "ensemble_variance": "#2f7d52",
     "ensemble_vote_disagreement": "#c77b2e",
     "mc_dropout_variance_mobilenet_only": "#a13d4c",
+    "mc_dropout_variance": "#a13d4c",
 }
+
+
+def _label_for(name: str) -> str:
+    if name in LABELS:
+        return LABELS[name]
+    return name.replace("_", " ").capitalize()  # covers any dynamically-named partial-coverage MC Dropout key
+
+
+def _color_for(name: str, index: int) -> str:
+    fallback_palette = ["#1f3a5f", "#5b7ea8", "#2f7d52", "#c77b2e", "#a13d4c"]
+    return COLORS.get(name, fallback_palette[index % len(fallback_palette)])
 
 
 def main() -> None:
@@ -44,10 +57,10 @@ def main() -> None:
     is_wrong = np.array(data["is_wrong"])
 
     fig, ax = plt.subplots(figsize=(6.5, 6))
-    for name, scores in data["signal_scores"].items():
+    for i, (name, scores) in enumerate(data["signal_scores"].items()):
         fpr, tpr, _ = roc_curve(is_wrong, np.array(scores))
         auroc = data["auroc"][name]
-        ax.plot(fpr, tpr, label=f"{LABELS[name]} (AUROC={auroc:.3f})", color=COLORS[name], linewidth=2)
+        ax.plot(fpr, tpr, label=f"{_label_for(name)} (AUROC={auroc:.3f})", color=_color_for(name, i), linewidth=2)
 
     ax.plot([0, 1], [0, 1], linestyle="--", color="gray", linewidth=1, label="Chance (AUROC=0.500)")
     ax.set_xlabel("False positive rate (correct predictions flagged)")
