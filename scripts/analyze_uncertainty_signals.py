@@ -19,11 +19,24 @@ independent of any particular threshold choice:
    Lakshminarayanan et al. 2017), needs no retraining.
 4. Ensemble variance: variance across the 4 members' assigned probability
    for the ensemble's chosen class -- a continuous version of (3).
-5. MC Dropout, MobileNet members only -- ResNet-50 has zero Dropout
-   layers (verified directly against the model definitions, not assumed),
-   so classic MC Dropout is silently deterministic for 60% of the
-   ensemble's decision weight (weight_resnet50_320=0.40 + resnet50_224's
-   0.20). Reported with that caveat, not hidden.
+5. MC Dropout variance: variance, across stochastic forward passes with
+   Dropout left in train mode (Gal & Ghahramani 2016), of each
+   MC-dropout-capable member's assigned probability for the final
+   ensemble's chosen class -- the continuous, probability-space MC
+   Dropout signal.
+6. MC top-class disagreement: fraction of those same stochastic forward
+   passes whose own argmax differs from the final ensemble prediction --
+   the discrete, argmax-space analogue of (5), same relationship (3) has
+   to (4) but for MC samples instead of independently-trained members.
+   Reuses the same forward passes as (5), no extra compute.
+
+With partial ensemble coverage (docs/DECISIONS.md 2026-09-16: ResNet-50
+had zero Dropout layers, so MC Dropout was silently deterministic for
+60% of the ensemble's decision weight) or full coverage (2026-09-17:
+both ResNet-50 members retrained with dropout added), whichever
+ensemble config is passed determines which members have real MC Dropout
+signal to contribute; a member with none is excluded and the coverage
+gap reported plainly.
 
 Usage:
     python scripts/analyze_uncertainty_signals.py
@@ -130,6 +143,7 @@ def main() -> None:
     # MC Dropout: only members with a real Dropout layer contribute variance;
     # a member with none is silently deterministic and excluded from the weighted sum.
     mc_variance = np.zeros(len(y_true))
+    mc_disagreement = np.zeros(len(y_true))
     mc_members = [m for m, n in zip(members_cfg, per_member_dropout_count) if n > 0]
     mc_coverage = sum(weights[members_cfg.index(m)] for m in mc_members)
     if mc_members:
@@ -157,8 +171,13 @@ def main() -> None:
             member_pred_class_probs = np.take_along_axis(mc_samples_probs, y_pred[None, :, None], axis=2)[:, :, 0]
             member_weight = weights[members_cfg.index(m)]
             mc_variance += (member_weight / mc_weight_total) * member_pred_class_probs.var(axis=0)
-    signal_name = "mc_dropout_variance" if mc_coverage > 0.99 else f"mc_dropout_variance_{int(round(mc_coverage*100))}pct_coverage"
-    signals[signal_name] = mc_variance
+
+            pred_t = mc_samples_probs.argmax(axis=2)  # (S, N) -- argmax per stochastic pass
+            member_disagreement = (pred_t != y_pred[None, :]).mean(axis=0)  # fraction of passes disagreeing with final prediction
+            mc_disagreement += (member_weight / mc_weight_total) * member_disagreement
+    coverage_suffix = "" if mc_coverage > 0.99 else f"_{int(round(mc_coverage*100))}pct_coverage"
+    signals[f"mc_dropout_variance{coverage_suffix}"] = mc_variance
+    signals[f"mc_top_class_disagreement{coverage_suffix}"] = mc_disagreement
 
     results = {"n_total": int(len(y_true)), "n_errors": int(is_wrong.sum()), "baseline_accuracy": float(1 - is_wrong.mean()),
                "mc_dropout_coverage": float(mc_coverage),
