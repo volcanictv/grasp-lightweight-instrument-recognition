@@ -79,7 +79,8 @@ def main() -> None:
     cfg = yaml.safe_load(args.ensemble_config.read_text())
     members = cfg["members"]
     w_320 = cfg["weight_resnet50_320"]
-    weights = [w_320 if m["label"] == "resnet50_320" else (1 - w_320) / (len(members) - 1) for m in members]
+    weights = np.array([w_320 if m["label"] == "resnet50_320" else (1 - w_320) / (len(members) - 1) for m in members])
+    weights = weights / weights.sum()  # raw weights sum to 1 + 2e-16, which makes unanimous votes score +/-1e-16 instead of tying at 0
 
     cache = np.load(args.logits_cache)
     y_true = cache["y_true"]
@@ -99,11 +100,11 @@ def main() -> None:
     entropy = -(v_mc * np.log(v_mc + 1e-12)).sum(axis=1)
 
     scores = {
-        "mc_vote_disagreement": 1 - v_mc[rows, y_pred],
+        "mc_vote_disagreement": np.round(1 - v_mc[rows, y_pred], 9),
         "mc_vote_variation_ratio": 1 - v_mc.max(axis=1),
         "mc_vote_entropy": entropy,
-        "det_vote_disagreement": 1 - v_det[rows, y_pred],
-        "pooled_vote_disagreement": 1 - v_pool[rows, y_pred],
+        "det_vote_disagreement": np.round(1 - v_det[rows, y_pred], 9),
+        "pooled_vote_disagreement": np.round(1 - v_pool[rows, y_pred], 9),
     }
 
     rng = np.random.default_rng(42)

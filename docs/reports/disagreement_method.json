@@ -3,33 +3,33 @@
   "n_errors": 214,
   "primary": "mc_vote_disagreement",
   "auroc": {
-    "mc_vote_disagreement": 0.8763827150468348,
-    "mc_vote_variation_ratio": 0.8751981612052437,
-    "mc_vote_entropy": 0.876201766062091,
-    "det_vote_disagreement": 0.8520128588527305,
-    "pooled_vote_disagreement": 0.8749104081856024,
+    "mc_vote_disagreement": 0.8764339103693477,
+    "mc_vote_variation_ratio": 0.8753049652401412,
+    "mc_vote_entropy": 0.8762264810453732,
+    "det_vote_disagreement": 0.8521532046506537,
+    "pooled_vote_disagreement": 0.8749236483552179,
     "max_softmax_confidence (reference)": 0.9189119052074469
   },
   "auroc_ci95": {
     "mc_vote_disagreement": [
-      0.8503661062654011,
-      0.9009575586940389
+      0.8504142531458414,
+      0.9010167915431374
     ],
     "mc_vote_variation_ratio": [
-      0.8498124487104802,
-      0.9001658739545099
+      0.8499188548564625,
+      0.9002844582456685
     ],
     "mc_vote_entropy": [
-      0.8478666538793586,
-      0.9030219679690716
+      0.8478762825188796,
+      0.9029793908039192
     ],
     "det_vote_disagreement": [
-      0.8234651403630566,
-      0.8774911087875364
+      0.8236399887743354,
+      0.8779115820543483
     ],
     "pooled_vote_disagreement": [
-      0.8483282051254433,
-      0.8984191836920788
+      0.8483301047722017,
+      0.8983688720818349
     ]
   },
   "gate": {
@@ -39,19 +39,19 @@
       "precision": 0.24246395806028834
     },
     "disagreement >= 0.10": {
-      "flagged_frac": 0.2425725270884306,
+      "flagged_frac": 0.24292205522544566,
       "errors_caught": 0.8551401869158879,
-      "precision": 0.26368876080691644
+      "precision": 0.2633093525179856
     },
     "disagreement >= 0.20": {
-      "flagged_frac": 0.19608528486543167,
+      "flagged_frac": 0.19713386927647675,
       "errors_caught": 0.8084112149532711,
-      "precision": 0.3083778966131907
+      "precision": 0.3067375886524823
     },
     "disagreement >= 0.30": {
-      "flagged_frac": 0.1268787137364558,
-      "errors_caught": 0.6495327102803738,
-      "precision": 0.38292011019283745
+      "flagged_frac": 0.12757777001048584,
+      "errors_caught": 0.6588785046728972,
+      "precision": 0.3863013698630137
     },
     "disagreement >= 0.50": {
       "flagged_frac": 0.03600139811254806,
@@ -64,5 +64,5 @@
       "precision": 0.30098684210526316
     }
   },
-  "primary_distinct_score_levels": 120
+  "primary_distinct_score_levels": 76
 }

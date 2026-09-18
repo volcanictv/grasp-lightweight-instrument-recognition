@@ -73,8 +73,8 @@ def build_signals(det, mc, weights, y_pred):
         "conf_mc_unc": 1 - p_mc[rows, y_pred],
         "entropy_det": entropy(p_det),
         "entropy_mc": entropy(p_mc),
-        "vote_dis": 1 - v_mc[rows, y_pred],
-        "det_vote_dis": 1 - v_det[rows, y_pred],
+        "vote_dis": np.round(1 - v_mc[rows, y_pred], 9),
+        "det_vote_dis": np.round(1 - v_det[rows, y_pred], 9),
         "mutual_info": mi,
     }
 
@@ -135,7 +135,8 @@ def main() -> None:
     cfg = yaml.safe_load(args.ensemble_config.read_text())
     members = cfg["members"]
     w320 = cfg["weight_resnet50_320"]
-    weights = [w320 if m["label"] == "resnet50_320" else (1 - w320) / (len(members) - 1) for m in members]
+    weights = np.array([w320 if m["label"] == "resnet50_320" else (1 - w320) / (len(members) - 1) for m in members])
+    weights = weights / weights.sum()  # raw weights sum to 1 + 2e-16, which turns unanimous votes into +/-1e-16 instead of exact ties
     cache = np.load(args.logits_cache)
     y_true = cache["y_true"]
     det = [cache[f"det_{m['label']}"] for m in members]
@@ -150,7 +151,8 @@ def main() -> None:
     y_pred = p_det.argmax(axis=1)
     y = (y_pred != y_true).astype(int)
     sig = build_signals(det, mc, weights, y_pred)
-    cases = sorted(np.unique(case_of))
+    cases = sorted(str(c) for c in np.unique(case_of))
+    case_of = case_of.astype(str)
     print(f"n={len(y)}, errors={y.sum()} ({y.mean():.1%}); cases: " + ", ".join(f"{c}: {int((case_of == c).sum())}/{int(y[case_of == c].sum())}" for c in cases))
     R: dict = {"n": int(len(y)), "n_errors": int(y.sum()), "cases": {c: [int((case_of == c).sum()), int(y[case_of == c].sum())] for c in cases}}
 
@@ -281,6 +283,80 @@ def main() -> None:
     for k in ["C conf+vote_dis", "D conf+mutual_info", "E conf+det_vote_dis", "G conf+conf_mc (control)", "H conf+entropy_det (control)"]:
         R["E6"][k] = R["E2"][k]["auroc"] - R["E2"]["A conf"]["auroc"]
         print(f"  {k:<32} {R['E6'][k]:+.4f}")
+
+
+    print("\n== E7 robustness ==")
+    R["E7"] = {}
+    xc = features(sig, models["C conf+vote_dis"])
+    sc = StandardScaler().fit(xc)
+    lr = LogisticRegression(C=1.0, max_iter=1000).fit(sc.transform(xc), y)
+    in_sample = float(roc_auc_score(y, lr.predict_proba(sc.transform(xc))[:, 1]))
+    coefs = {}
+    for c in cases:
+        te = case_of == c
+        s2 = StandardScaler().fit(xc[~te])
+        l2 = LogisticRegression(C=1.0, max_iter=1000).fit(s2.transform(xc[~te]), y[~te])
+        coefs[c] = l2.coef_[0].round(3).tolist()
+    R["E7"]["in_sample_auroc_conf_plus_vote_dis"] = in_sample
+    R["E7"]["loco_coefs_[conf, vote_dis]"] = coefs
+    print(f"  in-sample AUROC conf+vote_dis {in_sample:.4f} vs raw conf {R['E0']['conf_unc']['auroc']:.4f} (no held-out penalty)")
+    print("  LOCO standardized coefficients [conf, vote_dis] per held-out case:", coefs)
+
+    from sklearn.ensemble import GradientBoostingClassifier
+    def gbm_loco(cols):
+        x = np.stack([sig[c] for c in cols], axis=1)
+        out = np.zeros(len(y))
+        for c in cases:
+            te = case_of == c
+            g = GradientBoostingClassifier(n_estimators=100, max_depth=2, learning_rate=0.05, subsample=0.8, random_state=0).fit(x[~te], y[~te])
+            out[te] = g.predict_proba(x[te])[:, 1]
+        return out
+    g_a = gbm_loco(["conf_unc"])
+    g_all = gbm_loco(["conf_unc", "vote_dis", "det_vote_dis", "mutual_info"])
+    m_, lo_, hi_ = paired_bootstrap(roc_auc_score, y, g_a, g_all, rng)
+    R["E7"]["gbm"] = {"conf_only": float(roc_auc_score(y, g_a)), "four_features": float(roc_auc_score(y, g_all)), "delta": {"mean": m_, "ci95": [lo_, hi_]}}
+    print(f"  (raw confidence AUROC for reference: {R['E0']['conf_unc']['auroc']:.4f}; the GBM baseline is weaker than that, so its delta is partly the GBM recovering a monotone function)")
+    print(f"  nonlinear (GBM depth 2) LOCO: conf only {roc_auc_score(y, g_a):.4f}, +disagreement/MI {roc_auc_score(y, g_all):.4f}, delta {m_:+.4f} [{lo_:+.4f}, {hi_:+.4f}]")
+
+    low = conf < 0.80
+    R["E7"]["within_low_conf_tier"] = {}
+    print(f"  ordering inside the flagged set (conf < 0.80; n={int(low.sum())}, errors={int(y[low].sum())}):")
+    for name, s3 in [("conf", sig["conf_unc"]), ("vote_dis", sig["vote_dis"]), ("conf+vote_dis (oof)", oof["C conf+vote_dis"])]:
+        a3 = float(roc_auc_score(y[low], s3[low]))
+        R["E7"]["within_low_conf_tier"][name] = a3
+        print(f"    {name:<22} AUROC {a3:.3f}")
+
+    def stratified_auroc(s_, strata):
+        num = den = 0.0
+        for g in np.unique(strata):
+            m = strata == g
+            pos, neg = s_[m & (y == 1)], s_[m & (y == 0)]
+            if len(pos) and len(neg):
+                num += (pos[:, None] > neg[None, :]).sum() + 0.5 * (pos[:, None] == neg[None, :]).sum()
+                den += len(pos) * len(neg)
+        return num / den
+
+    print("  conditional AUROC: separate errors from correct among instances of near-equal confidence")
+    print("  (conf_mc_unc / entropy_* are confidence-type controls: they show how much a pure confidence variant scores here from leftover within-bin confidence variation)")
+    print("  (strata = equal-size confidence quantile bins; 0.5 = no information beyond confidence; permutation p within strata)")
+    R["E7"]["conditional_auroc"] = {}
+    order = np.argsort(sig["conf_unc"], kind="stable")
+    for k in (10, 20):
+        strata = np.zeros(len(y), int)
+        for i, idx in enumerate(np.array_split(order, k)):
+            strata[idx] = i
+        for name in ("vote_dis", "det_vote_dis", "mutual_info", "conf_mc_unc", "entropy_det", "entropy_mc"):
+            obs = stratified_auroc(sig[name], strata)
+            null = []
+            for _ in range(300):
+                perm = sig[name].copy()
+                for g in range(k):
+                    idx = np.where(strata == g)[0]
+                    perm[idx] = rng.permutation(perm[idx])
+                null.append(stratified_auroc(perm, strata))
+            pval = (1 + sum(v >= obs for v in null)) / (1 + len(null))
+            R["E7"]["conditional_auroc"][f"{name}|{k}strata"] = {"auroc": float(obs), "perm_p": float(pval)}
+            print(f"    {k:>2} strata  {name:<13} conditional AUROC {obs:.3f}  perm p={pval:.3f}")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(R, indent=2, default=float))
