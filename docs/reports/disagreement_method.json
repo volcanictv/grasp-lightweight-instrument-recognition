@@ -1,0 +1,68 @@
+{
+  "n_total": 2861,
+  "n_errors": 214,
+  "primary": "mc_vote_disagreement",
+  "auroc": {
+    "mc_vote_disagreement": 0.8763827150468348,
+    "mc_vote_variation_ratio": 0.8751981612052437,
+    "mc_vote_entropy": 0.876201766062091,
+    "det_vote_disagreement": 0.8520128588527305,
+    "pooled_vote_disagreement": 0.8749104081856024,
+    "max_softmax_confidence (reference)": 0.9189119052074469
+  },
+  "auroc_ci95": {
+    "mc_vote_disagreement": [
+      0.8503661062654011,
+      0.9009575586940389
+    ],
+    "mc_vote_variation_ratio": [
+      0.8498124487104802,
+      0.9001658739545099
+    ],
+    "mc_vote_entropy": [
+      0.8478666538793586,
+      0.9030219679690716
+    ],
+    "det_vote_disagreement": [
+      0.8234651403630566,
+      0.8774911087875364
+    ],
+    "pooled_vote_disagreement": [
+      0.8483282051254433,
+      0.8984191836920788
+    ]
+  },
+  "gate": {
+    "disagreement >= 0.05": {
+      "flagged_frac": 0.2666899685424677,
+      "errors_caught": 0.8644859813084113,
+      "precision": 0.24246395806028834
+    },
+    "disagreement >= 0.10": {
+      "flagged_frac": 0.2425725270884306,
+      "errors_caught": 0.8551401869158879,
+      "precision": 0.26368876080691644
+    },
+    "disagreement >= 0.20": {
+      "flagged_frac": 0.19608528486543167,
+      "errors_caught": 0.8084112149532711,
+      "precision": 0.3083778966131907
+    },
+    "disagreement >= 0.30": {
+      "flagged_frac": 0.1268787137364558,
+      "errors_caught": 0.6495327102803738,
+      "precision": 0.38292011019283745
+    },
+    "disagreement >= 0.50": {
+      "flagged_frac": 0.03600139811254806,
+      "errors_caught": 0.2570093457943925,
+      "precision": 0.5339805825242718
+    },
+    "confidence < 0.80 (incumbent)": {
+      "flagged_frac": 0.21251310730513806,
+      "errors_caught": 0.8551401869158879,
+      "precision": 0.30098684210526316
+    }
+  },
+  "primary_distinct_score_levels": 120
+}
