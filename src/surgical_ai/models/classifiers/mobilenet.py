@@ -40,3 +40,19 @@ def build_mobilenet_v3_large(num_classes: int, pretrained: bool, freeze_backbone
     return _build_mobilenet_v3(
         mobilenet_v3_large, MobileNet_V3_Large_Weights, num_classes, pretrained, freeze_backbone
     )
+
+
+@register_model("mobilenet_v3_small_deepdropout")
+def build_mobilenet_v3_small_deepdropout(num_classes: int, pretrained: bool, freeze_backbone: bool) -> nn.Module:
+    """mobilenet_v3_small plus channel-wise Dropout2d after features[8] and
+    at the end of features, alongside its existing pre-classifier dropout
+    (see resnet50_deepdropout for why this is a separate registered name
+    and why p=0.1). Rebuilding `features` shifts later state-dict indices,
+    so existing checkpoints do not load into it.
+    """
+    model = _build_mobilenet_v3(
+        mobilenet_v3_small, MobileNet_V3_Small_Weights, num_classes, pretrained, freeze_backbone
+    )
+    layers = list(model.features)
+    model.features = nn.Sequential(*layers[:9], nn.Dropout2d(p=0.1), *layers[9:], nn.Dropout2d(p=0.1))
+    return model

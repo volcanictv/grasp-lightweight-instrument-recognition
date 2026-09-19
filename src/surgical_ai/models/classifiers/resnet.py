@@ -84,3 +84,19 @@ def _build_resnet_with_dropout(
 @register_model("resnet50_mcdropout")
 def build_resnet50_mcdropout(num_classes: int, pretrained: bool, freeze_backbone: bool) -> nn.Module:
     return _build_resnet_with_dropout(resnet50, ResNet50_Weights, num_classes, pretrained, freeze_backbone)
+
+
+@register_model("resnet50_deepdropout")
+def build_resnet50_deepdropout(num_classes: int, pretrained: bool, freeze_backbone: bool) -> nn.Module:
+    """resnet50_mcdropout plus channel-wise Dropout2d after layer3 and layer4,
+    so MC Dropout perturbs the features and not only the classifier head
+    (docs/DECISIONS.md 2026-09-19: the test-time-only probe of the same
+    placements on checkpoints trained without it was off-distribution).
+    p=0.1 was the least-damaging setting in that probe. New registered name,
+    not a change to resnet50_mcdropout: wrapping layer3/layer4 renames their
+    state-dict keys, which would break loading of existing checkpoints.
+    """
+    model = _build_resnet_with_dropout(resnet50, ResNet50_Weights, num_classes, pretrained, freeze_backbone)
+    model.layer3 = nn.Sequential(model.layer3, nn.Dropout2d(p=0.1))
+    model.layer4 = nn.Sequential(model.layer4, nn.Dropout2d(p=0.1))
+    return model

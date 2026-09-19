@@ -66,10 +66,11 @@ from surgical_ai.models import build_model
 def enable_mc_dropout(model: nn.Module) -> None:
     """Puts only Dropout submodules into train mode (stochastic), leaving
     everything else (BatchNorm, etc.) in eval mode -- the standard MC
-    Dropout inference recipe (Gal & Ghahramani 2016)."""
+    Dropout inference recipe (Gal & Ghahramani 2016). Dropout2d is not a
+    subclass of nn.Dropout, so it is listed explicitly."""
     model.eval()
     for module in model.modules():
-        if isinstance(module, nn.Dropout):
+        if isinstance(module, (nn.Dropout, nn.Dropout2d)):
             module.train()
 
 
