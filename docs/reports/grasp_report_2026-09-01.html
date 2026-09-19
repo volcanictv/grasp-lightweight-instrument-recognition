@@ -62,7 +62,7 @@ a { color: var(--blue); }
 <div class="wrap">
 
 <h1>Surgical Instrument Classification on GraSP</h1>
-<div class="subtitle">Status: 2026-09-16</div>
+<div class="subtitle">Status: 2026-09-19</div>
 
 <p>
 Identifies which of 7 instruments (Bipolar Forceps, Prograsp Forceps, Large
@@ -130,9 +130,13 @@ instrument appearance rather than GraSP's own footage.
 </svg>
 </div>
 <p class="small">
-The ensemble's own confidence gates whether the more expensive tracking
-step runs at all &mdash; see Temporal tracking below for why blanket
-tracking on every instance was tested and rejected.
+An uncertainty estimate gates whether the more expensive tracking step
+runs at all &mdash; see Temporal tracking below for why blanket tracking on
+every instance was tested and rejected. This report's main uncertainty
+method is MC Dropout (see Uncertainty estimation below). The diagram and
+the tracking results show the pipeline as it was measured, with the
+ensemble's softmax confidence (threshold 0.80) as the gate; an MC Dropout
+gate has not yet been run end-to-end.
 </p>
 
 <h2>Results</h2>
@@ -224,6 +228,58 @@ discussed under Limitations; Prograsp Forceps' 12.1% into Bipolar
 Forceps is the largest single confusion pair overall.
 </p>
 
+<h2>Uncertainty estimation</h2>
+<p>
+The main uncertainty method is MC Dropout (Gal &amp; Ghahramani, 2016).
+Each of the four ensemble members has dropout layers inside its backbone
+(channel-wise dropout, p=0.1, after a mid-depth and the final
+convolutional stage, plus a p=0.2 dropout before the classifier), trained
+with it. At inference
+dropout stays on and each member makes 20 stochastic passes. The
+uncertainty score is the share of those 80 votes (4 members &times; 20
+passes, weighted by the ensemble weights) that name a different class than
+the ensemble's final prediction. It uses class votes, not the softmax
+probability, and has no fitted parameters.
+</p>
+<div class="tablewrap">
+<table>
+<tr><th>uncertainty signal</th><th class="num">AUROC for flagging real errors</th></tr>
+<tr class="hi"><td>MC Dropout vote disagreement (main method)</td><td class="num">0.898</td></tr>
+<tr><td>MC Dropout mutual information</td><td class="num">0.864</td></tr>
+<tr><td>Between-member disagreement (dropout off)</td><td class="num">0.836</td></tr>
+<tr><td>Softmax confidence (baseline)</td><td class="num">0.916</td></tr>
+</table>
+</div>
+<p class="small">
+AUROC: 0.5 is chance, 1.0 separates every wrong prediction from every
+correct one. Official test set, 2,861 instances, 212 wrong; 95% interval
+for the main method 0.875&ndash;0.919. This section uses a separate set of
+four members retrained with the dropout above (ensemble accuracy 0.926,
+against 0.934 for the checkpoint set in the tracking results), so its
+numbers are not mixed with the tracking table. Putting dropout inside the
+backbone, not only before the classifier, raised the main method from
+0.876 to 0.898.
+</p>
+<p>
+<b>What it adds beyond softmax confidence.</b> MC Dropout disagreement and
+softmax confidence agree closely (rank correlation 0.90) and flag mostly
+the same instances. At an equal review budget (10&ndash;30% of instances
+flagged) MC Dropout catches 1&ndash;4 points fewer of the real errors than
+confidence, e.g. 78.8% against 80.2% at 20%. Combining the two, evaluated
+with leave-one-case-out, does not catch more errors than confidence alone.
+The result is that MC Dropout is a working uncertainty estimate that
+corroborates the ensemble's confidence, not a second source of information
+about which predictions are wrong. Softmax confidence is kept only as the
+baseline it is compared against.
+</p>
+<p class="small">
+Gate status: the tracking results above were measured with the softmax
+confidence gate on the earlier checkpoint set, and tracked outcomes exist
+only for the 495 instances that gate flagged. An MC Dropout gate would flag
+a different set, so its end-to-end effect needs new SAM2 runs and is not
+claimed here.
+</p>
+
 <h2>Generalization</h2>
 <div class="tablewrap">
 <table>
@@ -265,10 +321,18 @@ three logged as negative results. Laparoscopic Grasper improved under
 all three regardless &mdash; a lead worth testing on its own.</li>
 <li>Ensemble weighting still being finalized; a simpler alternative
 scores ~1 point lower and is available as a fallback.</li>
+<li><b>Uncertainty flags borderline errors, not confident ones.</b> Of the
+212 errors in the MC Dropout ensemble, 43 pass a confidence-0.80 gate, and
+8 have confidence above 0.95 with unanimous votes across every pass and
+member. Neither MC Dropout nor softmax confidence flags these, because the
+models agree with each other on the wrong class.</li>
 </ul>
 
 <h3>Next steps</h3>
 <ol class="steps">
+<li>Run temporal tracking end-to-end with the MC Dropout gate in place of
+the softmax confidence gate, on the retrained ensemble, and compare its
+accuracy gain and cost against the measured +2.48 points.</li>
 <li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
 <li>Targeted data collection for the remaining confused pairs, or a way
 to fold ResNet-101's isolated gain into the ensemble profitably.</li>
