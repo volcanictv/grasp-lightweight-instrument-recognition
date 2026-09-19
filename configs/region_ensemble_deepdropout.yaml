@@ -1,0 +1,30 @@
+# Ensemble of the four members retrained with dropout inside the backbone
+# (resnet50_deepdropout / mobilenet_v3_small_deepdropout: Dropout2d(0.1)
+# after layer3+layer4 / features[8]+end, on top of the head dropout), to test
+# whether deeper *trained* dropout gives disagreement information beyond
+# confidence (docs/DECISIONS.md 2026-09-19). Same weighting scheme as
+# region_ensemble_mcdropout.yaml (weight_resnet50_320=0.40, rest equal),
+# held fixed so the only change vs that ensemble is dropout placement.
+weight_resnet50_320: 0.40
+
+members:
+  - checkpoint: experiments/region_letterbox_resnet50_320_deepdropout_20260919-155832/best.pt
+    model: resnet50_deepdropout
+    image_size: 320
+    letterbox: true
+    label: resnet50_320
+  - checkpoint: experiments/region_letterbox_resnet50_deepdropout_20260919-155932/best.pt
+    model: resnet50_deepdropout
+    image_size: 224
+    letterbox: true
+    label: resnet50_224
+  - checkpoint: experiments/region_baseline_deepdropout_20260919-164539/best.pt
+    model: mobilenet_v3_small_deepdropout
+    image_size: 224
+    letterbox: false
+    label: baseline
+  - checkpoint: experiments/region_letterbox_crop_deepdropout_20260919-165638/best.pt
+    model: mobilenet_v3_small_deepdropout
+    image_size: 224
+    letterbox: true
+    label: letterbox_crop
