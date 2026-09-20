@@ -1,0 +1,22 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # dev comparison only, never official (CLAUDE.md)
+  image_size: 224
+  crop_variant: tight_band # instrument + bounded real-background band, one instrument per crop
+  tight_band_frac: 0.5 # band holds at most this fraction of the instrument's own pixels
+  tight_r_cap: 24 # and reaches at most this many native pixels from the mask
+  augmentation: default # default | masklight
+  letterbox_crop: true # validation crops only; the standard evaluation is unchanged
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 43

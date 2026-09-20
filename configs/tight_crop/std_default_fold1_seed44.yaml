@@ -1,0 +1,20 @@
+task: region_classification
+model:
+  name: mobilenet_v3_small
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # dev comparison only, never official (CLAUDE.md)
+  image_size: 224
+  crop_variant: standard # training crops: the project's mask-only letterbox crop
+  augmentation: default # default | masklight
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 44
