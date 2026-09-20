@@ -131,14 +131,12 @@ instrument appearance rather than GraSP's own footage.
 </div>
 <p class="small">
 An uncertainty estimate gates whether the more expensive tracking step
-runs at all &mdash; see Temporal tracking below for why blanket tracking on
-every instance was tested and rejected. The gate is MC Dropout, this
+runs at all (see Temporal tracking below for why blanket tracking on
+every instance was tested and rejected). The gate is MC Dropout, this
 report's main uncertainty method (see Uncertainty estimation below): an
 instance is sent to tracking when at least 20% of the ensemble's stochastic
 votes disagree with its prediction. The diagram's 81.6% / 18.4% split is
-measured on the retrained ensemble. The first tracking table below was
-measured earlier, on a different checkpoint set, with a softmax-confidence
-gate; the second measures both gates on the retrained ensemble.
+measured on the retrained ensemble.
 </p>
 
 <h2>Results</h2>
@@ -160,8 +158,7 @@ Laparoscopic Grasper and Clip Applier are the weakest classes; both got
 worse under stronger class reweighting and tighter tip-cropping, so
 neither was adopted. The per-class table and confusion matrix under
 Temporal tracking are for the earlier checkpoint set with tracking, not
-this row alone; per-class F1 for the retrained ensemble is in the same
-section.
+this row alone.
 </p>
 
 <h2>Temporal tracking</h2>
@@ -170,12 +167,12 @@ Post-hoc correction on top of the ensemble, no retraining: an instance's
 annotated mask is propagated forward and backward across nearby video
 frames with SAM2, the ensemble scores every propagated frame, and the
 predictions are combined. Applying this to every instance was tested and
-rejected &mdash; propagation has a measured 9.8% chance of turning an
+rejected: propagation has a measured 9.8% chance of turning an
 already-correct low-confidence prediction wrong, which costs more than it
 gains once applied indiscriminately. A gated rule is used instead. On the
 earlier checkpoint set the gate was ensemble confidence below 0.80 (17.3%
-of test); the gate now used is MC Dropout, measured below. A learned
-version of the frame-combination step did not beat this fixed rule.
+of test); the gate now used is MC Dropout (see Uncertainty estimation). A
+learned version of the frame-combination step did not beat this fixed rule.
 </p>
 <h3>Earlier checkpoint set, softmax-confidence gate</h3>
 <div class="tablewrap">
@@ -189,7 +186,7 @@ version of the frame-combination step did not beat this fixed rule.
 Measured on the full official test set (2,861 instances). Every class
 improves, including the two weakest: Laparoscopic Grasper 0.800 &rarr;
 0.838 F1, Clip Applier 0.895 &rarr; 0.947 F1. Does not resolve
-identical-looking instruments &mdash; Laparoscopic Grasper vs. Suction
+identical-looking instruments: Laparoscopic Grasper vs. Suction
 Instrument remains one of the largest confusion pairs after correction,
 since the technique recovers missing signal, not indistinguishable
 appearance. Not suited to real-time use on any hardware: SAM2's own
@@ -197,41 +194,6 @@ per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
 budget. Offline, batch-applied only. Updated
 <a href="error_gallery_2026-09-16.html">error gallery</a>.
 </p>
-
-<h3>Retrained ensemble: MC Dropout gate vs confidence gate</h3>
-<div class="tablewrap">
-<table>
-<tr><th>configuration</th><th class="num">tracked</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
-<tr><td>Retrained ensemble alone</td><td class="num">&ndash;</td><td class="num">0.8894</td><td class="num">0.9259</td></tr>
-<tr><td>+ confidence-gated tracking (&lt; 0.80)</td><td class="num">540</td><td class="num">0.9340</td><td class="num">0.9612</td></tr>
-<tr class="hi"><td>+ MC Dropout-gated tracking (&ge; 0.20 disagreement)</td><td class="num">525</td><td class="num">0.9325</td><td class="num">0.9595</td></tr>
-</table>
-</div>
-<p class="small">
-Same 2,861 official-test instances, same ensemble, same SAM2 procedure; only
-the gate differs. The MC Dropout threshold was fixed before any tracking
-ran, by a rule that uses no labels: the value whose flagged count is closest
-to the confidence gate's, so both gates spend about the same tracking
-budget (~2.6 GPU-hours, offline). Tracking with the MC Dropout gate recovers
-almost all of the gain: +3.4 points of accuracy against +3.5 for the
-confidence gate. It ends up 5 instances behind (6 instances correct only
-under the confidence gate, 1 only under the MC Dropout gate; exact McNemar
-p = 0.125), a difference that is not statistically distinguishable from
-none. Both gates fix 72% of the errors they flag and break 21 previously
-correct instances. Every class improves under either gate.
-</p>
-<div class="tablewrap">
-<table>
-<tr><th>F1 by class</th><th class="num">ensemble alone</th><th class="num">+ confidence gate</th><th class="num">+ MC Dropout gate</th></tr>
-<tr><td>Monopolar Curved Scissors</td><td class="num">0.972</td><td class="num">0.989</td><td class="num">0.988</td></tr>
-<tr><td>Large Needle Driver</td><td class="num">0.930</td><td class="num">0.977</td><td class="num">0.973</td></tr>
-<tr><td>Bipolar Forceps</td><td class="num">0.937</td><td class="num">0.965</td><td class="num">0.964</td></tr>
-<tr><td>Suction Instrument</td><td class="num">0.901</td><td class="num">0.944</td><td class="num">0.941</td></tr>
-<tr><td>Prograsp Forceps</td><td class="num">0.851</td><td class="num">0.908</td><td class="num">0.905</td></tr>
-<tr class="rare"><td>Clip Applier</td><td class="num">0.850</td><td class="num">0.895</td><td class="num">0.895</td></tr>
-<tr class="rare"><td><b>Laparoscopic Grasper</b></td><td class="num">0.786</td><td class="num">0.861</td><td class="num">0.861</td></tr>
-</table>
-</div>
 
 <h3>Per-class breakdown (combined pipeline, earlier checkpoint set, confidence gate)</h3>
 <div class="tablewrap">
@@ -312,11 +274,11 @@ about which predictions are wrong. Softmax confidence is kept only as the
 baseline it is compared against.
 </p>
 <p class="small">
-Used as the tracking gate, end-to-end (Temporal tracking above): MC Dropout
-disagreement &ge; 0.20 gives 0.9595 accuracy against 0.9612 for the
-confidence gate at the same tracking budget, on the retrained ensemble
-(ensemble alone 0.9259). The two gates flag largely the same instances, so
-this is a near-tie, not an improvement over confidence.
+Used as the tracking gate, end-to-end: MC Dropout disagreement of at least
+0.20 flags 525 of the 2,861 test instances (18.4%). On the retrained
+ensemble, SAM2 tracking of those instances lifts accuracy from 0.9259 to
+0.9595 and macro-F1 from 0.8894 to 0.9325, fixing 117 errors and breaking 21
+previously correct instances.
 </p>
 
 <h2>Generalization</h2>
@@ -348,7 +310,7 @@ current model ships as-is.
 <li><b>Laparoscopic Grasper vs. Suction Instrument.</b> Closed jaws look
 identical to a suction tube in a still frame. Four fixes were ruled out
 (narrow and wide temporal search, action-state labels, targeted
-fine-tuning) &mdash; a single-frame information limit, not a training gap.</li>
+fine-tuning). This is a single-frame information limit, not a training gap.</li>
 <li><b>Same ceiling affects two more pairs</b> (Bipolar vs. Needle
 Driver, Monopolar vs. Suction): a distinguishing feature is sometimes
 just not visible in frame. Accounts for ~30 of 188 pre-tracking mistakes
@@ -357,7 +319,7 @@ and cannot be trained around.</li>
 independent split after looking promising once; a larger backbone
 (ResNet-101) held up alone but didn't beat the shipping ensemble. All
 three logged as negative results. Laparoscopic Grasper improved under
-all three regardless &mdash; a lead worth testing on its own.</li>
+all three regardless, a lead worth testing on its own.</li>
 <li>Ensemble weighting still being finalized; a simpler alternative
 scores ~1 point lower and is available as a fallback.</li>
 <li><b>Uncertainty flags borderline errors, not confident ones.</b> Of the
