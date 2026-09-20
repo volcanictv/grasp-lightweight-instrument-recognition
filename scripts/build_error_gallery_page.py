@@ -46,6 +46,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gallery-dir", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--total-instances", type=int, default=2861)
+    parser.add_argument("--subtitle", default=(
+        "Every misclassified official-test instance, current weighted ensemble "
+        "(<code>configs/region_ensemble.yaml</code>, weight_resnet50_320=0.40), grouped by confusion pair. "
+        "Each crop is exactly what the model was shown, not the raw frame."))
     return parser.parse_args()
 
 
@@ -85,7 +89,14 @@ def main() -> None:
         for m in items:
             src = img_data_uri(args.gallery_dir / m["image_path"])
             source = m.get("prediction_source", "single_frame")
-            if source == "sam2_tracked":
+            if "base_vote_share_pred" in m:
+                votes = f'votes before tracking: pred {m["base_vote_share_pred"]:.0%}, true {m["base_vote_share_true"]:.0%}'
+                if m.get("tracked"):
+                    outcome = "broken by tracking" if m.get("was_correct_before") else "still wrong after tracking"
+                    conf_html = f'<span class="conf tracked">{votes} &middot; {outcome}</span>'
+                else:
+                    conf_html = f'<span class="conf">{votes} &middot; not tracked (passed the gate)</span>'
+            elif source == "sam2_tracked":
                 conf_html = '<span class="conf tracked">SAM2 temporal-track prediction (confidence-gated, docs/DECISIONS.md 2026-09-16)</span>'
             else:
                 conf_html = f'<span class="conf">P(pred)={m["pred_confidence"]:.2f} &middot; P(true)={m["true_confidence"]:.2f}</span>'
@@ -213,9 +224,7 @@ a {{ color: var(--accent); }}
 
 <div class="wrap">
   <h1>Task B Error Gallery</h1>
-  <div class="subtitle">Every misclassified official-test instance, current weighted ensemble
-    (<code>configs/region_ensemble.yaml</code>, weight_resnet50_320=0.40), grouped by confusion pair.
-    Each crop is exactly what the model was shown, not the raw frame.</div>
+  <div class="subtitle">{args.subtitle}</div>
 
   <div class="stat-row">
     <div class="stat"><span class="n">{args.total_instances - n_wrong} / {args.total_instances}</span><span class="label">correct</span></div>

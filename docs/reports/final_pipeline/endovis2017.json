@@ -1,0 +1,118 @@
+{
+ "dataset": "2017",
+ "n_instances": 2544,
+ "shared_classes": 4,
+ "classes_present": 4,
+ "accuracy": 0.5507075471698113,
+ "macro_f1_present": 0.5694563242942354,
+ "per_class": {
+  "Bipolar Forceps": {
+   "support": 353,
+   "precision": 0.5185185185185185,
+   "recall": 0.5552407932011332,
+   "f1": 0.5362517099863201
+  },
+  "Prograsp Forceps": {
+   "support": 633,
+   "precision": 0.41500474833808165,
+   "recall": 0.6903633491311216,
+   "f1": 0.5183867141162515
+  },
+  "Large Needle Driver": {
+   "support": 1480,
+   "precision": 0.837968561064087,
+   "recall": 0.46824324324324323,
+   "f1": 0.6007802340702211
+  },
+  "Monopolar Curved Scissors": {
+   "support": 78,
+   "precision": 0.4601226993865031,
+   "recall": 0.9615384615384616,
+   "f1": 0.6224066390041494
+  },
+  "Suction Instrument": {
+   "support": 0,
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "Clip Applier": {
+   "support": 0,
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  },
+  "Laparoscopic Grasper": {
+   "support": 0,
+   "precision": 0.0,
+   "recall": 0.0,
+   "f1": 0.0
+  }
+ },
+ "confusion_counts": [
+  [
+   196,
+   110,
+   25,
+   12,
+   1,
+   2,
+   7
+  ],
+  [
+   52,
+   437,
+   109,
+   18,
+   3,
+   2,
+   12
+  ],
+  [
+   130,
+   504,
+   693,
+   58,
+   1,
+   4,
+   90
+  ],
+  [
+   0,
+   2,
+   0,
+   75,
+   0,
+   0,
+   1
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "mc_samples": 20
+}

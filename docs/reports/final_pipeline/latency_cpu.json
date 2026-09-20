@@ -1,0 +1,22 @@
+{
+ "device": "cpu",
+ "torch_threads": 4,
+ "members": [
+  "resnet50_320",
+  "resnet50_224",
+  "baseline",
+  "letterbox_crop"
+ ],
+ "total_params": 50094812,
+ "mc_samples": 20,
+ "single_pass_4_members": {
+  "median_ms": 171.75586702069268,
+  "p95_ms": 176.06780140195042,
+  "runs": 25
+ },
+ "mc_votes_4_members_x_passes": {
+  "median_ms": 3325.2637819969095,
+  "p95_ms": 3413.666666834615,
+  "runs": 25
+ }
+}

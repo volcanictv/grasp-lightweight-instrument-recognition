@@ -148,22 +148,28 @@ retrained ensemble.
 <div class="tablewrap">
 <table>
 <tr><th>configuration</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
-<tr><td>Whole-frame baseline</td><td class="num">0.708</td><td class="num">n/a</td></tr>
-<tr><td>Per-instrument, single lightweight model</td><td class="num">0.827</td><td class="num">0.882</td></tr>
-<tr><td>Per-instrument, ResNet-50</td><td class="num">0.876</td><td class="num">0.920</td></tr>
-<tr class="hi"><td>4-model ensemble</td><td class="num">0.894 &plusmn; 0.008</td><td class="num">0.926 &plusmn; 0.005</td></tr>
+<tr><td>Whole-frame multi-label baseline (Task A, a different task, not rerun)</td><td class="num">0.708</td><td class="num">n/a</td></tr>
+<tr><td>Per-instrument, single lightweight model (MobileNetV3-small)</td><td class="num">0.834</td><td class="num">0.867</td></tr>
+<tr><td>Per-instrument, single ResNet-50 (320 px)</td><td class="num">0.865</td><td class="num">0.915</td></tr>
+<tr><td>4-model ensemble (majority vote)</td><td class="num">0.890</td><td class="num">0.927</td></tr>
+<tr class="hi"><td>+ MC Dropout-gated SAM2 tracking (final pipeline)</td><td class="num">0.935</td><td class="num">0.962</td></tr>
 </table>
 </div>
 <p class="small">
-Ensemble row: mean &plusmn; SD across 5 retrained seeds. Two ResNet-50 +
-two MobileNetV3 checkpoints, ~17ms/instance GPU, ~61ms/instance CPU. The
-specific checkpoint set used below and for temporal tracking scores
-0.9343 standalone, within this range but on the high side of it.
-Laparoscopic Grasper and Clip Applier are the weakest classes; both got
-worse under stronger class reweighting and tighter tip-cropping, so
-neither was adopted. The per-class table and confusion matrix under
-Temporal tracking are for the earlier checkpoint set with tracking, not
-this row alone.
+The per-instrument rows are the four members retrained with dropout inside
+the backbone (two ResNet-50, two MobileNetV3) and their majority-vote
+ensemble, one training run each, so no seed-to-seed spread is shown. A single
+model is scored with dropout off. Laparoscopic Grasper and Clip Applier are the
+weakest classes; both got worse under stronger class reweighting and tighter
+tip-cropping, so neither was adopted. The per-class table and confusion matrix
+under Temporal tracking are for the final pipeline.
+</p>
+<p class="small">
+Speed on one Titan Xp, model forward only: one deterministic pass of the four
+members takes 20 ms per instance, and the 80 votes (4 members &times; 20
+passes) take 97 ms and 640 MB of GPU memory. On the 4-core CPU the same two
+take 172 ms and 3.3 s. An instance that goes to tracking also votes on about
+21 frames, so its classification adds roughly 2 s on the GPU to SAM2's own cost.
 </p>
 
 <h2>Temporal tracking</h2>
@@ -171,37 +177,13 @@ this row alone.
 Post-hoc correction on top of the ensemble, no retraining: an instance's
 annotated mask is propagated forward and backward across nearby video
 frames with SAM2, the ensemble votes on every propagated frame, and the
-frame votes are combined. Applying this to every instance was tested and
-rejected: propagation has a measured 9.8% chance of turning an
-already-correct low-confidence prediction wrong, which costs more than it
-gains once applied indiscriminately. A gated rule is used instead. On the
-earlier checkpoint set the gate was ensemble confidence below 0.80 (17.3%
-of test); the gate now used is MC Dropout (see Uncertainty estimation), with
-results in the vote-based subsection below. A learned version of the
-frame-combination step did not beat this fixed rule.
+frame votes are combined. Tracking every instance is not worth it: it costs
+about 24 seconds of GPU time per instance, and it stops paying once
+instances below about 6% vote disagreement are included (from 6% to 3% it
+adds 4 fixes and 5 breaks). The gate, MC Dropout disagreement (see
+Uncertainty estimation), sends only the uncertain instances.
 </p>
-<h3>Earlier checkpoint set, softmax-confidence gate</h3>
-<div class="tablewrap">
-<table>
-<tr><th>configuration</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
-<tr><td>4-model ensemble alone</td><td class="num">0.903</td><td class="num">0.9343</td></tr>
-<tr class="hi"><td>+ confidence-gated temporal tracking</td><td class="num">0.934</td><td class="num">0.9567</td></tr>
-</table>
-</div>
-<p class="small">
-Measured on the full official test set (2,861 instances). Every class
-improves, including the two weakest: Laparoscopic Grasper 0.800 &rarr;
-0.838 F1, Clip Applier 0.895 &rarr; 0.947 F1. Does not resolve
-identical-looking instruments: Laparoscopic Grasper vs. Suction
-Instrument remains one of the largest confusion pairs after correction,
-since the technique recovers missing signal, not indistinguishable
-appearance. Not suited to real-time use on any hardware: SAM2's own
-per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
-budget. Offline, batch-applied only. Updated
-<a href="error_gallery_2026-09-16.html">error gallery</a>.
-</p>
-
-<h3>Vote-based pipeline, retrained ensemble</h3>
+<h3>Final pipeline results</h3>
 <div class="tablewrap">
 <table>
 <tr><th>configuration</th><th class="num">tracked</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
@@ -230,6 +212,17 @@ The 9% value was chosen on the test set, so its margin is optimistic; picking
 the threshold by leave-one-case-out among 20%, 15%, 10%, 5% and 3% gives 0.9633
 accuracy.
 </p>
+<p class="small">
+At the 9% gate every class improves over the ensemble alone, including the two
+weakest: Laparoscopic Grasper 0.776 &rarr; 0.848 F1, Clip Applier
+0.861 &rarr; 0.907 F1. Tracking does not resolve identical-looking instruments:
+Laparoscopic Grasper vs. Suction Instrument remains one of the largest confusion
+pairs after correction, since the technique recovers missing signal, not
+indistinguishable appearance. Not suited to real-time use on any hardware:
+SAM2's own per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
+budget. Offline, batch-applied only.
+<a href="error_gallery_2026-09-20.html">Error gallery</a> of the 108 instances still wrong.
+</p>
 <h3>Confidently wrong cases</h3>
 <p>
 A 20% gate passes 50 of the 210 errors, all with fewer than 20% of votes
@@ -248,38 +241,39 @@ none of the 70 errors left among the tracked instances looked confident
 tracked instances trip the same threshold, so it is only a coarse review flag.
 </p>
 
-<h3>Per-class breakdown (combined pipeline, earlier checkpoint set, confidence gate)</h3>
+<h3>Per-class breakdown (final pipeline)</h3>
 <div class="tablewrap">
 <table>
 <tr><th>class</th><th class="num">n (test)</th><th class="num">precision</th><th class="num">recall</th><th class="num">F1</th></tr>
-<tr><td>Monopolar Curved Scissors</td><td class="num">844</td><td class="num">0.988</td><td class="num">0.994</td><td class="num">0.991</td></tr>
-<tr><td>Large Needle Driver</td><td class="num">449</td><td class="num">0.974</td><td class="num">0.984</td><td class="num">0.979</td></tr>
-<tr><td>Bipolar Forceps</td><td class="num">809</td><td class="num">0.944</td><td class="num">0.962</td><td class="num">0.953</td></tr>
-<tr><td>Clip Applier</td><td class="num">38</td><td class="num">0.947</td><td class="num">0.947</td><td class="num">0.947</td></tr>
-<tr><td>Suction Instrument</td><td class="num">310</td><td class="num">0.906</td><td class="num">0.990</td><td class="num">0.946</td></tr>
-<tr><td>Prograsp Forceps</td><td class="num">330</td><td class="num">0.941</td><td class="num">0.827</td><td class="num">0.881</td></tr>
-<tr class="rare"><td><b>Laparoscopic Grasper</b></td><td class="num">81</td><td class="num">0.925</td><td class="num">0.765</td><td class="num"><b>0.838</b></td></tr>
+<tr><td>Monopolar Curved Scissors</td><td class="num">844</td><td class="num">0.986</td><td class="num">0.993</td><td class="num">0.989</td></tr>
+<tr><td>Large Needle Driver</td><td class="num">449</td><td class="num">0.980</td><td class="num">0.978</td><td class="num">0.979</td></tr>
+<tr><td>Bipolar Forceps</td><td class="num">809</td><td class="num">0.983</td><td class="num">0.949</td><td class="num">0.966</td></tr>
+<tr><td>Suction Instrument</td><td class="num">310</td><td class="num">0.927</td><td class="num">0.977</td><td class="num">0.951</td></tr>
+<tr class="rare"><td>Clip Applier</td><td class="num">38</td><td class="num">0.919</td><td class="num">0.895</td><td class="num">0.907</td></tr>
+<tr><td>Prograsp Forceps</td><td class="num">330</td><td class="num">0.882</td><td class="num">0.930</td><td class="num">0.906</td></tr>
+<tr class="rare"><td><b>Laparoscopic Grasper</b></td><td class="num">81</td><td class="num">0.914</td><td class="num">0.790</td><td class="num"><b>0.848</b></td></tr>
 </table>
 </div>
 
-<h3>Normalized confusion matrix (combined pipeline, earlier checkpoint set, confidence gate)</h3>
+<h3>Normalized confusion matrix (final pipeline)</h3>
 <div class="tablewrap">
 <table>
 <tr><th>true \ predicted</th><th class="num">Bipolar</th><th class="num">Prograsp</th><th class="num">Needle Dr.</th><th class="num">Monopolar</th><th class="num">Suction</th><th class="num">Clip App.</th><th class="num">Laparo.</th></tr>
-<tr><td>Bipolar Forceps</td><td class="num cm-diag">96.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.1%</td><td class="num cm-off">0.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td></tr>
-<tr><td>Prograsp Forceps</td><td class="num cm-off">12.1%</td><td class="num cm-diag">82.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.6%</td><td class="num cm-off">2.7%</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.2%</td></tr>
-<tr><td>Large Needle Driver</td><td class="num cm-off">0.9%</td><td class="num cm-off">0.4%</td><td class="num cm-diag">98.4%</td><td class="num cm-off">0.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
-<tr><td>Monopolar Curved Scissors</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">99.4%</td><td class="num cm-off">0.5%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
-<tr><td>Suction Instrument</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">99.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
-<tr class="rare"><td>Clip Applier</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">2.6%</td><td class="num cm-off">2.6%</td><td class="num cm-diag">94.7%</td><td class="num cm-off">0.0%</td></tr>
-<tr class="rare"><td>Laparoscopic Grasper</td><td class="num cm-off">2.5%</td><td class="num cm-off">1.2%</td><td class="num cm-off">1.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">16.0%</td><td class="num cm-off">2.5%</td><td class="num cm-diag">76.5%</td></tr>
+<tr><td>Bipolar Forceps</td><td class="num cm-diag">94.9%</td><td class="num cm-off">3.0%</td><td class="num cm-off">0.7%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td></tr>
+<tr><td>Prograsp Forceps</td><td class="num cm-off">3.0%</td><td class="num cm-diag">93.0%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.6%</td><td class="num cm-off">1.8%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.9%</td></tr>
+<tr><td>Large Needle Driver</td><td class="num cm-off">0.7%</td><td class="num cm-off">1.3%</td><td class="num cm-diag">97.8%</td><td class="num cm-off">0.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
+<tr><td>Monopolar Curved Scissors</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.1%</td><td class="num cm-off">0.0%</td><td class="num cm-diag">99.3%</td><td class="num cm-off">0.6%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td></tr>
+<tr><td>Suction Instrument</td><td class="num cm-off">0.0%</td><td class="num cm-off">1.3%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.3%</td><td class="num cm-diag">97.7%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.6%</td></tr>
+<tr class="rare"><td>Clip Applier</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">0.0%</td><td class="num cm-off">7.9%</td><td class="num cm-off">2.6%</td><td class="num cm-diag">89.5%</td><td class="num cm-off">0.0%</td></tr>
+<tr class="rare"><td>Laparoscopic Grasper</td><td class="num cm-off">0.0%</td><td class="num cm-off">7.4%</td><td class="num cm-off">1.2%</td><td class="num cm-off">0.0%</td><td class="num cm-off">8.6%</td><td class="num cm-off">3.7%</td><td class="num cm-diag">79.0%</td></tr>
 </table>
 </div>
 <p class="small">
 Each row normalized to % of that true class's instances. Laparoscopic
-Grasper's 16.0% into Suction Instrument is the closed-jaw ceiling
-discussed under Limitations; Prograsp Forceps' 12.1% into Bipolar
-Forceps is the largest single confusion pair overall.
+Grasper's 8.6% into Suction Instrument is the closed-jaw ceiling
+discussed under Limitations. By count, Bipolar Forceps mistaken for Prograsp
+Forceps (24 instances, 3.0% of Bipolar Forceps) is the largest single
+confusion pair overall.
 </p>
 
 <h2>Uncertainty estimation</h2>
@@ -308,8 +302,7 @@ AUROC: 0.5 is chance, 1.0 separates every wrong prediction from every
 correct one. Official test set, 2,861 instances; each signal is scored
 against the errors of its own prediction (210 wrong for the vote-based
 signals, 212 for the baseline). This section uses a separate set of four
-members retrained with the dropout above (ensemble accuracy 0.927, against
-0.934 for the earlier checkpoint set in the first tracking table). Putting
+members retrained with the dropout above (ensemble accuracy 0.927). Putting
 dropout inside the backbone, not only before the classifier, raised the main
 method from about 0.88 to about 0.90.
 </p>
@@ -337,24 +330,35 @@ previously correct instances. The 0.09 threshold was chosen on the test set.
 <div class="tablewrap">
 <table>
 <tr><th>external dataset</th><th class="num">accuracy</th><th class="num">macro-F1</th><th class="small">shared classes</th></tr>
-<tr><td>EndoVis 2018</td><td class="num">0.536</td><td class="num">0.382</td><td class="small">6 of 7</td></tr>
-<tr><td>EndoVis 2017</td><td class="num">0.567</td><td class="num">0.596</td><td class="small">4 of 7</td></tr>
+<tr><td>EndoVis 2018</td><td class="num">0.528</td><td class="num">0.414</td><td class="small">6 of 7</td></tr>
+<tr><td>EndoVis 2017</td><td class="num">0.551</td><td class="num">0.570</td><td class="small">4 of 7</td></tr>
 </table>
 </div>
 <p class="small">
-Run unmodified, no retraining. The three bulkiest instruments
-transferred (F1 0.45-0.73) to camera setups and hardware never seen in
-training; two thinner instruments did not transfer on at least one
-dataset, traced to a different instrument generation/manufacturer, not a
-model flaw (the same class scored well on the other external dataset).
+Run unmodified, no retraining, with the same majority vote of the retrained
+ensemble used everywhere else in this report (20 stochastic passes per
+member, no tracking). The three bulkiest instruments transferred (F1
+0.52&ndash;0.66) to camera setups and hardware never seen in training. Two
+thinner instruments did not transfer on at least one dataset: Monopolar
+Curved Scissors scored F1 0.23 on EndoVis 2018 but 0.62 on EndoVis 2017, and
+Suction Instrument scored 0 on EndoVis 2018 (that macro-F1 covers the 5
+classes present in its validation split). The 2018 failures were traced
+earlier to a different instrument generation and manufacturer, not a model
+flaw (the same class scored well on the other external dataset). EndoVis 2017
+was previously scored with a single ResNet-50; this run uses the full
+ensemble on both.
 </p>
 
 <h2>Efficiency</h2>
 <p>
-INT8 quantization was tested directly rather than assumed to help. It
-made the model slower on CPU and cost 1-4 points of accuracy on the
-ResNet-50 models, 63-74 points on the lightweight models. Not adopted;
-current model ships as-is.
+The main cost of the vote-based pipeline is the 80 forward passes per
+instance: 97 ms against 20 ms for a single pass on the GPU, and 3.3 s against
+172 ms on the CPU (see Results). INT8 quantization (weights-only dynamic,
+ONNX Runtime) was re-tested on the retrained members rather than assumed to
+help. It made every member slower on CPU (the 320 px ResNet-50 went from 44 to
+74 ms) and cost 1.3&ndash;2.8 points of accuracy on the ResNet-50 members and
+72&ndash;79 points on the MobileNetV3 members. The exported graph also has no
+dropout, so it could not produce the votes anyway. Not adopted.
 </p>
 
 <h2>Limitations</h2>
@@ -365,8 +369,8 @@ identical to a suction tube in a still frame. Four fixes were ruled out
 fine-tuning). This is a single-frame information limit, not a training gap.</li>
 <li><b>Same ceiling affects two more pairs</b> (Bipolar vs. Needle
 Driver, Monopolar vs. Suction): a distinguishing feature is sometimes
-just not visible in frame. Accounts for ~30 of 188 pre-tracking mistakes
-and cannot be trained around.</li>
+just not visible in frame. Together the three pairs account for 59 of
+the ensemble's 210 pre-tracking mistakes.</li>
 <li><b>Resolution and augmentation changes didn't hold up</b> on a second
 independent split after looking promising once; a larger backbone
 (ResNet-101) held up alone but didn't beat the shipping ensemble. All
@@ -404,6 +408,8 @@ replacement for one ResNet-50 ensemble member.</li>
 Integration-ready package (trained ensemble + a single
 <code>predict()</code> call, no training/experiment code):
 <a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
+It holds the earlier ensemble, which averages class probabilities, and has not
+yet been updated to the vote-based pipeline described here.
 </p>
 
 </div>

@@ -1,0 +1,22 @@
+model            metric                       fp32       int8      delta
+------------------------------------------------------------------------
+resnet50_320     accuracy                   0.9147     0.8864    -0.0283
+resnet50_320     macro-F1                   0.8651     0.8129    -0.0522
+resnet50_320     ONNX CPU latency (ms)       43.91      74.40     +30.49
+resnet50_320     model size (MB)             94.01      23.70     -70.31
+
+resnet50_224     accuracy                   0.8969     0.8840    -0.0129
+resnet50_224     macro-F1                   0.8485     0.8420    -0.0065
+resnet50_224     ONNX CPU latency (ms)       21.90      35.13     +13.23
+resnet50_224     model size (MB)             94.01      23.70     -70.31
+
+baseline         accuracy                   0.8567     0.1370    -0.7197
+baseline         macro-F1                   0.8113     0.0827    -0.7287
+baseline         ONNX CPU latency (ms)        1.44       8.99      +7.54
+baseline         model size (MB)              6.11       1.70      -4.41
+
+letterbox_crop   accuracy                   0.8668     0.0744    -0.7924
+letterbox_crop   macro-F1                   0.8344     0.0633    -0.7711
+letterbox_crop   ONNX CPU latency (ms)        1.44       9.00      +7.55
+letterbox_crop   model size (MB)              6.11       1.70      -4.41
+
