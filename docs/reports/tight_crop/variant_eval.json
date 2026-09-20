@@ -1,0 +1,554 @@
+{
+ "band_default_fold1_20260920-033343": {
+  "crop": "tight_band",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 42,
+  "standard": {
+   "accuracy": 0.8293663060278207,
+   "macro_f1": 0.7647845365900199,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.827236916150816,
+    "Prograsp Forceps": 0.6909920182440137,
+    "Large Needle Driver": 0.81875,
+    "Monopolar Curved Scissors": 0.9260744985673353,
+    "Suction Instrument": 0.907035175879397,
+    "Clip Applier": 0.7123287671232876,
+    "Laparoscopic Grasper": 0.47107438016528924
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.5984544049459042,
+   "macro_f1": 0.46318223509487827,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.602203182374541,
+    "Prograsp Forceps": 0.47932131495228,
+    "Large Needle Driver": 0.4460227272727273,
+    "Monopolar Curved Scissors": 0.7655942219304005,
+    "Suction Instrument": 0.6435786435786436,
+    "Clip Applier": 0.25,
+    "Laparoscopic Grasper": 0.05555555555555555
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8667697063369397,
+   "macro_f1": 0.8069366938030696,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.850562399571505,
+    "Prograsp Forceps": 0.7512562814070352,
+    "Large Needle Driver": 0.8503611971104231,
+    "Monopolar Curved Scissors": 0.9556048834628191,
+    "Suction Instrument": 0.9187817258883249,
+    "Clip Applier": 0.7714285714285715,
+    "Laparoscopic Grasper": 0.550561797752809
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "band_default_fold1_seed43_20260920-050602": {
+  "crop": "tight_band",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 43,
+  "standard": {
+   "accuracy": 0.8361669242658424,
+   "macro_f1": 0.77948323254072,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.827212522576761,
+    "Prograsp Forceps": 0.710239651416122,
+    "Large Needle Driver": 0.8278008298755186,
+    "Monopolar Curved Scissors": 0.934435261707989,
+    "Suction Instrument": 0.8861689106487148,
+    "Clip Applier": 0.7619047619047619,
+    "Laparoscopic Grasper": 0.5086206896551724
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.6537867078825348,
+   "macro_f1": 0.503244372034812,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.6598796853308654,
+    "Prograsp Forceps": 0.5292887029288703,
+    "Large Needle Driver": 0.5506912442396313,
+    "Monopolar Curved Scissors": 0.8309178743961353,
+    "Suction Instrument": 0.6244477172312224,
+    "Clip Applier": 0.2222222222222222,
+    "Laparoscopic Grasper": 0.10526315789473684
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8760432766615147,
+   "macro_f1": 0.8226627996823426,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8685916322922805,
+    "Prograsp Forceps": 0.7686832740213523,
+    "Large Needle Driver": 0.8770894788593904,
+    "Monopolar Curved Scissors": 0.949244060475162,
+    "Suction Instrument": 0.9084158415841584,
+    "Clip Applier": 0.8059701492537313,
+    "Laparoscopic Grasper": 0.5806451612903226
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "band_default_fold1_seed44_20260920-061541": {
+  "crop": "tight_band",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 44,
+  "standard": {
+   "accuracy": 0.8519319938176197,
+   "macro_f1": 0.7953524047934619,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8537596210775606,
+    "Prograsp Forceps": 0.7323943661971831,
+    "Large Needle Driver": 0.8440545808966862,
+    "Monopolar Curved Scissors": 0.9441340782122905,
+    "Suction Instrument": 0.8950695322376738,
+    "Clip Applier": 0.7941176470588235,
+    "Laparoscopic Grasper": 0.5039370078740157
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.590726429675425,
+   "macro_f1": 0.48339302951425245,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.6304713804713805,
+    "Prograsp Forceps": 0.44371584699453553,
+    "Large Needle Driver": 0.5,
+    "Monopolar Curved Scissors": 0.7169811320754716,
+    "Suction Instrument": 0.5867418899858956,
+    "Clip Applier": 0.32653061224489793,
+    "Laparoscopic Grasper": 0.1793103448275862
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8714064914992272,
+   "macro_f1": 0.7931867836643542,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8784722222222222,
+    "Prograsp Forceps": 0.7702182284980744,
+    "Large Needle Driver": 0.8660968660968661,
+    "Monopolar Curved Scissors": 0.9460352422907489,
+    "Suction Instrument": 0.9195979899497487,
+    "Clip Applier": 0.7012987012987013,
+    "Laparoscopic Grasper": 0.47058823529411764
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "band_masklight_fold1_20260920-042019": {
+  "crop": "tight_band",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 42,
+  "standard": {
+   "accuracy": 0.8352395672333849,
+   "macro_f1": 0.7975505006490555,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8274285714285714,
+    "Prograsp Forceps": 0.711825487944891,
+    "Large Needle Driver": 0.8389662027833003,
+    "Monopolar Curved Scissors": 0.9181871689228959,
+    "Suction Instrument": 0.9001203369434416,
+    "Clip Applier": 0.8571428571428571,
+    "Laparoscopic Grasper": 0.5291828793774319
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.6160741885625965,
+   "macro_f1": 0.4762208429995599,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.6432203389830509,
+    "Prograsp Forceps": 0.4936854190585534,
+    "Large Needle Driver": 0.49744897959183676,
+    "Monopolar Curved Scissors": 0.7236662106703147,
+    "Suction Instrument": 0.6916565900846433,
+    "Clip Applier": 0.20512820512820512,
+    "Laparoscopic Grasper": 0.07874015748031496
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.884080370942813,
+   "macro_f1": 0.841977755945834,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8773109243697479,
+    "Prograsp Forceps": 0.7750952986022872,
+    "Large Needle Driver": 0.8721506442021804,
+    "Monopolar Curved Scissors": 0.9631696428571429,
+    "Suction Instrument": 0.9212121212121213,
+    "Clip Applier": 0.9,
+    "Laparoscopic Grasper": 0.5849056603773585
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "band_masklight_fold1_seed43_20260920-055049": {
+  "crop": "tight_band",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 43,
+  "standard": {
+   "accuracy": 0.8306027820710974,
+   "macro_f1": 0.7592415677738298,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8342077649527807,
+    "Prograsp Forceps": 0.6970091027308193,
+    "Large Needle Driver": 0.7881448957189902,
+    "Monopolar Curved Scissors": 0.9369988545246277,
+    "Suction Instrument": 0.9155107187894073,
+    "Clip Applier": 0.6923076923076923,
+    "Laparoscopic Grasper": 0.45051194539249145
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.62225656877898,
+   "macro_f1": 0.4929942940748463,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.632952691680261,
+    "Prograsp Forceps": 0.5221112696148359,
+    "Large Needle Driver": 0.5011337868480725,
+    "Monopolar Curved Scissors": 0.7571523619427811,
+    "Suction Instrument": 0.6471337579617834,
+    "Clip Applier": 0.3333333333333333,
+    "Laparoscopic Grasper": 0.05714285714285714
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8812982998454405,
+   "macro_f1": 0.826502045030871,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.876210979547901,
+    "Prograsp Forceps": 0.7711511789181692,
+    "Large Needle Driver": 0.8553971486761711,
+    "Monopolar Curved Scissors": 0.963327859879584,
+    "Suction Instrument": 0.9290161892901619,
+    "Clip Applier": 0.8333333333333334,
+    "Laparoscopic Grasper": 0.5570776255707762
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "band_masklight_fold1_seed44_20260920-063717": {
+  "crop": "tight_band",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 44,
+  "standard": {
+   "accuracy": 0.8720247295208655,
+   "macro_f1": 0.8239737506436707,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8672985781990521,
+    "Prograsp Forceps": 0.7604651162790698,
+    "Large Needle Driver": 0.8532818532818532,
+    "Monopolar Curved Scissors": 0.9528039977790117,
+    "Suction Instrument": 0.9287469287469288,
+    "Clip Applier": 0.8571428571428571,
+    "Laparoscopic Grasper": 0.5480769230769231
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.6491499227202473,
+   "macro_f1": 0.5171302479878119,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.6857402361489555,
+    "Prograsp Forceps": 0.5088757396449705,
+    "Large Needle Driver": 0.5834165834165834,
+    "Monopolar Curved Scissors": 0.7549668874172185,
+    "Suction Instrument": 0.6865671641791045,
+    "Clip Applier": 0.29508196721311475,
+    "Laparoscopic Grasper": 0.10526315789473684
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8843894899536322,
+   "macro_f1": 0.8349334851154798,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8847497089639115,
+    "Prograsp Forceps": 0.7934093789607097,
+    "Large Needle Driver": 0.8647619047619047,
+    "Monopolar Curved Scissors": 0.9561925365062196,
+    "Suction Instrument": 0.9158415841584159,
+    "Clip Applier": 0.8813559322033898,
+    "Laparoscopic Grasper": 0.5482233502538071
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_default_fold1_20260920-033343": {
+  "crop": "standard",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 42,
+  "standard": {
+   "accuracy": 0.8720247295208655,
+   "macro_f1": 0.8134263679679713,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8650201033888569,
+    "Prograsp Forceps": 0.7477876106194691,
+    "Large Needle Driver": 0.852589641434263,
+    "Monopolar Curved Scissors": 0.9578246392896781,
+    "Suction Instrument": 0.9341772151898734,
+    "Clip Applier": 0.8,
+    "Laparoscopic Grasper": 0.5365853658536586
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.476661514683153,
+   "macro_f1": 0.3291072190129034,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5324806462470548,
+    "Prograsp Forceps": 0.35856573705179284,
+    "Large Needle Driver": 0.3008356545961003,
+    "Monopolar Curved Scissors": 0.5542544886807181,
+    "Suction Instrument": 0.495114006514658,
+    "Clip Applier": 0.0625,
+    "Laparoscopic Grasper": 0.0
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8268933539412674,
+   "macro_f1": 0.7649252138532192,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8164556962025317,
+    "Prograsp Forceps": 0.6666666666666666,
+    "Large Needle Driver": 0.8070539419087137,
+    "Monopolar Curved Scissors": 0.9390519187358917,
+    "Suction Instrument": 0.8812664907651715,
+    "Clip Applier": 0.8301886792452831,
+    "Laparoscopic Grasper": 0.41379310344827586
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_default_fold1_seed43_20260920-043227": {
+  "crop": "standard",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 43,
+  "standard": {
+   "accuracy": 0.8782071097372488,
+   "macro_f1": 0.8212241545227668,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8710059171597633,
+    "Prograsp Forceps": 0.7980416156670747,
+    "Large Needle Driver": 0.8608534322820037,
+    "Monopolar Curved Scissors": 0.9545199326221224,
+    "Suction Instrument": 0.9183431952662722,
+    "Clip Applier": 0.8253968253968254,
+    "Laparoscopic Grasper": 0.5204081632653061
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.4639876352395672,
+   "macro_f1": 0.3628732465029677,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5431506849315069,
+    "Prograsp Forceps": 0.4213938411669368,
+    "Large Needle Driver": 0.4295991778006166,
+    "Monopolar Curved Scissors": 0.3296903460837887,
+    "Suction Instrument": 0.5041782729805014,
+    "Clip Applier": 0.2926829268292683,
+    "Laparoscopic Grasper": 0.019417475728155338
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8293663060278207,
+   "macro_f1": 0.7912103242482393,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8254847645429363,
+    "Prograsp Forceps": 0.7253613666228647,
+    "Large Needle Driver": 0.7975243147656941,
+    "Monopolar Curved Scissors": 0.9045108377270065,
+    "Suction Instrument": 0.8918269230769231,
+    "Clip Applier": 0.9019607843137255,
+    "Laparoscopic Grasper": 0.4918032786885246
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_default_fold1_seed44_20260920-045713": {
+  "crop": "standard",
+  "aug": "default",
+  "split": "fold1",
+  "seed": 44,
+  "standard": {
+   "accuracy": 0.8828438948995363,
+   "macro_f1": 0.8313948260533374,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8701837581505631,
+    "Prograsp Forceps": 0.7736526946107785,
+    "Large Needle Driver": 0.875602700096432,
+    "Monopolar Curved Scissors": 0.9622744669218152,
+    "Suction Instrument": 0.9313725490196079,
+    "Clip Applier": 0.8253968253968254,
+    "Laparoscopic Grasper": 0.5812807881773399
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.5502318392581144,
+   "macro_f1": 0.4100615606141084,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5873353166170846,
+    "Prograsp Forceps": 0.41706161137440756,
+    "Large Needle Driver": 0.5248868778280543,
+    "Monopolar Curved Scissors": 0.6819484240687679,
+    "Suction Instrument": 0.496,
+    "Clip Applier": 0.09302325581395349,
+    "Laparoscopic Grasper": 0.07017543859649122
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8420401854714065,
+   "macro_f1": 0.7950911747360931,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8227920227920228,
+    "Prograsp Forceps": 0.7087378640776699,
+    "Large Needle Driver": 0.8371647509578544,
+    "Monopolar Curved Scissors": 0.9407158836689038,
+    "Suction Instrument": 0.8829268292682927,
+    "Clip Applier": 0.8679245283018868,
+    "Laparoscopic Grasper": 0.5053763440860215
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_masklight_fold1_20260920-040039": {
+  "crop": "standard",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 42,
+  "standard": {
+   "accuracy": 0.8905718701700155,
+   "macro_f1": 0.8379280101034926,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.885730528709494,
+    "Prograsp Forceps": 0.7946859903381642,
+    "Large Needle Driver": 0.8687872763419483,
+    "Monopolar Curved Scissors": 0.9641082274986196,
+    "Suction Instrument": 0.9391304347826087,
+    "Clip Applier": 0.8181818181818182,
+    "Laparoscopic Grasper": 0.5948717948717949
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.5106646058732612,
+   "macro_f1": 0.389025000790336,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5530591081921881,
+    "Prograsp Forceps": 0.4057971014492754,
+    "Large Needle Driver": 0.4354243542435424,
+    "Monopolar Curved Scissors": 0.5437352245862884,
+    "Suction Instrument": 0.5613496932515337,
+    "Clip Applier": 0.16666666666666666,
+    "Laparoscopic Grasper": 0.05714285714285714
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8435857805255024,
+   "macro_f1": 0.7879115268056055,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8238897396630934,
+    "Prograsp Forceps": 0.7407407407407407,
+    "Large Needle Driver": 0.7838427947598253,
+    "Monopolar Curved Scissors": 0.9451523545706371,
+    "Suction Instrument": 0.9111675126903553,
+    "Clip Applier": 0.7924528301886793,
+    "Laparoscopic Grasper": 0.5181347150259067
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_masklight_fold1_seed43_20260920-052153": {
+  "crop": "standard",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 43,
+  "standard": {
+   "accuracy": 0.874806800618238,
+   "macro_f1": 0.834423774712458,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8631801373481247,
+    "Prograsp Forceps": 0.7692307692307693,
+    "Large Needle Driver": 0.841995841995842,
+    "Monopolar Curved Scissors": 0.9617117117117117,
+    "Suction Instrument": 0.9253365973072215,
+    "Clip Applier": 0.896551724137931,
+    "Laparoscopic Grasper": 0.5829596412556054
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.4884080370942813,
+   "macro_f1": 0.40147544844864586,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5505577545879813,
+    "Prograsp Forceps": 0.4020797227036395,
+    "Large Needle Driver": 0.4833040421792619,
+    "Monopolar Curved Scissors": 0.31868131868131866,
+    "Suction Instrument": 0.6469002695417789,
+    "Clip Applier": 0.3333333333333333,
+    "Laparoscopic Grasper": 0.07547169811320754
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8176197836166924,
+   "macro_f1": 0.773175444111587,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.7967711301044634,
+    "Prograsp Forceps": 0.6928895612708018,
+    "Large Needle Driver": 0.7662337662337663,
+    "Monopolar Curved Scissors": 0.92046783625731,
+    "Suction Instrument": 0.9002493765586035,
+    "Clip Applier": 0.8333333333333334,
+    "Laparoscopic Grasper": 0.502283105022831
+   }
+  },
+  "standard_matches_manifest": true
+ },
+ "std_masklight_fold1_seed44_20260920-054852": {
+  "crop": "standard",
+  "aug": "masklight",
+  "split": "fold1",
+  "seed": 44,
+  "standard": {
+   "accuracy": 0.8865533230293663,
+   "macro_f1": 0.8269139815937555,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8749298934380259,
+    "Prograsp Forceps": 0.7819548872180451,
+    "Large Needle Driver": 0.8786359077231695,
+    "Monopolar Curved Scissors": 0.9713340683572216,
+    "Suction Instrument": 0.9364881693648817,
+    "Clip Applier": 0.8307692307692308,
+    "Laparoscopic Grasper": 0.5142857142857142
+   }
+  },
+  "raw_bbox": {
+   "accuracy": 0.5001545595054095,
+   "macro_f1": 0.35193372843127807,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.5492772667542707,
+    "Prograsp Forceps": 0.2632612966601179,
+    "Large Needle Driver": 0.3278271918678526,
+    "Monopolar Curved Scissors": 0.5980167810831426,
+    "Suction Instrument": 0.5625,
+    "Clip Applier": 0.10810810810810811,
+    "Laparoscopic Grasper": 0.05454545454545454
+   }
+  },
+  "tight_band": {
+   "accuracy": 0.8256568778979907,
+   "macro_f1": 0.7723237700973976,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.8015873015873016,
+    "Prograsp Forceps": 0.6912181303116147,
+    "Large Needle Driver": 0.735658042744657,
+    "Monopolar Curved Scissors": 0.9488888888888889,
+    "Suction Instrument": 0.915,
+    "Clip Applier": 0.8235294117647058,
+    "Laparoscopic Grasper": 0.49038461538461536
+   }
+  },
+  "standard_matches_manifest": true
+ }
+}
