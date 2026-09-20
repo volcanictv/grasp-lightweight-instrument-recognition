@@ -1,0 +1,42 @@
+{
+ "auroc": {
+  "mc_vote_uncertainty_vs_vote_errors": 0.8961586822582672,
+  "between_member_vote_disagreement_vs_vote_errors": 0.8327881661906558,
+  "softmax_confidence_vs_softmax_errors": 0.916267797744966
+ },
+ "recall_at_budget": {
+  "0.1": {
+   "mc_vote": 0.6185714285714285,
+   "softmax_confidence": 0.6367924528301887
+  },
+  "0.2": {
+   "mc_vote": 0.7861224489795918,
+   "softmax_confidence": 0.8018867924528302
+  },
+  "0.3": {
+   "mc_vote": 0.8687891156462585,
+   "softmax_confidence": 0.9056603773584906
+  }
+ },
+ "passed_errors": {
+  "n": 50,
+  "unanimous": 8,
+  "unanimous_rescued": 3,
+  "non_unanimous": 42,
+  "non_unanimous_rescued": 25
+ },
+ "post_tracking_flag": {
+  "0.2": {
+   "errors_caught": 70,
+   "errors": 70,
+   "correct_flagged": 314,
+   "correct": 455
+  },
+  "0.3": {
+   "errors_caught": 65,
+   "errors": 70,
+   "correct_flagged": 213,
+   "correct": 455
+  }
+ }
+}

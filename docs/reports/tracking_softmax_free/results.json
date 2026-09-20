@@ -1,0 +1,139 @@
+{
+ "n_total": 2861,
+ "rows": {
+  "V1 pooled vote": {
+   "accuracy": 0.9577070954211814,
+   "macro_f1": 0.9287299044013729,
+   "fixed": 116,
+   "broken": 27,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9622,
+    "Prograsp Forceps": 0.9,
+    "Large Needle Driver": 0.9733,
+    "Monopolar Curved Scissors": 0.9882,
+    "Suction Instrument": 0.9406,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8421
+   }
+  },
+  "V2 uncertainty-weighted vote (primary)": {
+   "accuracy": 0.9580566235581964,
+   "macro_f1": 0.9295414311047822,
+   "fixed": 118,
+   "broken": 28,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9622,
+    "Prograsp Forceps": 0.9003,
+    "Large Needle Driver": 0.9732,
+    "Monopolar Curved Scissors": 0.9876,
+    "Suction Instrument": 0.9439,
+    "Clip Applier": 0.8919,
+    "Laparoscopic Grasper": 0.8477
+   }
+  },
+  "V4 unanimity guard": {
+   "accuracy": 0.9580566235581964,
+   "macro_f1": 0.9295414311047822,
+   "fixed": 118,
+   "broken": 28,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9622,
+    "Prograsp Forceps": 0.9003,
+    "Large Needle Driver": 0.9732,
+    "Monopolar Curved Scissors": 0.9876,
+    "Suction Instrument": 0.9439,
+    "Clip Applier": 0.8919,
+    "Laparoscopic Grasper": 0.8477
+   }
+  },
+  "A0 avg softmax (reference)": {
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9324716243273531,
+   "fixed": 116,
+   "broken": 22,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9642,
+    "Prograsp Forceps": 0.905,
+    "Large Needle Driver": 0.9733,
+    "Monopolar Curved Scissors": 0.9882,
+    "Suction Instrument": 0.941,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8609
+   }
+  }
+ },
+ "pairs": {
+  "V2 uncertainty-weighted vote (primary) vs V1 pooled vote": {
+   "only_first": 3,
+   "only_second": 2,
+   "p": 1.0
+  },
+  "V4 unanimity guard vs V2 uncertainty-weighted vote (primary)": {
+   "only_first": 0,
+   "only_second": 0,
+   "p": 1.0
+  },
+  "V2 uncertainty-weighted vote (primary) vs A0 avg softmax (reference)": {
+   "only_first": 5,
+   "only_second": 9,
+   "p": 0.4239501953125
+  }
+ },
+ "passed": {
+  "V1 pooled vote": {
+   "rescued": 27,
+   "n_wrong": 50,
+   "broken": 1,
+   "n_right_sample": 300,
+   "est_net_instances": 19.38,
+   "est_net_ci95": [
+    0.5105000000000002,
+    32.024999999999864
+   ],
+   "est_net_accuracy_points": 0.6773855295351275
+  },
+  "V2 uncertainty-weighted vote (primary)": {
+   "rescued": 28,
+   "n_wrong": 50,
+   "broken": 2,
+   "n_right_sample": 300,
+   "est_net_instances": 12.760000000000003,
+   "est_net_ci95": [
+    -11.100000000000001,
+    31.0
+   ],
+   "est_net_accuracy_points": 0.445997902831178
+  },
+  "V4 unanimity guard": {
+   "rescued": 25,
+   "n_wrong": 50,
+   "broken": 2,
+   "n_right_sample": 300,
+   "est_net_instances": 9.76,
+   "est_net_ci95": [
+    -16.720000000000002,
+    28.000000000000004
+   ],
+   "est_net_accuracy_points": 0.341139461726669
+  },
+  "A0 avg softmax (reference)": {
+   "rescued": 27,
+   "n_wrong": 50,
+   "broken": 1,
+   "n_right_sample": 300,
+   "est_net_instances": 19.38,
+   "est_net_ci95": [
+    0.14000000000000057,
+    32.0
+   ],
+   "est_net_accuracy_points": 0.6773855295351275
+  }
+ },
+ "post_combine": {
+  "auroc_track_uncertainty": 0.853171114599686,
+  "n_wrong": 70,
+  "wrong_with_u_lt_0.20": 0,
+  "wrong_with_u_lt_0.10": 0,
+  "right_with_u_lt_0.10": 42
+ }
+}
