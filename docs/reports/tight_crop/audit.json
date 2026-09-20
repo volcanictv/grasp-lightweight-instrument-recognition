@@ -1,0 +1,21 @@
+{
+ "split": "fold2",
+ "n_instances": 2935,
+ "empty_masks": 0,
+ "invariant_band_lt_instrument_holds_for_all": true,
+ "band_to_instrument_ratio": {
+  "mean": 0.3811621832454598,
+  "median": 0.377786669715331,
+  "p10": 0.2413661932179398,
+  "p90": 0.4990076494788466
+ },
+ "band_radius_px": {
+  "mean": 21.30491667610337,
+  "median": 24.0,
+  "p90": 24.0
+ },
+ "hit_radius_cap": 2074,
+ "no_band_at_all": 0,
+ "band_frac": 0.5,
+ "r_cap": 24
+}
