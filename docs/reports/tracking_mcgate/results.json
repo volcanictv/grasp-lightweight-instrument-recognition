@@ -1,0 +1,117 @@
+{
+ "n_total": 2861,
+ "rows": {
+  "ensemble alone": {
+   "accuracy": 0.9259000349528137,
+   "macro_f1": 0.8893827114796302,
+   "n_tracked": 0,
+   "fixed": 0,
+   "broken": 0,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9368,
+    "Prograsp Forceps": 0.8505,
+    "Large Needle Driver": 0.9299,
+    "Monopolar Curved Scissors": 0.972,
+    "Suction Instrument": 0.9008,
+    "Clip Applier": 0.85,
+    "Laparoscopic Grasper": 0.7857
+   }
+  },
+  "+ confidence gate (<0.80, n=540)": {
+   "accuracy": 0.9612023767913317,
+   "macro_f1": 0.9340398087371481,
+   "n_tracked": 540,
+   "fixed": 122,
+   "broken": 21,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9647,
+    "Prograsp Forceps": 0.9077,
+    "Large Needle Driver": 0.9767,
+    "Monopolar Curved Scissors": 0.9893,
+    "Suction Instrument": 0.9441,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8609
+   }
+  },
+  "+ MC Dropout gate (>=0.20, n=525)": {
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9324716243273531,
+   "n_tracked": 525,
+   "fixed": 117,
+   "broken": 21,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9642,
+    "Prograsp Forceps": 0.905,
+    "Large Needle Driver": 0.9733,
+    "Monopolar Curved Scissors": 0.9882,
+    "Suction Instrument": 0.941,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8609
+   }
+  },
+  "+ either gate (n=576)": {
+   "accuracy": 0.9615519049283467,
+   "macro_f1": 0.934326142073096,
+   "n_tracked": 576,
+   "fixed": 123,
+   "broken": 21,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9654,
+    "Prograsp Forceps": 0.9091,
+    "Large Needle Driver": 0.9767,
+    "Monopolar Curved Scissors": 0.9893,
+    "Suction Instrument": 0.9441,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8609
+   }
+  },
+  "+ both gates agree (n=489)": {
+   "accuracy": 0.9591052079692415,
+   "macro_f1": 0.9321870143409505,
+   "n_tracked": 489,
+   "fixed": 116,
+   "broken": 21,
+   "per_class_f1": {
+    "Bipolar Forceps": 0.9635,
+    "Prograsp Forceps": 0.9037,
+    "Large Needle Driver": 0.9733,
+    "Monopolar Curved Scissors": 0.9882,
+    "Suction Instrument": 0.941,
+    "Clip Applier": 0.8947,
+    "Laparoscopic Grasper": 0.8609
+   }
+  }
+ },
+ "gate_comparison": {
+  "mc_minus_conf_accuracy": -0.001747640685075158,
+  "bootstrap_ci95": [
+   -0.0035040195735756893,
+   0.0
+  ],
+  "correct_only_under_conf_gate": 6,
+  "correct_only_under_mc_gate": 1,
+  "mcnemar_exact_p": 0.125,
+  "per_case_accuracy": {
+   "CASE041": {
+    "conf": 0.9404761904761905,
+    "mc": 0.9370748299319728
+   },
+   "CASE047": {
+    "conf": 0.9685393258426966,
+    "mc": 0.9685393258426966
+   },
+   "CASE050": {
+    "conf": 0.9677725118483412,
+    "mc": 0.9677725118483412
+   },
+   "CASE051": {
+    "conf": 0.9690721649484536,
+    "mc": 0.9536082474226805
+   },
+   "CASE053": {
+    "conf": 0.9620034542314335,
+    "mc": 0.9620034542314335
+   }
+  }
+ }
+}
