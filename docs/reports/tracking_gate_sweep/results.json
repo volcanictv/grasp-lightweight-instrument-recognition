@@ -1,0 +1,203 @@
+{
+ "targets": {
+  "T1 softmax confidence gate + avg-softmax combine": {
+   "accuracy": 0.9612023767913317,
+   "macro_f1": 0.9340398087371481
+  },
+  "T2 MC gate (softmax-based) + avg-softmax combine": {
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9324716243273531
+  }
+ },
+ "rows": {
+  "0.2": {
+   "tracked": 525,
+   "accuracy": 0.9580566235581964,
+   "macro_f1": 0.9295414311047822,
+   "fixed": 118,
+   "broken": 28,
+   "gpu_hours": 3.5
+  },
+  "0.19": {
+   "tracked": 556,
+   "accuracy": 0.9584061516952115,
+   "macro_f1": 0.9298373818592269,
+   "fixed": 119,
+   "broken": 28,
+   "gpu_hours": 3.7066666666666666
+  },
+  "0.18": {
+   "tracked": 577,
+   "accuracy": 0.9587556798322265,
+   "macro_f1": 0.9302609102959541,
+   "fixed": 120,
+   "broken": 28,
+   "gpu_hours": 3.8466666666666667
+  },
+  "0.17": {
+   "tracked": 597,
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9308893057532435,
+   "fixed": 122,
+   "broken": 28,
+   "gpu_hours": 3.98
+  },
+  "0.16": {
+   "tracked": 625,
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9308893057532435,
+   "fixed": 122,
+   "broken": 28,
+   "gpu_hours": 4.166666666666667
+  },
+  "0.15": {
+   "tracked": 649,
+   "accuracy": 0.9594547361062565,
+   "macro_f1": 0.9308893057532435,
+   "fixed": 122,
+   "broken": 28,
+   "gpu_hours": 4.326666666666667
+  },
+  "0.14": {
+   "tracked": 668,
+   "accuracy": 0.9601537923802866,
+   "macro_f1": 0.9314355272330495,
+   "fixed": 124,
+   "broken": 28,
+   "gpu_hours": 4.453333333333333
+  },
+  "0.13": {
+   "tracked": 696,
+   "accuracy": 0.9605033205173017,
+   "macro_f1": 0.9316850521714494,
+   "fixed": 125,
+   "broken": 28,
+   "gpu_hours": 4.64
+  },
+  "0.12": {
+   "tracked": 729,
+   "accuracy": 0.9619014330653618,
+   "macro_f1": 0.932763243311019,
+   "fixed": 129,
+   "broken": 28,
+   "gpu_hours": 4.86
+  },
+  "0.11": {
+   "tracked": 764,
+   "accuracy": 0.9619014330653618,
+   "macro_f1": 0.932763243311019,
+   "fixed": 129,
+   "broken": 28,
+   "gpu_hours": 5.093333333333334
+  },
+  "0.1": {
+   "tracked": 797,
+   "accuracy": 0.9622509612023767,
+   "macro_f1": 0.933047296614351,
+   "fixed": 130,
+   "broken": 28,
+   "gpu_hours": 5.3133333333333335
+  },
+  "0.09": {
+   "tracked": 833,
+   "accuracy": 0.9622509612023767,
+   "macro_f1": 0.9350740238083551,
+   "fixed": 131,
+   "broken": 29,
+   "gpu_hours": 5.553333333333334
+  },
+  "0.08": {
+   "tracked": 868,
+   "accuracy": 0.9626004893393918,
+   "macro_f1": 0.9354275733154881,
+   "fixed": 132,
+   "broken": 29,
+   "gpu_hours": 5.786666666666667
+  },
+  "0.07": {
+   "tracked": 898,
+   "accuracy": 0.963649073750437,
+   "macro_f1": 0.9365249192324839,
+   "fixed": 135,
+   "broken": 29,
+   "gpu_hours": 5.986666666666666
+  },
+  "0.06": {
+   "tracked": 931,
+   "accuracy": 0.9639986018874519,
+   "macro_f1": 0.9367735014288526,
+   "fixed": 136,
+   "broken": 29,
+   "gpu_hours": 6.206666666666667
+  },
+  "0.05": {
+   "tracked": 979,
+   "accuracy": 0.963649073750437,
+   "macro_f1": 0.9345794323150141,
+   "fixed": 136,
+   "broken": 30,
+   "gpu_hours": 6.526666666666666
+  },
+  "0.04": {
+   "tracked": 1033,
+   "accuracy": 0.963649073750437,
+   "macro_f1": 0.934562325246639,
+   "fixed": 137,
+   "broken": 31,
+   "gpu_hours": 6.886666666666667
+  },
+  "0.03": {
+   "tracked": 1111,
+   "accuracy": 0.963649073750437,
+   "macro_f1": 0.9347357164167446,
+   "fixed": 140,
+   "broken": 34,
+   "gpu_hours": 7.406666666666666
+  }
+ },
+ "selection": {
+  "T1 softmax confidence gate + avg-softmax combine": {
+   "threshold": 0.09,
+   "note": "reaches both targets",
+   "tracked": 833,
+   "accuracy": 0.9622509612023767,
+   "macro_f1": 0.9350740238083551,
+   "fixed": 131,
+   "broken": 29,
+   "gpu_hours": 5.553333333333334,
+   "only_vote_pipeline": 13,
+   "only_softmax_pipeline": 10,
+   "mcnemar_p": 0.6776394844055176
+  },
+  "T2 MC gate (softmax-based) + avg-softmax combine": {
+   "threshold": 0.12,
+   "note": "reaches both targets",
+   "tracked": 729,
+   "accuracy": 0.9619014330653618,
+   "macro_f1": 0.932763243311019,
+   "fixed": 129,
+   "broken": 28,
+   "gpu_hours": 4.86,
+   "only_vote_pipeline": 16,
+   "only_softmax_pipeline": 9,
+   "mcnemar_p": 0.2295229434967041
+  }
+ },
+ "loco": {
+  "grid": [
+   0.2,
+   0.15,
+   0.1,
+   0.05,
+   0.03
+  ],
+  "chosen": {
+   "CASE041": 0.05,
+   "CASE047": 0.03,
+   "CASE050": 0.05,
+   "CASE051": 0.05,
+   "CASE053": 0.05
+  },
+  "accuracy": 0.9632995456134219
+ }
+}
