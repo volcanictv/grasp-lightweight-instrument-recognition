@@ -1,0 +1,7 @@
+{
+ "n_frames": 1125,
+ "macro_f1": 0.7011040870572346,
+ "exact_match_accuracy": 0.3591111111111111,
+ "per_label_accuracy": 0.8544761904761905,
+ "recorded_macro_f1": 0.7075593233484077
+}
