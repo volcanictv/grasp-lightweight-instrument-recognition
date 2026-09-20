@@ -371,7 +371,11 @@ and cannot be trained around.</li>
 independent split after looking promising once; a larger backbone
 (ResNet-101) held up alone but didn't beat the shipping ensemble. All
 three logged as negative results. Laparoscopic Grasper improved under
-all three regardless, a lead worth testing on its own.</li>
+all three regardless, a lead worth testing on its own. A fourth change,
+training on tight instrument-plus-background-buffer crops with random masking
+and lighting augmentation, was also worse: on fold1 with three seeds each,
+macro-F1 was 0.78&ndash;0.79 against 0.82&ndash;0.83 for the standard crop, and
+it learned more slowly.</li>
 <li>Ensemble weighting still being finalized; a simpler alternative
 scores ~1 point lower and is available as a fallback.</li>
 <li><b>The gate passes some errors.</b> Of the retrained ensemble's 210
