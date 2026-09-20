@@ -1,0 +1,18 @@
+{
+ "confidence gate": {
+  "errors_left": 111,
+  "never_tracked": 43,
+  "tracked_not_fixed": 47,
+  "tracked_broken": 21,
+  "never_tracked_conf_ge_095": 19,
+  "never_tracked_conf_median": 0.9179829239845277
+ },
+ "MC Dropout gate": {
+  "errors_left": 116,
+  "never_tracked": 50,
+  "tracked_not_fixed": 45,
+  "tracked_broken": 21,
+  "never_tracked_conf_ge_095": 19,
+  "never_tracked_conf_median": 0.8924579620361329
+ }
+}
