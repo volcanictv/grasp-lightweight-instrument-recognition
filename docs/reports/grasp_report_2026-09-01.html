@@ -85,7 +85,7 @@ a { color: var(--blue); }
 <div class="callout">
 <p><b>Final pipeline:</b> 0.9623 accuracy / 0.9351 macro-F1 on official test (2,861 instances, 5 cases).</p>
 <p>Defensible headline number is the leave-one-case-out result, 0.9633 accuracy, because the 9% gate was chosen on the test set.</p>
-<p>External generalization is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017.</p>
+<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The recipe itself transfers: trained on each EndoVis dataset's own sequences it reaches 0.85 to 0.91 accuracy (see Transfer).</p>
 <p>Gate: 9% for now (20% is the cheaper alternative, see Gate selection); a held-out confirmation run is planned.</p>
 </div>
 
@@ -207,6 +207,33 @@ generation and manufacturer from GraSP's; it has not been tested, and a 0.414
 macro-F1 should be read as a weak result rather than explained away. EndoVis
 2017 was previously scored with a single ResNet-50; this run uses the full
 ensemble on both.
+</p>
+
+<h3>Transfer: the recipe on EndoVis's own data</h3>
+<p class="small">
+A different question from the zero-shot test above, and not a generalization
+number: the same ResNet-50 (320 px) recipe is fine-tuned on each EndoVis
+dataset's own training sequences and scored on its held-out sequences (the
+same 3,231 and 2,544 instances as above; the splits are by video sequence, 10
+epochs, last epoch used, 3 seeds, mean &plusmn; standard deviation). It shows
+the architecture and training recipe work on other surgical footage; it says
+nothing about whether the GraSP-trained model generalizes.
+</p>
+<div class="tablewrap">
+<table>
+<tr><th>dataset (train / held-out instances)</th><th>starting weights</th><th class="num">accuracy</th><th class="num">macro-F1</th></tr>
+<tr><td rowspan="2">EndoVis 2017 (5,584 / 2,544)</td><td>GraSP</td><td class="num">0.9080 &plusmn; 0.0018</td><td class="num">0.8810 &plusmn; 0.0009</td></tr>
+<tr><td>ImageNet only</td><td class="num">0.9116 &plusmn; 0.0043</td><td class="num">0.8793 &plusmn; 0.0050</td></tr>
+<tr><td rowspan="2">EndoVis 2018 (5,992 / 3,231)</td><td>GraSP</td><td class="num">0.8515 &plusmn; 0.0122</td><td class="num">0.7988 &plusmn; 0.0294</td></tr>
+<tr><td>ImageNet only</td><td class="num">0.8794 &plusmn; 0.0028</td><td class="num">0.8599 &plusmn; 0.0077</td></tr>
+</table>
+</div>
+<p class="small">
+Starting from GraSP weights gives no benefit over ImageNet: equal on 2017 and
+slightly worse on 2018, so there is no evidence here that GraSP training
+transfers. Training and held-out sequences come from the same recordings'
+release, so these are in-domain numbers and are higher than a new hospital
+would see.
 </p>
 
 <h2>How it works</h2>

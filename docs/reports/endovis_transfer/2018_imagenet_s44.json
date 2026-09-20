@@ -1,0 +1,93 @@
+{
+ "dataset": "2018",
+ "init": "imagenet",
+ "seed": 44,
+ "epochs": 10,
+ "n_train": 5992,
+ "n_val": 3231,
+ "accuracy": 0.876199319096255,
+ "macro_f1_present": 0.8679717088811116,
+ "per_class_f1": {
+  "Bipolar Forceps": 0.7886497064579256,
+  "Prograsp Forceps": 0.8090277777777778,
+  "Large Needle Driver": 0.9550147492625368,
+  "Monopolar Curved Scissors": 0.8864468864468864,
+  "Suction Instrument": 0.9007194244604316,
+  "Clip Applier": 0.0,
+  "Laparoscopic Grasper": 0.0
+ },
+ "support": {
+  "Bipolar Forceps": 605,
+  "Prograsp Forceps": 778,
+  "Large Needle Driver": 1346,
+  "Monopolar Curved Scissors": 132,
+  "Suction Instrument": 370,
+  "Clip Applier": 0,
+  "Laparoscopic Grasper": 0
+ },
+ "confusion_counts": [
+  [
+   403,
+   170,
+   29,
+   0,
+   1,
+   2,
+   0
+  ],
+  [
+   3,
+   699,
+   37,
+   8,
+   8,
+   23,
+   0
+  ],
+  [
+   7,
+   37,
+   1295,
+   0,
+   3,
+   4,
+   0
+  ],
+  [
+   1,
+   5,
+   2,
+   121,
+   0,
+   3,
+   0
+  ],
+  [
+   3,
+   39,
+   3,
+   12,
+   313,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ ]
+}
