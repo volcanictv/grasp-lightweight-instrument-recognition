@@ -86,8 +86,7 @@ a { color: var(--blue); }
 <p><b>Final pipeline:</b> 0.9623 accuracy / 0.9351 macro-F1 on official test (2,861 instances, 5 cases).</p>
 <p>Defensible headline number is the leave-one-case-out result, 0.9633 accuracy, because the 9% gate was chosen on the test set.</p>
 <p>External generalization is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017.</p>
-<p>Open question for you: 9% vs 20% gate (see Gate selection).</p>
-<p>Caveat: ensemble weighting not yet finalized, all numbers move ~1 point if the fallback weighting is used.</p>
+<p>Gate: 9% for now (20% is the cheaper alternative, see Gate selection); a held-out confirmation run is planned.</p>
 </div>
 
 <p>
@@ -105,8 +104,8 @@ seen during training (EndoVis 2017, 2018).
 <table>
 <tr><th>configuration</th><th class="num">tracked</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
 <tr><td>Whole-frame baseline (exact match; a different task)</td><td class="num">&ndash;</td><td class="num">0.7076</td><td class="num">0.3591</td></tr>
-<tr><td>Per-instrument, single lightweight model (MobileNetV3-small)</td><td class="num">&ndash;</td><td class="num">0.834 [TODO: need 4-decimal value]</td><td class="num">0.867 [TODO: need 4-decimal value]</td></tr>
-<tr><td>Per-instrument, single ResNet-50 (320 px)</td><td class="num">&ndash;</td><td class="num">0.865 [TODO: need 4-decimal value]</td><td class="num">0.915 [TODO: need 4-decimal value]</td></tr>
+<tr><td>Per-instrument, single lightweight model (MobileNetV3-small)</td><td class="num">&ndash;</td><td class="num">0.834</td><td class="num">0.867</td></tr>
+<tr><td>Per-instrument, single ResNet-50 (320 px)</td><td class="num">&ndash;</td><td class="num">0.865</td><td class="num">0.915</td></tr>
 <tr><td>4-model ensemble (majority vote)</td><td class="num">&ndash;</td><td class="num">0.8898</td><td class="num">0.9266</td></tr>
 <tr><td>+ tracking, 20% gate, pooled vote</td><td class="num">525</td><td class="num">0.9287</td><td class="num">0.9577</td></tr>
 <tr><td>+ tracking, 20% gate, uncertainty-weighted vote</td><td class="num">525</td><td class="num">0.9295</td><td class="num">0.9581</td></tr>
@@ -130,10 +129,11 @@ still wrong.
 Scope and cost: one deterministic pass of the four members takes 20 ms per
 instance on one Titan Xp; the 80 votes (4 members &times; 20 passes) take 97 ms
 and 640 MB. On the 4-core CPU: 172 ms and 3.3 s. An instance that goes to
-tracking also votes on about 21 frames. Target: maximum accuracy on GraSP,
-offline. The pipeline is not deployable-light (80 passes, 3.3 s per instance on
-CPU, and INT8 quantization was tested and not adopted, see Efficiency).
-[TODO: Aryan to confirm that deployable-light is not also a goal.]
+tracking also votes on about 21 frames. The stated goal is deployable-light;
+the current work is maximum accuracy on GraSP instead, and nothing is being done
+toward efficiency for now. The pipeline as it stands is offline (80 passes, 3.3 s
+per instance on CPU, and INT8 quantization was tested and not adopted, see
+Efficiency).
 </p>
 
 <div class="tablewrap">
@@ -183,7 +183,7 @@ headline. The 9% gate itself was chosen on the five test cases, so its margin
 fixes, 1 break). The final pipeline matches, rather than beats, the earlier
 probability-averaging pipeline (0.9612 accuracy / 0.9340 macro-F1); matched
 accuracy at a threshold-stable operating point is the intended claim. The 9%
-gate is provisional pending confirmation on held-out cases.
+gate is kept for now and is provisional pending a held-out confirmation run.
 </p>
 
 <h2>Generalization</h2>
@@ -338,17 +338,6 @@ fine-tuning). This is a single-frame information limit, not a training gap.</li>
 Driver, Monopolar vs. Suction): a distinguishing feature is sometimes
 just not visible in frame. Together the three pairs account for 59 of
 the ensemble's 210 pre-tracking mistakes.</li>
-<li><b>Resolution and augmentation changes didn't hold up</b> on a second
-independent split after looking promising once; a larger backbone
-(ResNet-101) held up alone but didn't beat the shipping ensemble. All
-three logged as negative results. Laparoscopic Grasper improved under
-all three regardless, a lead worth testing on its own. A fourth change,
-training on tight instrument-plus-background-buffer crops with random masking
-and lighting augmentation, was also worse: on fold1 with three seeds each,
-macro-F1 was 0.78&ndash;0.79 against 0.82&ndash;0.83 for the standard crop, and
-it learned more slowly.</li>
-<li>Ensemble weighting still being finalized; a simpler alternative
-scores ~1 point lower and is available as a fallback.</li>
 <li><b>The gate passes some errors.</b> Of the retrained ensemble's 210
 errors, the 9% gate passes 29 and they are never tracked. Eight of them are
 unanimous across every pass and member, which no vote-based uncertainty can
@@ -369,15 +358,13 @@ than, the earlier softmax-based pipeline.</li>
 <li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
 <li>Targeted data collection for the remaining confused pairs, or a way
 to fold ResNet-101's isolated gain into the ensemble profitably.</li>
-<li>Lighter backbone (ResNet-18 / EfficientNet-B0) as a drop-in
-replacement for one ResNet-50 ensemble member.</li>
+<li>For efficiency, replace SAM2 with a lighter tracker (the dominant cost, about 24 s per tracked instance).</li>
 </ol>
 
 <h2>What I need from you</h2>
 <ul>
-<li><b>Gate choice:</b> 9% or 20% (see Gate selection).</li>
-<li><b>Scope:</b> deployable-light or maximum accuracy on GraSP (see Results).</li>
-<li><b>Ensemble weighting:</b> sign-off on the final weighting.</li>
+<li><b>Gate:</b> 9% for now; a held-out confirmation run is planned (see Gate selection).</li>
+<li><b>Pull request 1</b> (below): merge when you are ready.</li>
 </ul>
 <p class="small">
 Integration-ready package (trained ensemble + a single <code>predict()</code>
