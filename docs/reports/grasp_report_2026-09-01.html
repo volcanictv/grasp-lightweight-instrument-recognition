@@ -62,7 +62,7 @@ a { color: var(--blue); }
 <div class="wrap">
 
 <h1>Surgical Instrument Classification on GraSP</h1>
-<div class="subtitle">Status: 2026-09-19</div>
+<div class="subtitle">Status: 2026-09-20</div>
 
 <p>
 Identifies which of 7 instruments (Bipolar Forceps, Prograsp Forceps, Large
@@ -77,7 +77,7 @@ instrument appearance rather than GraSP's own footage.
 
 <h2>How it works</h2>
 <div class="diagram">
-<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If MC Dropout finds the prediction not uncertain (81.6% of instances), the ensemble prediction is final. Otherwise (18.4%) SAM2 propagates the mask across nearby frames, the ensemble scores every frame, and the predictions are combined into the final prediction.">
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If MC Dropout finds the prediction not uncertain (81.6% of instances), the ensemble prediction is final. Otherwise (18.4%) SAM2 propagates the mask across nearby frames, the ensemble votes on every frame, and the frames are combined by an uncertainty-weighted vote into the final prediction.">
 <defs>
 <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
 <path d="M0,0 L6,3 L0,6 Z" fill="#475569"></path>
@@ -124,7 +124,7 @@ instrument appearance rather than GraSP's own footage.
 <path class="arrow" d="M624,175 H660"></path>
 
 <g class="box"><rect x="630" y="180" width="120" height="45" rx="6"></rect>
-<text x="690" y="197" text-anchor="middle" font-size="11"><tspan x="690">Combine</tspan><tspan x="690" dy="13">(avg softmax)</tspan></text></g>
+<text x="690" y="197" text-anchor="middle" font-size="11"><tspan x="690">Combine</tspan><tspan x="690" dy="13">(weighted vote)</tspan></text></g>
 
 <path class="arrow" d="M690,180 V138"></path>
 </svg>
@@ -133,10 +133,15 @@ instrument appearance rather than GraSP's own footage.
 An uncertainty estimate gates whether the more expensive tracking step
 runs at all (see Temporal tracking below for why blanket tracking on
 every instance was tested and rejected). The gate is MC Dropout, this
-report's main uncertainty method (see Uncertainty estimation below): an
-instance is sent to tracking when at least 20% of the ensemble's stochastic
-votes disagree with its prediction. The diagram's 81.6% / 18.4% split is
-measured on the retrained ensemble.
+report's main uncertainty method (see Uncertainty estimation below). No
+softmax probability is used at any stage. Each of the four ensemble members
+makes 20 stochastic passes (dropout left on) and every pass votes for one
+class; the class with the most weighted votes is the prediction. An instance
+is sent to tracking when at least 20% of those votes disagree with the
+winner. After tracking, each propagated frame casts its own votes, frames
+whose votes are more unanimous count for more, and the class with the largest
+weighted total wins. The diagram's 81.6% / 18.4% split is measured on the
+retrained ensemble.
 </p>
 
 <h2>Results</h2>
@@ -165,14 +170,15 @@ this row alone.
 <p>
 Post-hoc correction on top of the ensemble, no retraining: an instance's
 annotated mask is propagated forward and backward across nearby video
-frames with SAM2, the ensemble scores every propagated frame, and the
-predictions are combined. Applying this to every instance was tested and
+frames with SAM2, the ensemble votes on every propagated frame, and the
+frame votes are combined. Applying this to every instance was tested and
 rejected: propagation has a measured 9.8% chance of turning an
 already-correct low-confidence prediction wrong, which costs more than it
 gains once applied indiscriminately. A gated rule is used instead. On the
 earlier checkpoint set the gate was ensemble confidence below 0.80 (17.3%
-of test); the gate now used is MC Dropout (see Uncertainty estimation). A
-learned version of the frame-combination step did not beat this fixed rule.
+of test); the gate now used is MC Dropout (see Uncertainty estimation), with
+results in the vote-based subsection below. A learned version of the
+frame-combination step did not beat this fixed rule.
 </p>
 <h3>Earlier checkpoint set, softmax-confidence gate</h3>
 <div class="tablewrap">
@@ -193,6 +199,40 @@ appearance. Not suited to real-time use on any hardware: SAM2's own
 per-frame encoding cost (398ms, reference GPU) alone exceeds a 33ms
 budget. Offline, batch-applied only. Updated
 <a href="error_gallery_2026-09-16.html">error gallery</a>.
+</p>
+
+<h3>Vote-based pipeline, retrained ensemble</h3>
+<div class="tablewrap">
+<table>
+<tr><th>configuration</th><th class="num">tracked</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
+<tr><td>Retrained ensemble alone (majority vote)</td><td class="num">&ndash;</td><td class="num">0.8898</td><td class="num">0.9266</td></tr>
+<tr><td>+ MC Dropout-gated tracking, pooled vote</td><td class="num">525</td><td class="num">0.9287</td><td class="num">0.9577</td></tr>
+<tr class="hi"><td>+ MC Dropout-gated tracking, uncertainty-weighted vote</td><td class="num">525</td><td class="num">0.9295</td><td class="num">0.9581</td></tr>
+</table>
+</div>
+<p class="small">
+Same official test set (2,861 instances). Predictions, the gate and the frame
+combination are all votes over stochastic passes, with no softmax anywhere.
+Tracking fixes 118 errors and breaks 28 previously correct instances.
+Weighting frames by their own agreement instead of pooling them evenly
+changes the outcome of 3 instances one way and 2 the other (exact McNemar
+p = 1.0), so the choice of combination rule makes no measurable difference
+here.
+</p>
+<h3>Confidently wrong cases</h3>
+<p>
+The gate passes 50 errors, all with fewer than 20% of votes disagreeing; 8
+of them are unanimous across every pass and member. To see whether tracking
+could reach them, all 50 and a random 300 of the 2,286 correct instances the
+gate passed were tracked too. Tracking rescued 28 of the 50 errors (25 of the
+42 non-unanimous ones, 3 of the 8 unanimous ones) and broke 2 of the 300
+correct instances. Extrapolated to every gate-passed instance, that is a net
+gain of about 13 instances (0.45 points, 95% interval from &minus;11 to
++31), which cannot be told apart from zero, for roughly 15 extra GPU-hours of
+tracking. The gate is therefore unchanged for now. After tracking, none of
+the 70 errors left among the tracked instances looks confident (track-level
+uncertainty is at least 0.20 for all of them), but 69% of the correct tracked
+instances trip the same threshold, so it is only a coarse review flag.
 </p>
 
 <h3>Per-class breakdown (combined pipeline, earlier checkpoint set, confidence gate)</h3>
@@ -239,33 +279,33 @@ with it. At inference
 dropout stays on and each member makes 20 stochastic passes. The
 uncertainty score is the share of those 80 votes (4 members &times; 20
 passes, weighted by the ensemble weights) that name a different class than
-the ensemble's final prediction. It uses class votes, not the softmax
+the winning class (the plurality vote). It uses class votes, not the softmax
 probability, and has no fitted parameters.
 </p>
 <div class="tablewrap">
 <table>
 <tr><th>uncertainty signal</th><th class="num">AUROC for flagging real errors</th></tr>
-<tr class="hi"><td>MC Dropout vote disagreement (main method)</td><td class="num">0.898</td></tr>
-<tr><td>Between-member disagreement (dropout off)</td><td class="num">0.836</td></tr>
+<tr class="hi"><td>MC Dropout vote disagreement (main method)</td><td class="num">0.896</td></tr>
+<tr><td>Between-member disagreement (dropout off)</td><td class="num">0.833</td></tr>
 <tr><td>Softmax confidence (baseline)</td><td class="num">0.916</td></tr>
 </table>
 </div>
 <p class="small">
 AUROC: 0.5 is chance, 1.0 separates every wrong prediction from every
-correct one. Official test set, 2,861 instances, 212 wrong; 95% interval
-for the main method 0.875&ndash;0.919. This section uses a separate set of
-four members retrained with the dropout above (ensemble accuracy 0.926,
-against 0.934 for the checkpoint set in the tracking results), so its
-numbers are not mixed with the tracking table. Putting dropout inside the
-backbone, not only before the classifier, raised the main method from
-0.876 to 0.898.
+correct one. Official test set, 2,861 instances; each signal is scored
+against the errors of its own prediction (210 wrong for the vote-based
+signals, 212 for the baseline). This section uses a separate set of four
+members retrained with the dropout above (ensemble accuracy 0.927, against
+0.934 for the earlier checkpoint set in the first tracking table). Putting
+dropout inside the backbone, not only before the classifier, raised the main
+method from about 0.88 to about 0.90.
 </p>
 <p>
 <b>What it adds beyond softmax confidence.</b> MC Dropout disagreement and
 softmax confidence agree closely (rank correlation 0.90) and flag mostly
 the same instances. At an equal review budget (10&ndash;30% of instances
-flagged) MC Dropout catches 1&ndash;4 points fewer of the real errors than
-confidence, e.g. 78.8% against 80.2% at 20%. Combining the two, evaluated
+flagged) MC Dropout catches 2&ndash;4 points fewer of the real errors than
+confidence, e.g. 78.6% against 80.2% at 20%. Combining the two, evaluated
 with leave-one-case-out, does not catch more errors than confidence alone.
 The result is that MC Dropout is a working uncertainty estimate that
 corroborates the ensemble's confidence, not a second source of information
@@ -275,8 +315,8 @@ baseline it is compared against.
 <p class="small">
 Used as the tracking gate, end-to-end: MC Dropout disagreement of at least
 0.20 flags 525 of the 2,861 test instances (18.4%). On the retrained
-ensemble, SAM2 tracking of those instances lifts accuracy from 0.9259 to
-0.9595 and macro-F1 from 0.8894 to 0.9325, fixing 117 errors and breaking 21
+ensemble, SAM2 tracking of those instances lifts accuracy from 0.9266 to
+0.9581 and macro-F1 from 0.8898 to 0.9295, fixing 118 errors and breaking 28
 previously correct instances.
 </p>
 
@@ -321,15 +361,20 @@ three logged as negative results. Laparoscopic Grasper improved under
 all three regardless, a lead worth testing on its own.</li>
 <li>Ensemble weighting still being finalized; a simpler alternative
 scores ~1 point lower and is available as a fallback.</li>
-<li><b>Uncertainty flags borderline errors, not confident ones.</b> Of the
-212 errors in the MC Dropout ensemble, 43 pass a confidence-0.80 gate, and
-8 have confidence above 0.95 with unanimous votes across every pass and
-member. Neither MC Dropout nor softmax confidence flags these, because the
-models agree with each other on the wrong class.</li>
+<li><b>The gate passes some errors.</b> Of the retrained ensemble's 210
+errors, 50 have fewer than 20% of votes disagreeing and are never tracked.
+Eight of them are unanimous across every pass and member, which no
+vote-based uncertainty can flag, because the models agree with each other
+on the wrong class. Tracking the rest would rescue about half but is not
+part of the pipeline (see Confidently wrong cases).</li>
 </ul>
 
 <h3>Next steps</h3>
 <ol class="steps">
+<li>Decide how many gate-passed instances to track: tracking all of them is
+estimated at +0.3 to +0.7 points for about 15 GPU-hours, and a lower gate
+threshold is a cheaper middle option that still has to be chosen without
+tuning on the official test set.</li>
 <li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
 <li>Targeted data collection for the remaining confused pairs, or a way
 to fold ResNet-101's isolated gain into the ensemble profitably.</li>
