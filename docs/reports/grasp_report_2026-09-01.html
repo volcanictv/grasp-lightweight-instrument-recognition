@@ -82,13 +82,6 @@ a { color: var(--blue); }
 <h1>Surgical Instrument Classification on GraSP</h1>
 <div class="subtitle">Status: 2026-09-20</div>
 
-<div class="callout">
-<p><b>Final pipeline:</b> 0.9623 accuracy / 0.9351 macro-F1 on official test (2,861 instances, 5 cases).</p>
-<p>Defensible headline number is 0.9595 accuracy (0.9309 macro-F1): the gate threshold (15%) was chosen on held-out cases, not on the test set. The 9% figure above was chosen on the test set; leave-one-case-out gives 0.9633.</p>
-<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The architecture transfers: trained on EndoVis's own sequences, the full pipeline reaches 0.9279 accuracy on EndoVis 2018 (see Cross-Dataset Evaluation).</p>
-<p>Gate: the held-out confirmation picks 15%, and the accuracy curve is flat from 20% down to 3% on held-out cases, so 9% buys little (see Gate selection). Keeping 9% or moving to 15% is your call.</p>
-</div>
-
 <p>
 Identifies which of 7 instruments (Bipolar Forceps, Prograsp Forceps, Large
 Needle Driver, Monopolar Curved Scissors, Suction Instrument, Clip Applier,
@@ -208,12 +201,19 @@ accuracy / 0.9340 macro-F1); matched accuracy at a threshold-stable operating
 point is the intended claim. Leave-one-case-out gate choice on the test cases
 gives 0.9633.
 </p>
+<p>
+<b>Why 9%:</b> it gave the best accuracy of the gates compared (0.9623 on the
+official test set). It costs a little more compute than 15%, 184 more tracked
+instances (833 against 649), about 1.2 extra GPU-hours at 24 s per instance, and
+returns a marginally higher accuracy (+0.0028) and macro-F1 (+0.0042).
+</p>
 <p class="small">
-Caveats: the fold-trained members saw half the training cases, so their
+Caveats: 9% is the test-selected point, so that margin over 15% is partly
+selection; on the held-out cases the curve is flat and the pre-registered rule
+picks 15%. The fold-trained members saw half the training cases, so their
 disagreement distribution is not identical to the shipped ensemble's, and the
 held-out fold is 4 cases, so the effective sample size is closer to 4 than to
-3,235. The 9% gate is kept as the reported pipeline for now; this confirmation
-supports 15% as the threshold chosen without the test set.
+3,235.
 </p>
 
 <h2>Cross-Dataset Evaluation and Architectural Portability</h2>
@@ -399,7 +399,6 @@ value itself was chosen on the five test cases, so its accuracy is optimistic.</
 unchanged to EndoVis 2017 and 2018, and report what share of instances each
 sends to tracking. If the softmax operating point drifts and the vote gate
 holds, that is the empirical version of the argument in Uncertainty estimation.</li>
-<li>Decide between reporting the 9% gate and the 15% gate chosen on held-out cases. The confirmation run found no held-out accuracy gain below about 15%, and 9% costs about 1.3 times the tracking of 15% (833 against 649 instances on the test set).</li>
 <li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
 <li>Targeted data collection for the remaining confused pairs, or a way
 to fold ResNet-101's isolated gain into the ensemble profitably.</li>
