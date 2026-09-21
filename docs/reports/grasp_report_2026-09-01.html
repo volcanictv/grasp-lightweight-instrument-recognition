@@ -85,7 +85,7 @@ a { color: var(--blue); }
 <div class="callout">
 <p><b>Final pipeline:</b> 0.9623 accuracy / 0.9351 macro-F1 on official test (2,861 instances, 5 cases).</p>
 <p>Defensible headline number is the leave-one-case-out result, 0.9633 accuracy, because the 9% gate was chosen on the test set.</p>
-<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The architecture transfers: trained on EndoVis's own sequences, the full pipeline reaches 0.9279 accuracy on EndoVis 2018 (see Transfer).</p>
+<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The architecture transfers: trained on EndoVis's own sequences, the full pipeline reaches 0.9279 accuracy on EndoVis 2018 (see Cross-Dataset Evaluation).</p>
 <p>Gate: 9% for now (20% is the cheaper alternative, see Gate selection); a held-out confirmation run is planned.</p>
 </div>
 
@@ -186,81 +186,45 @@ accuracy at a threshold-stable operating point is the intended claim. The 9%
 gate is kept for now and is provisional pending a held-out confirmation run.
 </p>
 
-<h2>Generalization</h2>
-<div class="tablewrap">
-<table>
-<tr><th>external dataset</th><th class="num">accuracy</th><th class="num">macro-F1</th><th class="small">shared classes</th></tr>
-<tr><td>EndoVis 2018</td><td class="num">0.528</td><td class="num">0.414</td><td class="small">6 of 7</td></tr>
-<tr><td>EndoVis 2017</td><td class="num">0.551</td><td class="num">0.570</td><td class="small">4 of 7</td></tr>
-</table>
-</div>
+<h2>Cross-Dataset Evaluation and Architectural Portability</h2>
 <p class="small">
-Run unmodified, no retraining, with the same majority vote of the retrained
-ensemble used everywhere else in this report (20 stochastic passes per
-member, no tracking). The three bulkiest instruments transferred (F1
-0.52&ndash;0.66). Two thinner instruments did not transfer on at least one
-dataset: Monopolar Curved Scissors scored F1 0.23 on EndoVis 2018 but 0.62 on
-EndoVis 2017, and Suction Instrument scored 0 on EndoVis 2018 (that macro-F1
-covers the 5 classes present in its validation split). One hypothesis for the
-2018 result, consistent with the better 2017 result, is a different instrument
-generation and manufacturer from GraSP's; it has not been tested, and a 0.414
-macro-F1 should be read as a weak result rather than explained away. EndoVis
-2017 was previously scored with a single ResNet-50; this run uses the full
-ensemble on both.
-</p>
-
-<h3>Transfer: the recipe on EndoVis's own data</h3>
-<p class="small">
-A different question from the zero-shot test above, and not a generalization
-number: the same ResNet-50 (320 px) recipe is fine-tuned on each EndoVis
-dataset's own training sequences and scored on its held-out sequences (the
-same 3,231 and 2,544 instances as above; the splits are by video sequence, 10
-epochs, last epoch used, 3 seeds, mean &plusmn; standard deviation). It shows
-the architecture and training recipe work on other surgical footage; it says
-nothing about whether the GraSP-trained model generalizes.
+Two different questions, kept apart. <b>Zero-shot:</b> the GraSP-trained
+ensemble run unchanged on EndoVis (no retraining, no tracking, 20 stochastic
+passes per member). <b>Portability:</b> the same architecture and recipe trained
+on each EndoVis dataset's own sequences and scored on its held-out sequences
+(same 3,231 and 2,544 instances, split by video, ImageNet start, 10 epochs, seed
+42, single runs). The second is in-domain and does not show that the GraSP model
+generalizes.
 </p>
 <div class="tablewrap">
 <table>
-<tr><th>dataset (train / held-out instances)</th><th>starting weights</th><th class="num">accuracy</th><th class="num">macro-F1</th></tr>
-<tr><td rowspan="2">EndoVis 2017 (5,584 / 2,544)</td><td>GraSP</td><td class="num">0.9080 &plusmn; 0.0018</td><td class="num">0.8810 &plusmn; 0.0009</td></tr>
-<tr><td>ImageNet only</td><td class="num">0.9116 &plusmn; 0.0043</td><td class="num">0.8793 &plusmn; 0.0050</td></tr>
-<tr><td rowspan="2">EndoVis 2018 (5,992 / 3,231)</td><td>GraSP</td><td class="num">0.8515 &plusmn; 0.0122</td><td class="num">0.7988 &plusmn; 0.0294</td></tr>
-<tr><td>ImageNet only</td><td class="num">0.8794 &plusmn; 0.0028</td><td class="num">0.8599 &plusmn; 0.0077</td></tr>
+<tr><th>dataset</th><th>setting</th><th class="num">flagged by 9% gate</th><th class="num">accuracy</th><th class="num">macro-F1</th></tr>
+<tr><td>EndoVis 2018</td><td>zero-shot (6 of 7 classes shared)</td><td class="num">&ndash;</td><td class="num">0.528</td><td class="num">0.414</td></tr>
+<tr><td>EndoVis 2017</td><td>zero-shot (4 of 7 classes shared)</td><td class="num">&ndash;</td><td class="num">0.551</td><td class="num">0.570</td></tr>
+<tr><td>EndoVis 2017</td><td>trained on EndoVis, 4-member vote ensemble</td><td class="num">19.9%</td><td class="num">0.9171</td><td class="num">0.8855</td></tr>
+<tr><td>EndoVis 2018</td><td>trained on EndoVis, 4-member vote ensemble</td><td class="num">27.2%</td><td class="num">0.8818</td><td class="num">0.8630</td></tr>
+<tr class="hi"><td>EndoVis 2018</td><td>+ SAM2 tracking (final pipeline)</td><td class="num">878 tracked</td><td class="num">0.9279</td><td class="num">0.9187</td></tr>
 </table>
 </div>
 <p class="small">
-Starting from GraSP weights gives no benefit over ImageNet: equal on 2017 and
-slightly worse on 2018, so there is no evidence here that GraSP training
-transfers. Training and held-out sequences come from the same recordings'
-release, so these are in-domain numbers and are higher than a new hospital
-would see.
+Zero-shot, the three bulkiest instruments transferred (F1 0.52&ndash;0.66), but
+Monopolar Curved Scissors scored F1 0.23 on EndoVis 2018 against 0.62 on 2017,
+and Suction Instrument scored 0 on 2018 (macro-F1 covers the 5 classes present).
+One untested hypothesis, consistent with the better 2017 result, is a different
+instrument generation and manufacturer from GraSP's; 0.414 is a weak result and
+should not be explained away. Trained on EndoVis, tracking on 2018 fixes 168
+instances and breaks 19 (pooled vote: 0.9245 / 0.9130), and the gate holds up:
+the 9% threshold from GraSP, not re-tuned, flags 20% to 27% of instances (29.1%
+on GraSP), and on 2018 the flagged instances hold 253 of the 382 ensemble errors
+(accuracy 0.712 flagged, 0.945 unflagged). 2017 has no tracking result because
+most of its held-out images are not in the release.
 </p>
-
 <p class="small">
-The full architecture, not only a single model: the four ensemble members are
-trained on each dataset's own training sequences with the GraSP recipe (ImageNet
-start, 10 epochs, seed 42, single run), the vote-disagreement gate is applied at
-the 9% threshold chosen on GraSP without re-tuning, and on EndoVis 2018 the
-flagged instances are tracked with SAM2 (up to 10 frames each way) and combined
-by the uncertainty-weighted vote. Same held-out sequences as above.
-</p>
-<div class="tablewrap">
-<table>
-<tr><th>configuration</th><th class="num">flagged by gate</th><th class="num">accuracy</th><th class="num">macro-F1</th></tr>
-<tr><td>EndoVis 2017, 4-member vote ensemble</td><td class="num">19.9% (506 of 2,544)</td><td class="num">0.9171</td><td class="num">0.8855</td></tr>
-<tr><td>EndoVis 2018, 4-member vote ensemble</td><td class="num">27.2% (878 of 3,231)</td><td class="num">0.8818</td><td class="num">0.8630</td></tr>
-<tr class="hi"><td>EndoVis 2018, + SAM2 tracking (final pipeline)</td><td class="num">878 tracked</td><td class="num">0.9279</td><td class="num">0.9187</td></tr>
-</table>
-</div>
-<p class="small">
-On 2018, tracking fixes 168 instances and breaks 19 (pooled vote instead of the
-weighted one: 0.9245 / 0.9130). The gate flags the hard instances: on 2018 it
-holds 253 of the 382 ensemble errors, and accuracy is 0.712 on flagged against
-0.945 on unflagged instances. Its share (20% to 27%) is close to the 29.1% on
-GraSP even though the threshold was not re-tuned. EndoVis 2017 has no tracking
-result because most of its held-out images are not in the release. These are
-single runs on in-domain data, so they support that the architecture and its
-gate work on other footage, not that the GraSP-trained model does.
+Single ResNet-50 (320 px), 3 seeds, accuracy: EndoVis 2017 0.9080 &plusmn; 0.0018
+from GraSP weights and 0.9116 &plusmn; 0.0043 from ImageNet only; EndoVis 2018
+0.8515 &plusmn; 0.0122 and 0.8794 &plusmn; 0.0028 (macro-F1 0.7988 and 0.8599).
+Starting from GraSP weights gives no benefit over ImageNet, so there is no
+evidence that GraSP training transfers.
 </p>
 
 <h2>How it works</h2>
@@ -415,11 +379,7 @@ to fold ResNet-101's isolated gain into the ensemble profitably.</li>
 <li>For efficiency, replace SAM2 with a lighter tracker (the dominant cost, about 24 s per tracked instance).</li>
 </ol>
 
-<h2>What I need from you</h2>
-<ul>
-<li><b>Gate:</b> 9% for now; a held-out confirmation run is planned (see Gate selection).</li>
-<li><b>Pull request 1</b> (below): merge when you are ready.</li>
-</ul>
+<h2>Handoff</h2>
 <p class="small">
 Integration-ready package (trained ensemble + a single <code>predict()</code>
 call, no training/experiment code):
