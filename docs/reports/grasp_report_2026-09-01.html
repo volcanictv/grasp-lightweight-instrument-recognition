@@ -357,8 +357,15 @@ to the segmentation mAP that GraSP reports (TAPIS 89.85, TAPIS-VST 89.58, SlowFa
 its class is not new in itself: ISINet (Gonz&aacute;lez et al., MICCAI 2020)
 applies a temporal consistency step to instance classes. What is specific here is
 gating tracking by vote disagreement, so only uncertain instances are tracked, and
-SAM2 propagation from the annotated mask. [TODO: need a head-to-head with ISINet's
-temporal module on GraSP.]</li>
+SAM2 propagation from the annotated mask. A flow-propagation baseline in the
+spirit of ISINet's temporal step (RAFT optical flow chaining the annotated mask 10
+frames each way, the same ensemble votes, a plain majority of frame labels) on the
+same 833 flagged instances gives 0.8448 accuracy / 0.8061 macro-F1. That is below
+the ensemble alone (0.9266 / 0.8898; 49 fixed, 283 broken) and far below SAM2
+tracking (0.9623 / 0.9351; exact McNemar p &lt; 0.001), probably because
+consecutive frames are far apart and the warped masks drift (frame rate not
+confirmed). It is not ISINet itself (its classifier and flow network are not used),
+and only one flow model was tried, untuned.</li>
 <li><b>Laparoscopic Grasper vs. Suction Instrument.</b> Closed jaws look
 identical to a suction tube in a still frame. Four fixes were ruled out
 (narrow and wide temporal search, action-state labels, targeted
