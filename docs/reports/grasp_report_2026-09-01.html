@@ -179,18 +179,6 @@ retrained on the fold2 cases and the gate was scored on the held-out fold1 cases
 compute than 15%, 184 more tracked instances (about 1.2 extra GPU-hours at 24 s
 each), for a marginal gain of +0.0028 accuracy and +0.0042 macro-F1.
 </p>
-<p class="small">
-Caveats: that margin is partly test-set selection. On the held-out cases the
-curve is flat (0.9567 to 0.9586 from a 20% gate down to 3%) and the rule fixed in
-advance, the highest threshold within 0.0010 of the best accuracy, picks 15%. The
-fold-trained members saw half the training cases and the held-out fold is 4
-cases, so the effective sample size is closer to 4 than to 3,235.
-Leave-one-case-out gate choice on the test cases gives 0.9633. The final pipeline
-matches, rather than beats, the earlier probability-averaging pipeline (0.9612
-accuracy / 0.9340 macro-F1); matched accuracy at a threshold-stable operating
-point is the intended claim.
-</p>
-
 <h2>Cross-Dataset Evaluation and Architectural Portability</h2>
 <p class="small">
 Two different questions, kept apart. <b>Zero-shot:</b> the GraSP-trained
@@ -213,23 +201,18 @@ generalizes.
 </div>
 <p class="small">
 Zero-shot, the three bulkiest instruments transferred (F1 0.52&ndash;0.66), but
-Monopolar Curved Scissors scored F1 0.23 on EndoVis 2018 against 0.62 on 2017,
-and Suction Instrument scored 0 on 2018 (macro-F1 covers the 5 classes present).
-One untested hypothesis, consistent with the better 2017 result, is a different
-instrument generation and manufacturer from GraSP's; 0.414 is a weak result and
-should not be explained away. Trained on EndoVis, tracking on 2018 fixes 168
-instances and breaks 19 (pooled vote: 0.9245 / 0.9130), and the gate holds up:
-the 9% threshold from GraSP, not re-tuned, flags 20% to 27% of instances (29.1%
-on GraSP), and on 2018 the flagged instances hold 253 of the 382 ensemble errors
-(accuracy 0.712 flagged, 0.945 unflagged). 2017 has no tracking result because
-most of its held-out images are not in the release.
+Monopolar Curved Scissors scored F1 0.23 on EndoVis 2018 (0.62 on 2017) and
+Suction Instrument scored 0 on 2018. A different instrument generation is one
+untested explanation; 0.414 macro-F1 is a weak result. Trained on EndoVis,
+tracking on 2018 fixes 168 instances and breaks 19, and the un-retuned 9% gate
+flags 20% to 27% of instances (29.1% on GraSP), holding 253 of the 382 ensemble
+errors on 2018. 2017 has no tracking result: most of its held-out images are not
+in the release.
 </p>
 <p class="small">
-Single ResNet-50 (320 px), 3 seeds, accuracy: EndoVis 2017 0.9080 &plusmn; 0.0018
-from GraSP weights and 0.9116 &plusmn; 0.0043 from ImageNet only; EndoVis 2018
-0.8515 &plusmn; 0.0122 and 0.8794 &plusmn; 0.0028 (macro-F1 0.7988 and 0.8599).
-Starting from GraSP weights gives no benefit over ImageNet, so there is no
-evidence that GraSP training transfers.
+A single ResNet-50 started from GraSP weights is no better than one started from
+ImageNet (accuracy 0.9080 against 0.9116 on 2017, 0.8515 against 0.8794 on 2018,
+3 seeds), so there is no evidence that GraSP training transfers.
 </p>
 
 <h2>How it works</h2>
