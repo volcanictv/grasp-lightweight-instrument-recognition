@@ -139,6 +139,8 @@ def fit(
     best_metrics: MultiLabelMetrics | RegionClassificationMetrics | None = None
 
     for epoch in range(1, epochs + 1):
+        if hasattr(loss_fn, "set_epoch"):
+            loss_fn.set_epoch(epoch)
         train_loss = train_one_epoch(model, train_loader, loss_fn, optimizer, device)
         # Re-running eval on the train set is redundant compute (roughly 2x
         # epoch time) but is what CLAUDE.md's "train/val metric curves" asks

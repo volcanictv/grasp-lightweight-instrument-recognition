@@ -7,6 +7,8 @@ one-line config change.
 
 from __future__ import annotations
 
+import math
+
 import torch
 import torch.nn as nn
 
@@ -69,6 +71,53 @@ class FocalBCELoss(nn.Module):
         return (focal_weight * bce).mean()
 
 
+class EvidentialLoss(nn.Module):
+    """Dirichlet evidential loss (Sensoy et al. 2018; Duan et al., WACV 2024).
+
+    Evidence is exp of the clamped logits (no softmax anywhere), alpha = evidence + 1.
+    Loss per sample = sum_c y_c (log alpha0 - log alpha_c)  +  lambda * KL(Dir(alpha_tilde) || Dir(1)),
+    with alpha_tilde = y + (1 - y) * alpha. `lambda` is ramped linearly over `anneal_epochs`
+    (0 = constant), driven by `set_epoch`, which the trainer calls once per epoch if present.
+    Optional per-class weights scale each sample's loss by its true class's weight.
+    """
+
+    def __init__(self, reg_lambda: float, anneal_epochs: int = 0, clamp: float = 10.0,
+                 class_weight: torch.Tensor | None = None):
+        super().__init__()
+        self.reg_lambda = reg_lambda
+        self.anneal_epochs = anneal_epochs
+        self.clamp = clamp
+        self.epoch = 1
+        self.register_buffer("class_weight", class_weight, persistent=False)
+
+    def set_epoch(self, epoch: int) -> None:
+        self.epoch = epoch
+
+    def lambda_now(self) -> float:
+        if self.anneal_epochs <= 0:
+            return self.reg_lambda
+        return self.reg_lambda * min(1.0, self.epoch / self.anneal_epochs)
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        alpha = torch.exp(logits.clamp(-self.clamp, self.clamp)) + 1.0
+        num_classes = alpha.shape[1]
+        y = nn.functional.one_hot(targets, num_classes).to(alpha.dtype)
+        alpha0 = alpha.sum(dim=1, keepdim=True)
+        nll = (y * (torch.log(alpha0) - torch.log(alpha))).sum(dim=1)
+
+        alpha_t = y + (1.0 - y) * alpha
+        sum_t = alpha_t.sum(dim=1, keepdim=True)
+        kl = (
+            torch.lgamma(sum_t).squeeze(1) - math.lgamma(num_classes) - torch.lgamma(alpha_t).sum(dim=1)
+            + ((alpha_t - 1.0) * (torch.digamma(alpha_t) - torch.digamma(sum_t))).sum(dim=1)
+        )
+        per_sample = nll + self.lambda_now() * kl
+        if self.class_weight is not None:
+            w = self.class_weight[targets]
+            return (per_sample * w).sum() / w.sum()  # same normalisation as nn.CrossEntropyLoss(weight=...)
+        return per_sample.mean()
+
+
 def build_loss(
     loss_config: dict,
     pos_weight: torch.Tensor | None = None,
@@ -92,4 +141,14 @@ def build_loss(
             raise ValueError("loss.class_weights is true but no class_weight was computed")
         return nn.CrossEntropyLoss(weight=class_weight if use_weights else None)
 
-    raise ValueError(f"unknown loss type '{loss_type}'. Valid: bce, focal_bce, cross_entropy")
+    if loss_type == "evidential":
+        if use_weights and class_weight is None:
+            raise ValueError("loss.class_weights is true but no class_weight was computed")
+        return EvidentialLoss(
+            reg_lambda=loss_config.get("edl_lambda", 1.0 / 7),
+            anneal_epochs=loss_config.get("edl_anneal_epochs", 0),
+            clamp=loss_config.get("edl_clamp", 10.0),
+            class_weight=class_weight if use_weights else None,
+        )
+
+    raise ValueError(f"unknown loss type '{loss_type}'. Valid: bce, focal_bce, cross_entropy, evidential")
