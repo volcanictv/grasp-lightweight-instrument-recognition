@@ -326,7 +326,7 @@ whether it does.</li>
 <li><b>Softmax confidence is documented as poorly calibrated</b> (Guo et al.,
 2017), and calibration degrades further under dataset shift (Ovadia et al.,
 2019). The part expected to drift is its operating point, not its ranking. This
-is not yet measured here; Next steps, item 1, is the test.</li>
+is not measured here.</li>
 <li><b>Vote disagreement uses class votes only,</b> has no fitted parameters,
 and needs no softmax probability. That is the reason it is the gate.</li>
 </ul>
@@ -370,14 +370,8 @@ value itself was chosen on the five test cases, so its accuracy is optimistic.</
 
 <h3>Next steps</h3>
 <ol class="steps">
-<li>Pick both the vote-disagreement and softmax thresholds on GraSP, apply them
-unchanged to EndoVis 2017 and 2018, and report what share of instances each
-sends to tracking. If the softmax operating point drifts and the vote gate
-holds, that is the empirical version of the argument in Uncertainty estimation.</li>
-<li>Collect and label more Grasper/Suction closed-jaw training examples.</li>
-<li>Targeted data collection for the remaining confused pairs, or a way
-to fold ResNet-101's isolated gain into the ensemble profitably.</li>
-<li>For efficiency, replace SAM2 with a lighter tracker (the dominant cost, about 24 s per tracked instance).</li>
+<li>Collect and label more training data for the confused pairs, starting with closed-jaw Grasper and Suction examples.</li>
+<li>Replace SAM2 with a lighter tracker for efficiency (the dominant cost, about 24 s per tracked instance).</li>
 </ol>
 
 <h2>Handoff</h2>
