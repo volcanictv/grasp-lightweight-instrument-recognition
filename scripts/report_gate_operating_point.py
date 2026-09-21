@@ -16,6 +16,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import numpy as np
 import yaml
@@ -35,6 +36,7 @@ def main() -> None:
     ap.add_argument("--logits-cache", type=Path, default=REPO_ROOT / "experiments" / "mc_logits_cache_deepdropout.npz")
     ap.add_argument("--dirs", type=Path, nargs="+", default=[REPO_ROOT / "docs" / "reports" / "tracking_softmax_free",
                                                               REPO_ROOT / "docs" / "reports" / "tracking_gate_sweep"])
+    ap.add_argument("--data-root", type=Path, default=None, help="adds per-case accuracy and a bootstrap CI")
     ap.add_argument("--out", type=Path, default=None)
     args = ap.parse_args()
 
@@ -79,6 +81,19 @@ def main() -> None:
                           "f1_before_tracking": float(f1_base[i])} for i, n in enumerate(CLASS_NAMES)},
         "confusion_counts": confusion_matrix(y, pred, labels=list(range(n_classes))).tolist(),
     }
+    if args.data_root is not None:
+        from surgical_ai.data.region_dataset import GraspRegionDataset
+        ds = GraspRegionDataset(args.data_root, "test", letterbox=True)
+        case_of = np.array([fn.split("/")[0] for fn, _s, _b, _l in ds.instances])
+        assert len(case_of) == len(y)
+        out["per_case"] = {c: {"n": int((case_of == c).sum()), "accuracy": float((pred == y)[case_of == c].mean()),
+                               "accuracy_ensemble_alone": float((base == y)[case_of == c].mean())} for c in sorted(set(case_of))}
+        rng = np.random.default_rng(42)
+        correct = (pred == y).astype(float)
+        boots = [correct[rng.integers(0, len(y), len(y))].mean() for _ in range(5000)]
+        out["accuracy_bootstrap_95ci_instances"] = [float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))]
+        print("per case:", {c: (v["n"], round(v["accuracy"], 4), round(v["accuracy_ensemble_alone"], 4)) for c, v in out["per_case"].items()})
+        print("instance-bootstrap 95% CI for accuracy:", out["accuracy_bootstrap_95ci_instances"])
     print(f"gate {args.threshold:.2f}: {out['tracked']} of {out['n']} tracked ({100 * out['share_tracked']:.1f}%)")
     print(f"ensemble alone: accuracy {out['ensemble_alone_accuracy']:.4f}, macro-F1 {out['ensemble_alone_macro_f1']:.4f}")
     print(f"final pipeline: accuracy {out['accuracy']:.4f}, macro-F1 {out['macro_f1']:.4f}; "

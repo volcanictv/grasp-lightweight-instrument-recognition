@@ -138,6 +138,14 @@ instrument units, so the effective sample size is far closer to 5 than to
 2,861. Clip Applier (n=38) and Laparoscopic Grasper (n=81) per-class F1 moves
 represent only a handful of instances each.
 </p>
+<p class="small">
+Accuracy per test case, ensemble alone to final pipeline: CASE041 0.9116 to
+0.9388 (588 instances), CASE047 0.9326 to 0.9730 (445), CASE050 0.9318 to 0.9668
+(1,055), CASE051 0.9227 to 0.9742 (194), CASE053 0.9292 to 0.9655 (579); every
+case improves. An instance bootstrap gives a 95% interval of 0.9553 to 0.9692 for
+the final accuracy, but it treats instances as independent, so it is too narrow
+given 5 cases. Single run, one seed.
+</p>
 <div class="tablewrap">
 <table>
 <tr><th>true \ predicted</th><th class="num">Bipolar</th><th class="num">Prograsp</th><th class="num">Needle Dr.</th><th class="num">Monopolar</th><th class="num">Suction</th><th class="num">Clip App.</th><th class="num">Laparo.</th></tr>
@@ -177,7 +185,10 @@ retrained on the fold2 cases and the gate was scored on the held-out fold1 cases
 <p>
 <b>Why 9%:</b> best accuracy of the gates compared. It costs a little more
 compute than 15%, 184 more tracked instances (about 1.2 extra GPU-hours at 24 s
-each), for a marginal gain of +0.0028 accuracy and +0.0042 macro-F1.
+each), for a marginal gain of +0.0028 accuracy and +0.0042 macro-F1. For scale,
+tracking all 2,861 instances would take about 19 GPU-hours at 24 s each, against
+about 5.6 for the 9% gate (estimates from the per-instance time, not a measured
+full run).
 </p>
 <h2>Cross-Dataset Evaluation and Architectural Portability</h2>
 <p class="small">
@@ -336,6 +347,18 @@ votes anyway. Not adopted.
 
 <h2>Limitations</h2>
 <ul>
+<li><b>Ground-truth masks in, not end-to-end.</b> The crops and the SAM2 seeds
+come from annotated masks, so the results measure naming an instrument once its
+location is given, not a deployed detect-then-classify system. They are
+classification metrics and are not comparable to the segmentation mAP that GraSP
+reports (TAPIS, 89.85 mAP@0.5 IoU). [TODO: need MATIS/ISINet/TAPIS numbers on a
+comparable classification protocol, or an end-to-end run of this pipeline.]</li>
+<li><b>Prior work overlap.</b> Following an instance across frames and voting on
+its class is not new in itself: ISINet (Gonz&aacute;lez et al., MICCAI 2020)
+applies a temporal consistency step to instance classes. What is specific here is
+gating tracking by vote disagreement, so only uncertain instances are tracked, and
+SAM2 propagation from the annotated mask. [TODO: need a head-to-head with ISINet's
+temporal module on GraSP.]</li>
 <li><b>Laparoscopic Grasper vs. Suction Instrument.</b> Closed jaws look
 identical to a suction tube in a still frame. Four fixes were ruled out
 (narrow and wide temporal search, action-state labels, targeted
