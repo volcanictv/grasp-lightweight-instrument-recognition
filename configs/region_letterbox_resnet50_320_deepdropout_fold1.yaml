@@ -1,0 +1,22 @@
+task: region_classification
+model:
+  name: resnet50_deepdropout # one variable vs the matching *_mcdropout.yaml: adds Dropout2d(0.1) after
+                              # layer3 and layer4 so MC Dropout perturbs features, not only
+                              # the head (docs/DECISIONS.md 2026-09-19).
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1 # official | fold1 | fold2 -- matches the deployed resnet50_320 member,
+                   # this is meant as a drop-in replacement for it.
+  image_size: 320
+  augmentation: default # default | strong
+  letterbox_crop: true
+loss:
+  type: cross_entropy
+  class_weights: true
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 42
