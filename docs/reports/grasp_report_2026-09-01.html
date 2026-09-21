@@ -106,15 +106,6 @@ seen during training (EndoVis 2017, 2018).
 </table>
 </div>
 <p class="small">
-Official test set, 2,861 instances. Tracking is a post-hoc correction with no
-retraining: an instance's mask is propagated across nearby frames with SAM2
-(&plusmn;10 frames), the ensemble votes on each frame, and the frame votes are
-combined by an uncertainty-weighted vote. Tracking every instance is not worth
-it: it costs about 24 s of GPU time per instance and stops paying once
-instances below about 6% vote disagreement are included (from 6% to 3% it adds
-4 fixes and 5 breaks). It is offline only (SAM2 alone takes 398 ms per frame)
-and cannot separate identical-looking instruments. Every class improves,
-most for Laparoscopic Grasper (0.776 &rarr; 0.848 F1).
 <a href="error_gallery_2026-09-20.html">Error gallery</a> of the 108 instances
 still wrong.
 </p>
