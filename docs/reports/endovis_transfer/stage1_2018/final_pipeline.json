@@ -1,0 +1,23 @@
+{
+ "n_tracked": 878,
+ "weighted_pred": {
+  "accuracy": 0.9278861033735686,
+  "macro_f1_present": 0.9187404567418348,
+  "fixed": 168,
+  "broken": 19,
+  "errors_left": 233
+ },
+ "pooled_pred": {
+  "accuracy": 0.9244815846487155,
+  "macro_f1_present": 0.9129564675118133,
+  "fixed": 158,
+  "broken": 20,
+  "errors_left": 244
+ },
+ "baseline": {
+  "accuracy": 0.8817703497369236,
+  "macro_f1_present": 0.8629795619460985
+ },
+ "track_len_median": 21.0,
+ "track_len_le3": 5
+}

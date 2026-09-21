@@ -85,7 +85,7 @@ a { color: var(--blue); }
 <div class="callout">
 <p><b>Final pipeline:</b> 0.9623 accuracy / 0.9351 macro-F1 on official test (2,861 instances, 5 cases).</p>
 <p>Defensible headline number is the leave-one-case-out result, 0.9633 accuracy, because the 9% gate was chosen on the test set.</p>
-<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The recipe itself transfers: trained on each EndoVis dataset's own sequences it reaches 0.85 to 0.91 accuracy (see Transfer).</p>
+<p>External generalization of the GraSP-trained model is weak: 0.528 accuracy on EndoVis 2018, 0.551 on EndoVis 2017. The architecture transfers: trained on EndoVis's own sequences, the full pipeline reaches 0.9279 accuracy on EndoVis 2018 (see Transfer).</p>
 <p>Gate: 9% for now (20% is the cheaper alternative, see Gate selection); a held-out confirmation run is planned.</p>
 </div>
 
@@ -234,6 +234,33 @@ slightly worse on 2018, so there is no evidence here that GraSP training
 transfers. Training and held-out sequences come from the same recordings'
 release, so these are in-domain numbers and are higher than a new hospital
 would see.
+</p>
+
+<p class="small">
+The full architecture, not only a single model: the four ensemble members are
+trained on each dataset's own training sequences with the GraSP recipe (ImageNet
+start, 10 epochs, seed 42, single run), the vote-disagreement gate is applied at
+the 9% threshold chosen on GraSP without re-tuning, and on EndoVis 2018 the
+flagged instances are tracked with SAM2 (up to 10 frames each way) and combined
+by the uncertainty-weighted vote. Same held-out sequences as above.
+</p>
+<div class="tablewrap">
+<table>
+<tr><th>configuration</th><th class="num">flagged by gate</th><th class="num">accuracy</th><th class="num">macro-F1</th></tr>
+<tr><td>EndoVis 2017, 4-member vote ensemble</td><td class="num">19.9% (506 of 2,544)</td><td class="num">0.9171</td><td class="num">0.8855</td></tr>
+<tr><td>EndoVis 2018, 4-member vote ensemble</td><td class="num">27.2% (878 of 3,231)</td><td class="num">0.8818</td><td class="num">0.8630</td></tr>
+<tr class="hi"><td>EndoVis 2018, + SAM2 tracking (final pipeline)</td><td class="num">878 tracked</td><td class="num">0.9279</td><td class="num">0.9187</td></tr>
+</table>
+</div>
+<p class="small">
+On 2018, tracking fixes 168 instances and breaks 19 (pooled vote instead of the
+weighted one: 0.9245 / 0.9130). The gate flags the hard instances: on 2018 it
+holds 253 of the 382 ensemble errors, and accuracy is 0.712 on flagged against
+0.945 on unflagged instances. Its share (20% to 27%) is close to the 29.1% on
+GraSP even though the threshold was not re-tuned. EndoVis 2017 has no tracking
+result because most of its held-out images are not in the release. These are
+single runs on in-domain data, so they support that the architecture and its
+gate work on other footage, not that the GraSP-trained model does.
 </p>
 
 <h2>How it works</h2>
