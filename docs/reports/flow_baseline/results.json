@@ -1,0 +1,48 @@
+{
+ "n": 2861,
+ "flagged": 833,
+ "ensemble_alone": {
+  "accuracy": 0.9265990912268438,
+  "macro_f1": 0.889830547668527
+ },
+ "flow majority of frame labels": {
+  "accuracy": 0.8448095071653268,
+  "macro_f1": 0.8060830691100574,
+  "fixed": 49,
+  "broken": 283,
+  "only_this_correct_vs_sam2": 23,
+  "only_sam2_correct": 359,
+  "mcnemar_p_vs_sam2": 1.0415019080896015e-78
+ },
+ "flow pooled vote": {
+  "accuracy": 0.8409646976581615,
+  "macro_f1": 0.7993607055401514,
+  "fixed": 46,
+  "broken": 291,
+  "only_this_correct_vs_sam2": 24,
+  "only_sam2_correct": 371,
+  "mcnemar_p_vs_sam2": 4.355313247093594e-81
+ },
+ "flow uncertainty-weighted vote": {
+  "accuracy": 0.8402656413841314,
+  "macro_f1": 0.8009183154806265,
+  "fixed": 45,
+  "broken": 292,
+  "only_this_correct_vs_sam2": 22,
+  "only_sam2_correct": 371,
+  "mcnemar_p_vs_sam2": 6.143915875797039e-83
+ },
+ "SAM2 uncertainty-weighted vote": {
+  "accuracy": 0.9622509612023767,
+  "macro_f1": 0.9350740238083551,
+  "fixed": 131,
+  "broken": 29
+ },
+ "tracking": {
+  "mean_track_len": 20.59783913565426,
+  "mean_window_frames": 20.92797118847539,
+  "mean_area_ratio_vs_annotation": 0.9859472839313479,
+  "seconds_per_instance": 15.616296338863304,
+  "flow_seconds_per_instance": 3.288753038122445
+ }
+}
