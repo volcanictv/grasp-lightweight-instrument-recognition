@@ -347,12 +347,15 @@ votes anyway. Not adopted.
 
 <h2>Limitations</h2>
 <ul>
-<li><b>Ground-truth masks in, not end-to-end.</b> The crops and the SAM2 seeds
-come from annotated masks, so the results measure naming an instrument once its
-location is given, not a deployed detect-then-classify system. They are
-classification metrics and are not comparable to the segmentation mAP that GraSP
-reports (TAPIS, 89.85 mAP@0.5 IoU). [TODO: need MATIS/ISINet/TAPIS numbers on a
-comparable classification protocol, or an end-to-end run of this pipeline.]</li>
+<li><b>Ground-truth masks in, by design.</b> The classifier is the deliverable
+and detection and segmentation are treated as an upstream input, so the crops and
+the SAM2 seeds come from annotated masks. The results measure naming an instrument
+once its location is given. They are classification metrics and are not comparable
+to the segmentation mAP that GraSP reports (TAPIS 89.85, TAPIS-VST 89.58, SlowFast
+74.33 mAP@0.5 IoU); the GraSP paper reports no classification-only baseline. An
+earlier test of putting the ensemble's labels into our own Mask R-CNN pipeline
+lowered AP50_segm from 0.8101 to 0.6748, because the classifier has no notion of a
+false detection, so this pipeline is not claimed as an end-to-end system.</li>
 <li><b>Prior work overlap.</b> Following an instance across frames and voting on
 its class is not new in itself: ISINet (Gonz&aacute;lez et al., MICCAI 2020)
 applies a temporal consistency step to instance classes. What is specific here is
