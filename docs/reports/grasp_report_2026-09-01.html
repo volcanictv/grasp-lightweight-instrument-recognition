@@ -333,6 +333,16 @@ which is the property the gate depends on. At an equal review budget of
 confidence (78.6% against 80.2% at 20%). Its blind spot is unanimous errors,
 where every pass and member agrees on the wrong class (8 of the 210).
 </p>
+<p class="small">
+Evidential (Dirichlet, variance-based) uncertainty (Duan et al., WACV 2024) was
+tried as a single-pass alternative to the 80-pass vote. On held-out cases it
+matches or beats the vote gate's AUROC (0.927 against 0.912) at 1/80th the cost,
+and catches more of the vote gate's unanimous-error blind spot. But its
+threshold is less stable under real shift, not more: fixed to flag 25% of
+instances on GraSP, it flags 84&ndash;87% on EndoVis against the vote gate's
+78&ndash;83%. Not adopted, since threshold stability under shift is why the gate
+uses MC Dropout at all.
+</p>
 
 <h2>Efficiency</h2>
 <p class="small">
