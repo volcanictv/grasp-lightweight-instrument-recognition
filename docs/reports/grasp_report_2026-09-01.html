@@ -402,11 +402,9 @@ value itself was chosen on the five test cases, so its accuracy is optimistic.</
 Integration-ready package (trained ensemble + a single <code>predict()</code>
 call, no training/experiment code):
 <a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
-Its <code>master</code> branch holds the earlier probability-averaging ensemble.
-The vote-based pipeline described here, with the retrained weights, is in
-<a href="https://github.com/volcanictv/grasp-instrument-classifier/pull/1">pull request 1</a>
-and takes effect once merged (98% class agreement with this pipeline on 300
-test instances, 10 of 10 on tracked instances).
+Its <code>master</code> branch now holds the vote-based pipeline described here,
+with the retrained weights (merged from pull request 1, 98% class agreement
+with this pipeline on 300 test instances, 10 of 10 on tracked instances).
 </p>
 
 </div>
