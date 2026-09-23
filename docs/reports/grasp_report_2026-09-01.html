@@ -354,6 +354,13 @@ accuracy on the ResNet-50 members and 72&ndash;79 points on the MobileNetV3
 members. The exported graph also has no dropout, so it could not produce the
 votes anyway. Not adopted.
 </p>
+<p class="small">
+A lighter SAM2 variant (sam2.1_hiera_small in place of the large checkpoint,
+same gate, same 833 tracked instances) cuts tracking time by about 30% (16.7 s
+against 24 s per instance) for 0.0039 less accuracy and the same number of
+breaks (29). Confirms real efficiency headroom exists in the tracker; kept the
+large checkpoint since accuracy is the current priority.
+</p>
 
 <h2>Limitations</h2>
 <ul>
