@@ -1,0 +1,64 @@
+{
+ "official_test_sanity": {
+  "n": 2861,
+  "accuracy": 0.9265990912268438,
+  "macro_f1": 0.889830547668527
+ },
+ "unanimous_errors_total": 8,
+ "unanimous_errors_missed_by_gate": 8,
+ "unanimous_error_s1_percentiles": [
+  16.88,
+  20.06,
+  42.64,
+  48.51,
+  52.78,
+  73.86,
+  80.95,
+  85.67
+ ],
+ "auroc_s1_official_test": 0.9164969194014837,
+ "auroc_b1_official_test": 0.8961586822582672,
+ "pre_registered_tau_projection": {
+  "tau": 2.701544415117233e-08,
+  "additional_flagged": 1475,
+  "additional_flagged_share": 0.5155540020971688,
+  "additional_gpu_hours": 9.833333333333334,
+  "target_unanimous_caught": 7,
+  "target_unanimous_total": 8,
+  "note": "projection from the score only; not tracked (cost stop condition triggered on fold1 calibration)"
+ },
+ "illustrative_smaller_budgets": [
+  {
+   "budget": 0.01,
+   "additional_flagged": 29,
+   "additional_gpu_hours": 0.19333333333333333,
+   "target_unanimous_caught": 0,
+   "target_unanimous_total": 8,
+   "note": "projection from the score only; not tracked, so the eventual accuracy effect is unverified"
+  },
+  {
+   "budget": 0.02,
+   "additional_flagged": 57,
+   "additional_gpu_hours": 0.38,
+   "target_unanimous_caught": 1,
+   "target_unanimous_total": 8,
+   "note": "projection from the score only; not tracked, so the eventual accuracy effect is unverified"
+  },
+  {
+   "budget": 0.05,
+   "additional_flagged": 143,
+   "additional_gpu_hours": 0.9533333333333334,
+   "target_unanimous_caught": 2,
+   "target_unanimous_total": 8,
+   "note": "projection from the score only; not tracked, so the eventual accuracy effect is unverified"
+  },
+  {
+   "budget": 0.1,
+   "additional_flagged": 286,
+   "additional_gpu_hours": 1.9066666666666667,
+   "target_unanimous_caught": 3,
+   "target_unanimous_total": 8,
+   "note": "projection from the score only; not tracked, so the eventual accuracy effect is unverified"
+  }
+ ]
+}

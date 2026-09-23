@@ -57,7 +57,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("what", choices=["train", "ensemble"])
     ap.add_argument("--arm", choices=["E", "C"], required=True)
-    ap.add_argument("--fold", choices=["fold1", "fold2"], required=True)
+    ap.add_argument("--fold", choices=["fold1", "fold2", "official"], required=True)
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--lam", type=float, default=0.1)
     ap.add_argument("--anneal", type=int, default=10)

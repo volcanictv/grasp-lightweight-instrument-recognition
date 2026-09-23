@@ -56,7 +56,7 @@ def run_member(model, loader_batches, device, mc_samples):
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--ensemble-config", type=Path, required=True)
-    ap.add_argument("--target", choices=["grasp_fold1", "grasp_fold2", "endovis2018", "endovis2017"], required=True)
+    ap.add_argument("--target", choices=["grasp_fold1", "grasp_fold2", "grasp_test", "endovis2018", "endovis2017"], required=True)
     ap.add_argument("--data-root", type=Path, default=Path("GraSP"))
     ap.add_argument("--zip", type=Path, default=None)
     ap.add_argument("--mc-samples", type=int, default=0)
