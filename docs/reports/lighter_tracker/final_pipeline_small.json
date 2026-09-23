@@ -1,0 +1,11 @@
+{
+ "tracker": "small",
+ "n": 2861,
+ "tracked": 833,
+ "missing_tracking_data": 0,
+ "accuracy": 0.9584061516952115,
+ "macro_f1": 0.933424668653162,
+ "fixed": 120,
+ "broken": 29,
+ "errors_left": 119
+}
