@@ -343,6 +343,14 @@ instances on GraSP, it flags 84&ndash;87% on EndoVis against the vote gate's
 78&ndash;83%. Not adopted, since threshold stability under shift is why the gate
 uses MC Dropout at all.
 </p>
+<p class="small">
+Tried patching the blind spot directly: add evidential uncertainty as a second
+trigger alongside the 9% gate, aimed only at unanimous errors. On held-out cases
+the smallest threshold that catches every unanimous error flags 59% of all
+instances; evidential is confident on these specific errors too, since the
+frame itself carries no distinguishing information. Confirms the blind spot is
+a single-frame information ceiling, not a signal-choice problem. Not adopted.
+</p>
 
 <h2>Efficiency</h2>
 <p class="small">
