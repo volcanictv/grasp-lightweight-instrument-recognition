@@ -24,7 +24,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REPORTS = REPO_ROOT / "docs" / "reports"
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+BLUE, ORANGE, AQUA, YELLOW = "#2a78d6", "#eb6834", "#1baf7a", "#eda100"
 INK, SUB, MUTED, GRID, BASE, SURFACE = "#1e293b", "#475569", "#898781", "#e1e0d9", "#c3c2b7", "#ffffff"
 FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 
@@ -48,13 +48,19 @@ def dot(x: float, y: float, fill: str, tip: str, r: float = 5) -> str:
 
 
 def legend(items: list[tuple[str, str, str]], x: float, y: float, gap: float = 20) -> str:
-    """items: (label, colour, key) with key 'line' or 'box'."""
+    """items: (label, colour, key[, dash]) with key 'line', 'box' or 'dot'; an
+    optional 4th element is a stroke-dasharray for 'line' entries (e.g. "6 4"),
+    the texture channel used to tell a 4th line series from the first three
+    hues without adding a fourth risky categorical colour."""
     out, yy = [], y
-    for label, colour, key in items:
+    for item in items:
+        label, colour, key = item[0], item[1], item[2]
+        dash = item[3] if len(item) > 3 else ""
         if key == "dot":
             out.append(f'<circle cx="{x + 7}" cy="{yy - 4}" r="5" fill="{colour}" stroke="{SURFACE}" stroke-width="2"/>')
         elif key == "line":
-            out.append(f'<line x1="{x}" y1="{yy - 4}" x2="{x + 18}" y2="{yy - 4}" stroke="{colour}" stroke-width="2" stroke-linecap="round"/>')
+            dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+            out.append(f'<line x1="{x}" y1="{yy - 4}" x2="{x + 18}" y2="{yy - 4}" stroke="{colour}" stroke-width="2" stroke-linecap="round"{dash_attr}/>')
         else:
             out.append(f'<rect x="{x}" y="{yy - 10}" width="14" height="12" rx="3" fill="{colour}"/>')
         out.append(text(x + 24, yy, label, SUB))
@@ -94,9 +100,10 @@ def figure_votes() -> str:
 
 def figure_roc() -> str:
     data = json.loads((REPORTS / "final_pipeline" / "roc_curves.json").read_text())["curves"]
-    order = [("MC Dropout vote disagreement (main method)", "MC Dropout vote disagreement", BLUE),
-             ("Between-member disagreement (dropout off)", "Between-member disagreement (dropout off)", ORANGE),
-             ("Softmax confidence (baseline)", "Softmax confidence (baseline)", AQUA)]
+    order = [("MC Dropout vote disagreement (main method)", "MC Dropout vote disagreement", BLUE, ""),
+             ("Between-member disagreement (dropout off)", "Between-member disagreement (dropout off)", ORANGE, ""),
+             ("Softmax confidence (baseline)", "Softmax confidence (baseline)", AQUA, ""),
+             ("Evidential epistemic uncertainty (own prediction)", "Evidential epistemic uncertainty", YELLOW, "6 4")]
     w, h = 560, 450
     px0, py0, pw, ph = 66, 22, 470, 380
     parts = [svg_open(w, h, "ROC curves: how well each uncertainty signal separates wrong from correct predictions")]
@@ -111,18 +118,19 @@ def figure_roc() -> str:
     parts.append(line(px0, py0, px0, py0 + ph, BASE))
     parts.append(line(px0, py0 + ph, px0 + pw, py0, MUTED, 1))
     parts.append(text(px0 + pw * 0.62, py0 + ph * 0.66, "chance", MUTED, size=10))
-    for key, label, colour in order:
+    for key, label, colour, dash in order:
         c = data[key.replace(" (main method)", "")]
         pts = " ".join(f"{px0 + pw * f:.1f},{py0 + ph * (1 - t):.1f}" for f, t in zip(c["fpr"], c["tpr"]))
-        parts.append(f'<polyline points="{pts}" fill="none" stroke="{colour}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><title>{html.escape(label)}: AUROC {c["auroc"]:.3f}</title></polyline>')
+        dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+        parts.append(f'<polyline points="{pts}" fill="none" stroke="{colour}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"{dash_attr}><title>{html.escape(label)}: AUROC {c["auroc"]:.3f}</title></polyline>')
     parts.append(text(px0 + pw / 2, py0 + ph + 40, "Share of correct predictions flagged (false alarms)", SUB, anchor="middle"))
     parts.append(f'<text transform="translate(16,{py0 + ph / 2}) rotate(-90)" fill="{SUB}" text-anchor="middle" font-size="11">Share of errors caught</text>')
-    lx, ly = px0 + pw - 268, py0 + ph - 74
-    parts.append(f'<rect x="{lx - 10}" y="{ly - 18}" width="270" height="76" rx="6" fill="{SURFACE}" stroke="{GRID}"/>')
+    lx, ly = px0 + pw - 268, py0 + ph - 96
+    parts.append(f'<rect x="{lx - 10}" y="{ly - 18}" width="270" height="98" rx="6" fill="{SURFACE}" stroke="{GRID}"/>')
     entries = []
-    for key, label, colour in order:
+    for key, label, colour, dash in order:
         c = data[key.replace(" (main method)", "")]
-        entries.append((f"{label.split(' (')[0]}  AUROC {c['auroc']:.3f}", colour, "line"))
+        entries.append((f"{label.split(' (')[0]}  AUROC {c['auroc']:.3f}", colour, "line", dash))
     parts.append(legend(entries, lx, ly, 22))
     parts.append("</svg>")
     return "".join(parts)
