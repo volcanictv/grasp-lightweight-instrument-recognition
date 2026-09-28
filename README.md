@@ -60,8 +60,9 @@ Verify it actually works before you trust anything downstream of it:
 python -m pytest tests/ -q
 ```
 
-81 tests, should all pass, takes under 20 seconds. If it doesn't pass, stop and
-fix that first: nothing past this point means anything if the basics are broken.
+88 tests (80 pass, 8 skip if the GraSP dataset isn't at `GRASP_DATA_ROOT`
+yet), takes under 20 seconds. If a non-skipped test fails, stop and fix that
+first: nothing past this point means anything if the basics are broken.
 
 ## Running things
 
@@ -75,8 +76,9 @@ python scripts/train.py configs/<name>.yaml --data-root ./GraSP --device cuda:0
 Each run writes `experiments/<run_id>/` with a `manifest.json` (full config,
 git commit, seed, split checksums, package versions, final metrics: everything
 needed to answer "how did we get this number" without guessing) and `best.pt`.
-`configs/` has ~36 examples covering every task type above; copy the closest one
-and change what you need, don't start from scratch.
+`configs/` has ~90 examples covering every task type above (many are one-off
+ablation variants of a handful of base recipes, not 90 distinct setups); copy
+the closest one and change what you need, don't start from scratch.
 
 Splits: `official` (train on the 8 official-train cases, test on the 5
 official-test cases; use this for one final confirmatory run, not for
