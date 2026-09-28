@@ -1,0 +1,22 @@
+{
+ "2018": {
+  "n": 3231,
+  "accuracy": 0.49891674404209224,
+  "macro_f1_present": 0.3903119533764046,
+  "classes_present": 5,
+  "ce_pipeline_zero_shot": {
+   "accuracy": 0.528,
+   "macro_f1": 0.414
+  }
+ },
+ "2017": {
+  "n": 2544,
+  "accuracy": 0.5157232704402516,
+  "macro_f1_present": 0.5013546774801692,
+  "classes_present": 4,
+  "ce_pipeline_zero_shot": {
+   "accuracy": 0.551,
+   "macro_f1": 0.57
+  }
+ }
+}
