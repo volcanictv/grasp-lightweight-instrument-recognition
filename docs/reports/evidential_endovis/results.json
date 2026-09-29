@@ -1,0 +1,325 @@
+{
+ "design": "docs/DECISIONS.md 2026-09-29, evidential ensemble trained on EndoVis with the same gate",
+ "mc_reference": {
+  "2018": {
+   "base": [
+    0.8817703497369236,
+    0.8629795619460985
+   ],
+   "tracked_final": [
+    0.9278861033735686,
+    0.9187404567418348
+   ],
+   "n_tracked": 878,
+   "source": "docs/reports/endovis_transfer/stage1_2018/final_pipeline.json"
+  },
+  "2017": {
+   "base": [
+    0.9170597484276729,
+    0.8855360165896442
+   ],
+   "n_flagged": 506,
+   "tracking": "not possible, images missing"
+  }
+ },
+ "2018": {
+  "train_result": {
+   "dataset": "2018",
+   "seed": 42,
+   "n_train": 5992,
+   "n_val": 3231,
+   "lambda": 0.01,
+   "anneal_epochs": 5,
+   "epochs": 10,
+   "accuracy": 0.8882698854843701,
+   "macro_f1_present": 0.8663689081288076,
+   "s1_quantiles": {
+    "0.5": 1.8934595402697596e-07,
+    "0.7": 7.175391601776937e-06,
+    "0.8": 0.00012139122554799542,
+    "0.9": 0.0022992228623479605,
+    "0.95": 0.008673596195876598
+   }
+  },
+  "analysis": {
+   "dataset": "2018",
+   "n": 3231,
+   "tau": 1.7e-05,
+   "budget_matched_k": 878,
+   "evidential": {
+    "accuracy": 0.8882698854843701,
+    "macro_f1_present": 0.8663689081288076,
+    "errors": 361
+   },
+   "mc_pipeline_ensemble_alone": {
+    "accuracy": 0.8817703497369236,
+    "macro_f1_present": 0.8629795619460985,
+    "errors": 382
+   },
+   "gate_A_fixed_tau": {
+    "n_flagged": 871,
+    "share_flagged": 0.26957598266790467,
+    "errors_caught": 241,
+    "share_of_errors_caught": 0.667590027700831,
+    "error_rate_inside_flagged": 0.2766934557979334,
+    "error_rate_outside_flagged": 0.05084745762711865
+   },
+   "gate_B_budget_matched": {
+    "n_flagged": 878,
+    "share_flagged": 0.2717424945837202,
+    "errors_caught": 241,
+    "share_of_errors_caught": 0.667590027700831,
+    "error_rate_inside_flagged": 0.2744874715261959,
+    "error_rate_outside_flagged": 0.050998725031874206
+   },
+   "mc_gate_9pct_for_comparison": {
+    "n_flagged": 878,
+    "share_flagged": 0.2717424945837202,
+    "errors_caught": 253,
+    "share_of_errors_caught": 0.662303664921466,
+    "error_rate_inside_flagged": 0.28815489749430523,
+    "error_rate_outside_flagged": 0.05482362940926477
+   },
+   "auroc": {
+    "mc_vote_disagreement": {
+     "auroc": 0.7746104539298256,
+     "auroc_ci95": [
+      0.7470116718178038,
+      0.8022786833571698
+     ],
+     "auroc_per_sequence": {
+      "seq_1": 0.40642736616045405,
+      "seq_10": 0.919425287356322,
+      "seq_2": 0.9934210526315789,
+      "seq_3": 0.9830508474576272,
+      "seq_5": 0.949724517906336,
+      "seq_6": 0.9585464620630861,
+      "seq_7": 0.7649711399711399,
+      "seq_9": 0.7944302132373303
+     },
+     "auroc_per_sequence_min_mean_max": [
+      0.40642736616045405,
+      0.8462496108479843,
+      0.9934210526315789
+     ]
+    },
+    "softmax_confidence_of_mc_arm": {
+     "auroc": 0.802347751300631,
+     "auroc_ci95": [
+      0.77831011553442,
+      0.8282673433278256
+     ],
+     "auroc_per_sequence": {
+      "seq_1": 0.3584905660377359,
+      "seq_10": 0.9305747126436783,
+      "seq_2": 0.9967105263157895,
+      "seq_3": 0.980225988700565,
+      "seq_5": 0.9807162534435261,
+      "seq_6": 0.9531116794543905,
+      "seq_7": 0.8452380952380952,
+      "seq_9": 0.8243561340348934
+     },
+     "auroc_per_sequence_min_mean_max": [
+      0.3584905660377359,
+      0.8586779944835843,
+      0.9967105263157895
+     ]
+    },
+    "evidential_S1": {
+     "auroc": 0.7933180190527668,
+     "auroc_ci95": [
+      0.7688947566652778,
+      0.8169492149431082
+     ],
+     "auroc_per_sequence": {
+      "seq_1": 0.46015384615384614,
+      "seq_10": 0.8562650280523645,
+      "seq_3": 0.9875,
+      "seq_5": 0.9704918032786886,
+      "seq_6": 0.9520710059171598,
+      "seq_7": 0.8036135113904164,
+      "seq_9": 0.78738730657098
+     },
+     "auroc_per_sequence_min_mean_max": [
+      0.46015384615384614,
+      0.831068928766208,
+      0.9875
+     ]
+    }
+   },
+   "overlap_A_vs_MC_flagged": 679,
+   "union_A_B_size": 878
+  },
+  "final_pipeline": {
+   "n": 3231,
+   "tracked_available": 878,
+   "base": {
+    "accuracy": 0.8882698854843701,
+    "macro_f1_present": 0.8663689081288076
+   },
+   "gate_A_fixed_tau": {
+    "n_flagged": 871,
+    "missing_tracking": 0,
+    "accuracy": 0.9266480965645311,
+    "macro_f1_present": 0.9160782558256202,
+    "fixed": 143,
+    "broken": 19,
+    "errors_left": 237
+   },
+   "gate_B_budget_matched": {
+    "n_flagged": 878,
+    "missing_tracking": 0,
+    "accuracy": 0.9266480965645311,
+    "macro_f1_present": 0.9160782558256202,
+    "fixed": 143,
+    "broken": 19,
+    "errors_left": 237
+   }
+  },
+  "paired_vs_mc": {
+   "n": 3231,
+   "acc_evidential": 0.9266480965645311,
+   "acc_mc": 0.9278861033735686,
+   "only_evidential_correct": 24,
+   "only_mc_correct": 28,
+   "mcnemar_exact_p": 0.6778086391424605,
+   "per_sequence": {
+    "seq_1": {
+     "n": 229,
+     "acc_evidential": 0.47161572052401746,
+     "acc_mc": 0.47161572052401746
+    },
+    "seq_10": {
+     "n": 610,
+     "acc_evidential": 0.9918032786885246,
+     "acc_mc": 0.9950819672131147
+    },
+    "seq_2": {
+     "n": 154,
+     "acc_evidential": 1.0,
+     "acc_mc": 1.0
+    },
+    "seq_3": {
+     "n": 181,
+     "acc_evidential": 1.0,
+     "acc_mc": 1.0
+    },
+    "seq_4": {
+     "n": 412,
+     "acc_evidential": 1.0,
+     "acc_mc": 1.0
+    },
+    "seq_5": {
+     "n": 127,
+     "acc_evidential": 0.9921259842519685,
+     "acc_mc": 0.9763779527559056
+    },
+    "seq_6": {
+     "n": 403,
+     "acc_evidential": 0.9975186104218362,
+     "acc_mc": 1.0
+    },
+    "seq_7": {
+     "n": 153,
+     "acc_evidential": 0.954248366013072,
+     "acc_mc": 0.954248366013072
+    },
+    "seq_8": {
+     "n": 150,
+     "acc_evidential": 1.0,
+     "acc_mc": 1.0
+    },
+    "seq_9": {
+     "n": 812,
+     "acc_evidential": 0.874384236453202,
+     "acc_mc": 0.8780788177339901
+    }
+   }
+  }
+ },
+ "2017": {
+  "train_result": {
+   "dataset": "2017",
+   "seed": 42,
+   "n_train": 5584,
+   "n_val": 2544,
+   "lambda": 0.01,
+   "anneal_epochs": 5,
+   "epochs": 10,
+   "accuracy": 0.9213836477987422,
+   "macro_f1_present": 0.889558649216299,
+   "s1_quantiles": {
+    "0.5": 1.1623326656717836e-07,
+    "0.7": 6.259900260374707e-07,
+    "0.8": 4.528560111793922e-06,
+    "0.9": 0.00010144208499696106,
+    "0.95": 0.0010032497812062502
+   }
+  },
+  "analysis": {
+   "dataset": "2017",
+   "n": 2544,
+   "tau": 1.7e-05,
+   "budget_matched_k": 506,
+   "evidential": {
+    "accuracy": 0.9213836477987422,
+    "macro_f1_present": 0.889558649216299,
+    "errors": 200
+   },
+   "mc_pipeline_ensemble_alone": {
+    "accuracy": 0.9170597484276729,
+    "macro_f1_present": 0.8855360165896442,
+    "errors": 211
+   },
+   "gate_A_fixed_tau": {
+    "n_flagged": 375,
+    "share_flagged": 0.1474056603773585,
+    "errors_caught": 80,
+    "share_of_errors_caught": 0.4,
+    "error_rate_inside_flagged": 0.21333333333333335,
+    "error_rate_outside_flagged": 0.05532503457814661
+   },
+   "gate_B_budget_matched": {
+    "n_flagged": 506,
+    "share_flagged": 0.1988993710691824,
+    "errors_caught": 90,
+    "share_of_errors_caught": 0.45,
+    "error_rate_inside_flagged": 0.17786561264822134,
+    "error_rate_outside_flagged": 0.053974484789008834
+   },
+   "mc_gate_9pct_for_comparison": {
+    "n_flagged": 506,
+    "share_flagged": 0.1988993710691824,
+    "errors_caught": 88,
+    "share_of_errors_caught": 0.41706161137440756,
+    "error_rate_inside_flagged": 0.17391304347826086,
+    "error_rate_outside_flagged": 0.06035328753680078
+   },
+   "auroc": {
+    "mc_vote_disagreement": {
+     "auroc": 0.6710569350123816,
+     "auroc_ci95": [
+      0.6288875969269817,
+      0.7090212468690082
+     ]
+    },
+    "softmax_confidence_of_mc_arm": {
+     "auroc": 0.6729573419086952,
+     "auroc_ci95": [
+      0.6305808129037616,
+      0.7099422131968446
+     ]
+    },
+    "evidential_S1": {
+     "auroc": 0.6799797354948804,
+     "auroc_ci95": [
+      0.6370300388676313,
+      0.7201052590450472
+     ]
+    }
+   },
+   "overlap_A_vs_MC_flagged": 270,
+   "union_A_B_size": 506
+  }
+ }
+}

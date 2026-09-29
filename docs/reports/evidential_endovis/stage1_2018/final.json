@@ -1,0 +1,26 @@
+{
+ "n": 3231,
+ "tracked_available": 878,
+ "base": {
+  "accuracy": 0.8882698854843701,
+  "macro_f1_present": 0.8663689081288076
+ },
+ "gate_A_fixed_tau": {
+  "n_flagged": 871,
+  "missing_tracking": 0,
+  "accuracy": 0.9266480965645311,
+  "macro_f1_present": 0.9160782558256202,
+  "fixed": 143,
+  "broken": 19,
+  "errors_left": 237
+ },
+ "gate_B_budget_matched": {
+  "n_flagged": 878,
+  "missing_tracking": 0,
+  "accuracy": 0.9266480965645311,
+  "macro_f1_present": 0.9160782558256202,
+  "fixed": 143,
+  "broken": 19,
+  "errors_left": 237
+ }
+}
