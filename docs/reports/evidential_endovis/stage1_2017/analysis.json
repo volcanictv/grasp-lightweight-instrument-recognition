@@ -1,0 +1,65 @@
+{
+ "dataset": "2017",
+ "n": 2544,
+ "tau": 1.7e-05,
+ "budget_matched_k": 506,
+ "evidential": {
+  "accuracy": 0.9213836477987422,
+  "macro_f1_present": 0.889558649216299,
+  "errors": 200
+ },
+ "mc_pipeline_ensemble_alone": {
+  "accuracy": 0.9170597484276729,
+  "macro_f1_present": 0.8855360165896442,
+  "errors": 211
+ },
+ "gate_A_fixed_tau": {
+  "n_flagged": 375,
+  "share_flagged": 0.1474056603773585,
+  "errors_caught": 80,
+  "share_of_errors_caught": 0.4,
+  "error_rate_inside_flagged": 0.21333333333333335,
+  "error_rate_outside_flagged": 0.05532503457814661
+ },
+ "gate_B_budget_matched": {
+  "n_flagged": 506,
+  "share_flagged": 0.1988993710691824,
+  "errors_caught": 90,
+  "share_of_errors_caught": 0.45,
+  "error_rate_inside_flagged": 0.17786561264822134,
+  "error_rate_outside_flagged": 0.053974484789008834
+ },
+ "mc_gate_9pct_for_comparison": {
+  "n_flagged": 506,
+  "share_flagged": 0.1988993710691824,
+  "errors_caught": 88,
+  "share_of_errors_caught": 0.41706161137440756,
+  "error_rate_inside_flagged": 0.17391304347826086,
+  "error_rate_outside_flagged": 0.06035328753680078
+ },
+ "auroc": {
+  "mc_vote_disagreement": {
+   "auroc": 0.6710569350123816,
+   "auroc_ci95": [
+    0.6288875969269817,
+    0.7090212468690082
+   ]
+  },
+  "softmax_confidence_of_mc_arm": {
+   "auroc": 0.6729573419086952,
+   "auroc_ci95": [
+    0.6305808129037616,
+    0.7099422131968446
+   ]
+  },
+  "evidential_S1": {
+   "auroc": 0.6799797354948804,
+   "auroc_ci95": [
+    0.6370300388676313,
+    0.7201052590450472
+   ]
+  }
+ },
+ "overlap_A_vs_MC_flagged": 270,
+ "union_A_B_size": 506
+}
