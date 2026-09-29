@@ -1,0 +1,50 @@
+{
+ "n": 2861,
+ "errors_full": 210,
+ "gate": 0.09,
+ "flagged_full": 833,
+ "rows": {
+  "1": {
+   "votes": 4,
+   "auroc": 0.8296554759210363,
+   "auroc_sd": 0.005235903304761646,
+   "overlap_with_full_gate": 0.8136850044666796,
+   "errors_in_flagged_set": 0.8203919879340785
+  },
+  "2": {
+   "votes": 8,
+   "auroc": 0.8611537425230371,
+   "auroc_sd": 0.005543647867285423,
+   "overlap_with_full_gate": 0.8695815602607089,
+   "errors_in_flagged_set": 0.8487588305661572
+  },
+  "3": {
+   "votes": 12,
+   "auroc": 0.8731794530964657,
+   "auroc_sd": 0.004335221978300651,
+   "overlap_with_full_gate": 0.8958607330884046,
+   "errors_in_flagged_set": 0.8566513381611239
+  },
+  "5": {
+   "votes": 20,
+   "auroc": 0.8834656284241346,
+   "auroc_sd": 0.0033708478539346515,
+   "overlap_with_full_gate": 0.9240467724984286,
+   "errors_in_flagged_set": 0.8613058255996623
+  },
+  "10": {
+   "votes": 40,
+   "auroc": 0.8913375006736004,
+   "auroc_sd": 0.0023511032863769072,
+   "overlap_with_full_gate": 0.9565710265547573,
+   "errors_in_flagged_set": 0.8650516378437602
+  },
+  "20": {
+   "votes": 80,
+   "auroc": 0.8961586822582672,
+   "auroc_sd": 0.0,
+   "overlap_with_full_gate": 1.0,
+   "errors_in_flagged_set": 0.861904761904762
+  }
+ }
+}
