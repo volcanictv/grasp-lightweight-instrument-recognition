@@ -103,8 +103,10 @@ def calibrate(args: argparse.Namespace) -> None:
     tracked = load_tracked(args.work_dir, "fold1", order)
     grid = sorted({round(float(x), 6) for x in np.percentile(s1, PERCENTILES)}, reverse=True)
     missing = set(np.where(s1 >= min(grid))[0].tolist()) - set(tracked)
+    if missing and not args.allow_partial:
+        raise SystemExit(f"{len(missing)} flagged fold1 instances have no tracking yet (--allow-partial for a dry run)")
     if missing:
-        raise SystemExit(f"{len(missing)} flagged fold1 instances have no tracking yet")
+        print(f"WARNING dry run: {len(missing)} flagged instances untracked keep the base prediction")
     rows = {}
     for t in grid:
         flag = s1 >= t
@@ -162,6 +164,7 @@ def main() -> None:
     ap.add_argument("--fold1-config", type=Path, default=REPO_ROOT / "configs" / "evidential" / "ens_E_fold1_s42_lam0p01a10.yaml")
     ap.add_argument("--official-config", type=Path, default=REPO_ROOT / "configs" / "evidential" / "ens_E_official_s42_lam0p01a10.yaml")
     ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--allow-partial", action="store_true", help="dry run on incomplete tracking output")
     args = ap.parse_args()
     {"prep-fold1": prep_fold1, "calibrate": calibrate, "prep-official": prep_official, "score": score}[args.stage](args)
 
