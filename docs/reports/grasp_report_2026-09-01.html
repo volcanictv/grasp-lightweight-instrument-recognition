@@ -80,7 +80,7 @@ a { color: var(--blue); }
 <div class="wrap">
 
 <h1>Surgical Instrument Classification on GraSP</h1>
-<div class="subtitle">Status: 2026-09-20</div>
+<div class="subtitle">Status: 2026-09-29</div>
 
 <p>
 Identifies which of 7 instruments (Bipolar Forceps, Prograsp Forceps, Large
@@ -93,33 +93,36 @@ seen during training (EndoVis 2017, 2018).
 </p>
 
 <h2>Results</h2>
+<p>
+The shipped pipeline is a four-member evidential ensemble that makes one deterministic pass
+per member (4 passes, not 80). A gate flags 539 of 2,861 official-test instances, SAM2
+corrects them, and accuracy rises from 0.9207 to 0.9507 (macro-F1 0.8867 to 0.9279).
+</p>
 <div class="tablewrap">
 <table>
 <tr><th>configuration</th><th class="num">tracked</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr>
 <tr><td>Whole-frame baseline (exact match; a different task)</td><td class="num">&ndash;</td><td class="num">0.7076</td><td class="num">0.3591</td></tr>
-<tr><td>Per-instrument, single lightweight model (MobileNetV3-small)</td><td class="num">&ndash;</td><td class="num">0.834</td><td class="num">0.867</td></tr>
-<tr><td>Per-instrument, single ResNet-50 (320 px)</td><td class="num">&ndash;</td><td class="num">0.865</td><td class="num">0.915</td></tr>
-<tr><td>4-model ensemble (majority vote)</td><td class="num">&ndash;</td><td class="num">0.8898</td><td class="num">0.9266</td></tr>
-<tr><td>+ tracking, 20% gate, pooled vote</td><td class="num">525</td><td class="num">0.9287</td><td class="num">0.9577</td></tr>
-<tr><td>+ tracking, 20% gate, uncertainty-weighted vote</td><td class="num">525</td><td class="num">0.9295</td><td class="num">0.9581</td></tr>
-<tr class="hi"><td>+ tracking, 9% gate, uncertainty-weighted vote (final pipeline)</td><td class="num">833</td><td class="num">0.9351</td><td class="num">0.9623</td></tr>
-<tr><td>Lighter candidate: single-pass evidential ensemble + gate, same 9% budget</td><td class="num">833</td><td class="num">0.9242</td><td class="num">0.9521</td></tr>
-<tr><td>Lighter candidate, at its own fold1-chosen threshold (4 passes, not 80)</td><td class="num">539</td><td class="num">0.9279</td><td class="num">0.9507</td></tr>
+<tr><td>Single lightweight model (MobileNetV3-small)</td><td class="num">&ndash;</td><td class="num">0.834</td><td class="num">0.867</td></tr>
+<tr><td>Single ResNet-50 (320 px)</td><td class="num">&ndash;</td><td class="num">0.865</td><td class="num">0.915</td></tr>
+<tr><td>Evidential ensemble alone (4 passes)</td><td class="num">&ndash;</td><td class="num">0.8867</td><td class="num">0.9207</td></tr>
+<tr class="hi"><td>Evidential ensemble + SAM2 correction, fold1-chosen gate (shipped)</td><td class="num">539</td><td class="num">0.9279</td><td class="num">0.9507</td></tr>
+<tr><th colspan="4">Reference points</th></tr>
+<tr><td>Evidential + SAM2 correction at the vote pipeline's 833-instance budget</td><td class="num">833</td><td class="num">0.9242</td><td class="num">0.9521</td></tr>
+<tr><td>Vote ensemble alone (80 passes)</td><td class="num">&ndash;</td><td class="num">0.8898</td><td class="num">0.9266</td></tr>
+<tr><td>Vote pipeline + SAM2 correction, 9% gate (80 passes; gate chosen on the test set)</td><td class="num">833</td><td class="num">0.9351</td><td class="num">0.9623</td></tr>
 </table>
 </div>
-<p class="small">
-<a href="error_gallery_2026-09-20.html">Error gallery</a> of the 108 instances
-still wrong.
+<p>
+Correction fixes 121 instances and breaks 35 at 539. The 80-pass vote pipeline is about a point
+ahead at matched budgets (0.9623 against 0.9521 at 833; one seed, and the evidential ensemble's
+own seed-to-seed SD is 0.003). We ship the evidential pipeline for 20 times fewer passes, error
+ranking at least as good as softmax and better than the vote, and a more defensible method. It is
+not better calibrated than softmax, and every number comes from five test cases.
 </p>
 <p class="small">
-Scope and cost: one deterministic pass of the four members takes 20 ms per
-instance on one Titan Xp; the 80 votes (4 members &times; 20 passes) take 97 ms
-and 640 MB. On the 4-core CPU: 172 ms and 3.3 s. An instance that goes to
-tracking also votes on about 21 frames. The stated goal is deployable-light;
-the current work is maximum accuracy on GraSP instead, and nothing is being done
-toward efficiency for now. The pipeline as it stands is offline (80 passes, 3.3 s
-per instance on CPU, and INT8 quantization was tested and not adopted, see
-Efficiency).
+<a href="error_gallery_2026-09-20.html">Error gallery</a> of the 108 instances the vote pipeline
+still gets wrong. One pass of the four members takes 20 ms per instance on a Titan Xp (the 80
+votes 97 ms; CPU 172 ms and 3.3 s); tracking, about 21 s per tracked instance, dominates.
 </p>
 
 <div class="tablewrap">
@@ -135,18 +138,19 @@ Efficiency).
 </table>
 </div>
 <p class="small">
-Instances within a case share patient, camera, lighting, and physical
+The class table, per-case accuracy and confusion matrix below are for the vote
+pipeline (0.9623). Instances within a case share patient, camera, lighting, and physical
 instrument units, so the effective sample size is far closer to 5 than to
 2,861. Clip Applier (n=38) and Laparoscopic Grasper (n=81) per-class F1 moves
 represent only a handful of instances each.
 </p>
 <p class="small">
-Accuracy per test case, ensemble alone to final pipeline: CASE041 0.9116 to
+Accuracy per test case, vote ensemble alone to vote pipeline: CASE041 0.9116 to
 0.9388 (588 instances), CASE047 0.9326 to 0.9730 (445), CASE050 0.9318 to 0.9668
 (1,055), CASE051 0.9227 to 0.9742 (194), CASE053 0.9292 to 0.9655 (579); every
 case improves. An instance bootstrap gives a 95% interval of 0.9553 to 0.9692 for
 the final accuracy, but it treats instances as independent, so it is too narrow
-given 5 cases. Single run, one seed.
+given 5 cases. One seed.
 </p>
 <div class="tablewrap">
 <table>
@@ -161,7 +165,7 @@ given 5 cases. Single run, one seed.
 </table>
 </div>
 <p class="small">
-Each row normalized to % of that true class's instances (final pipeline).
+Each row normalized to % of that true class's instances (vote pipeline).
 Laparoscopic Grasper's 8.6% into Suction Instrument is the closed-jaw ceiling
 discussed under Limitations. By count, Bipolar Forceps mistaken for Prograsp
 Forceps (24 instances, 3.0% of Bipolar Forceps) is the largest single
@@ -170,7 +174,7 @@ confusion pair overall.
 
 <h2>Gate selection</h2>
 <p>
-The 9% gate was chosen for the best accuracy on the official test set (2,861
+For the vote pipeline, the 9% gate was chosen for the best accuracy on the official test set (2,861
 instances, 5 cases). To check it without the test set, the four members were
 retrained on the fold2 cases and the gate was scored on the held-out fold1 cases
 (3,235 instances, 4 cases), tracking every instance at or above 3% disagreement.
@@ -185,12 +189,14 @@ retrained on the fold2 cases and the gate was scored on the held-out fold1 cases
 </table>
 </div>
 <p>
-<b>Why 9%:</b> best accuracy of the gates compared. It costs a little more
-compute than 15%, 184 more tracked instances (about 1.2 extra GPU-hours at 24 s
-each), for a marginal gain of +0.0028 accuracy and +0.0042 macro-F1. For scale,
-tracking all 2,861 instances would take about 19 GPU-hours at 24 s each, against
-about 5.6 for the 9% gate (estimates from the per-instance time, not a measured
-full run).
+<b>Why 9% (vote pipeline):</b> best accuracy of the gates compared, for 184 more tracked
+instances than 15% (about 1.2 extra GPU-hours at 24 s each) and +0.0028 accuracy, +0.0042
+macro-F1. Tracking all 2,861 would take about 19 GPU-hours, against about 5.6 for 9%
+(estimates from the per-instance time, not a measured full run). At the 20% gate an unweighted (pooled) frame vote scores 0.9577 / 0.9287 against 0.9581 / 0.9295 for the uncertainty-weighted vote.
+</p>
+<p>
+The evidential gate's threshold was set on held-out fold1 cases by a pre-registered rule
+(fold1 accuracy 0.9604 at 20% flagged) and applied unchanged: 539 of 2,861 test instances.
 </p>
 <h2>Cross-Dataset Evaluation and Architectural Portability</h2>
 <p class="small">
@@ -229,14 +235,13 @@ in the release.
 A single ResNet-50 started from GraSP weights is no better than one started from
 ImageNet (accuracy 0.9080 against 0.9116 on 2017, 0.8515 against 0.8794 on 2018,
 3 seeds), so there is no evidence that GraSP training transfers. The evidential
-ensemble trained the same way behaves like the vote ensemble (2018 after tracking
-0.9266 against 0.9279, exact McNemar p = 0.68), so the gate carries over when the
-members are retrained, whichever signal drives it.
+ensemble trained the same way matches the vote ensemble (2018 after tracking 0.9266
+against 0.9279, McNemar p = 0.68).
 </p>
 
 <h2>How it works</h2>
 <div class="diagram">
-<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If the MC Dropout vote disagreement is below 9% (70.9% of instances), the ensemble prediction is final. Otherwise (29.1%) SAM2 propagates the mask across nearby frames, the ensemble votes on every frame, and the frames are combined by an uncertainty-weighted vote into the final prediction.">
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If the evidential epistemic score is below the threshold (81.2% of instances), the ensemble prediction is final. Otherwise (18.8%) SAM2 propagates the mask across nearby frames, the ensemble classifies every frame, and the frames are combined by a confidence-weighted evidential vote into the final prediction.">
 <defs>
 <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
 <path d="M0,0 L6,3 L0,6 Z" fill="#475569"></path>
@@ -260,14 +265,14 @@ members are retrained, whichever signal drives it.
 
 <g class="decision">
 <polygon points="478,45 543,10 608,45 543,80"></polygon>
-<text x="543" y="41" text-anchor="middle" font-size="11"><tspan x="543">MC disagreement</tspan><tspan x="543" dy="13">&lt; 9% ?</tspan></text>
+<text x="543" y="41" text-anchor="middle" font-size="11"><tspan x="543">Epistemic score</tspan><tspan x="543" dy="13">&lt; threshold ?</tspan></text>
 </g>
 
 <path class="arrow" d="M608,45 C650,45 650,90 690,113"></path>
-<text class="branch-label" x="622" y="34">yes, 70.9%</text>
+<text class="branch-label" x="622" y="34">yes, 81.2%</text>
 
 <path class="arrow" d="M543,80 V150"></path>
-<text class="branch-label" x="551" y="118">no, 29.1%</text>
+<text class="branch-label" x="551" y="118">no, 18.8%</text>
 
 <g class="box final"><rect x="630" y="88" width="120" height="50" rx="6"></rect>
 <text x="690" y="108" text-anchor="middle" font-size="12"><tspan x="690">Final</tspan><tspan x="690" dy="15">prediction</tspan></text></g>
@@ -289,29 +294,29 @@ members are retrained, whichever signal drives it.
 </svg>
 </div>
 <p class="small">
-Each of the four ensemble members makes 20 stochastic passes (dropout left on)
-and every pass votes for one class; the class with the most weighted votes is
-the prediction. An instance is sent to tracking when at least 9% of those votes
-disagree with the winner (29.1% of instances on the retrained ensemble). After
-tracking, each propagated frame casts its own votes, frames whose votes are more
-unanimous count for more, and the class with the largest weighted total wins.
+Shipped default: each member makes one deterministic pass, logits become Dirichlet
+evidence, evidences are combined with the ensemble weights, and an instance is
+tracked when its epistemic score is at or above the fold1-chosen threshold (18.8%).
+Each propagated frame is classified the same way, confident frames count for more, and
+the largest weighted total wins. The vote pipeline instead takes the plurality of 80
+stochastic votes and tracks where at least 9% disagree (29.1%).
 </p>
 
 <h2>Uncertainty estimation</h2>
 <p>
-The gate uses MC Dropout (Gal &amp; Ghahramani, 2016): each of the four members
+The vote pipeline's gate uses MC Dropout (Gal &amp; Ghahramani, 2016): each of the four members
 keeps dropout on and makes 20 passes, the prediction is the weighted plurality of
 the 80 votes, and the uncertainty is the share of votes that name a different
 class. Softmax confidence and a single-pass evidential score (Duan et al., 2024)
 were compared as alternatives, each scored against the errors of its own
 ensemble's prediction on official test (the vote and softmax come from the
-shipped ensemble, 0.9266; evidential from the seed-42 evidential ensemble,
+vote ensemble, 0.9266; evidential from the seed-42 evidential ensemble,
 0.9207, so signal and model are not separated).
 </p>
 <div class="tablewrap">
 <table>
 <tr><th>uncertainty signal</th><th class="num">AUROC</th><th class="num">AURC (lower is better)</th><th class="num">errors caught in 833 flagged</th><th class="num">calibration error (ECE)</th></tr>
-<tr class="hi"><td>MC Dropout vote disagreement (main method, 80 passes)</td><td class="num">0.896</td><td class="num">0.0136</td><td class="num">86.2%</td><td class="num">0.025</td></tr>
+<tr class="hi"><td>MC Dropout vote disagreement (vote pipeline, 80 passes)</td><td class="num">0.896</td><td class="num">0.0136</td><td class="num">86.2%</td><td class="num">0.025</td></tr>
 <tr><td>Between-member disagreement (dropout off)</td><td class="num">0.833</td><td class="num">n/a</td><td class="num">n/a</td><td class="num">n/a</td></tr>
 <tr><td>Softmax confidence (baseline, 1 pass)</td><td class="num">0.916</td><td class="num">0.0102</td><td class="num">90.0%</td><td class="num">0.032</td></tr>
 <tr><td>Evidential epistemic score (1 pass)</td><td class="num">0.925</td><td class="num">0.0103</td><td class="num">95.6%</td><td class="num">0.040</td></tr>
@@ -328,38 +333,32 @@ separate them.</li>
 (interval &minus;0.003 to +0.028) and AURC is the same. Its clearest edge is
 catching more errors in a fixed review budget, on one seed. It is not better
 calibrated (overconfident: confidence 0.960 against accuracy 0.921).</li>
-<li><b>Seed noise is about a third of a point.</b> Three seeds of the evidential
-ensemble give accuracy 0.9240 &plusmn; 0.0031 (0.9207 to 0.9266) and AUROC
-0.9225 &plusmn; 0.0076 (0.914 to 0.928). The reported 0.9207 is the lowest seed, and
-the base gap to the vote ensemble (0.9266) is inside one SD of the seed mean.
-The end-to-end one-point gap was measured on seed 42 only.</li>
+<li><b>Seed noise is about a third of a point.</b> Three evidential seeds give accuracy
+0.9240 &plusmn; 0.0031 and AUROC 0.9225 &plusmn; 0.0076; the reported seed 42 (0.9207) is the
+lowest, and the base gap to the vote ensemble (0.9266) is inside one SD. The end-to-end gap
+was measured on seed 42 only.</li>
 <li><b>End to end the signals land within about a point.</b> At matched budgets of
 525, 649 and 833 instances the evidential pipeline scores 0.9507, 0.9514 and
 0.9521 against the vote pipeline's 0.9581, 0.9595 and 0.9623 (single seed, different
 combine rule). Retrained on EndoVis 2018 the two are level after correction
 (0.9266 against 0.9279, McNemar p = 0.68).</li>
-<li><b>No signal fixes the closed-jaw errors.</b> They are as uncertain as other
-errors and every signal flags them equally, but correction fails on them because
-the frame does not carry the information. A second evidential trigger for the
-vote gate's unanimous errors would flag 59% of instances to catch them all, so
-it was not adopted.</li>
+<li><b>No signal fixes the closed-jaw errors.</b> They are as uncertain as other errors and
+every signal flags them equally, but correction fails because the frame lacks the information. A
+second evidential trigger for the vote gate's unanimous errors would flag 59% of instances, so it
+was not adopted.</li>
 </ul>
 <h2>Efficiency</h2>
 <p class="small">
-The main cost is the 80 forward passes per instance (see Results). INT8
-quantization (weights-only dynamic, ONNX Runtime) was re-tested on the retrained
-members rather than assumed to help. It made every member slower on CPU (the
-320 px ResNet-50 went from 44 to 74 ms) and cost 1.3&ndash;2.8 points of
-accuracy on the ResNet-50 members and 72&ndash;79 points on the MobileNetV3
-members. The exported graph also has no dropout, so it could not produce the
-votes anyway. Not adopted.
+The shipped default needs 4 forward passes per instance and the vote pipeline 80; tracking
+(about 21 s per tracked instance) dominates either way. INT8 quantization (weights-only dynamic,
+ONNX Runtime) on the retrained vote members made every member slower on CPU (the 320 px
+ResNet-50 went from 44 to 74 ms) and cost 1.3&ndash;2.8 points of accuracy on the ResNet-50
+members and 72&ndash;79 points on the MobileNetV3 members. Not adopted.
 </p>
 <p class="small">
-A lighter SAM2 variant (sam2.1_hiera_small in place of the large checkpoint,
-same gate, same 833 tracked instances) cuts tracking time by about 30% (16.7 s
-against 24 s per instance) for 0.0039 less accuracy and the same number of
-breaks (29). Confirms real efficiency headroom exists in the tracker; kept the
-large checkpoint since accuracy is the current priority.
+A lighter SAM2 variant (small, same gate, same 833 tracked instances) cuts tracking time
+about 30% (16.7 s against 24 s per instance) for 0.0039 less accuracy and the same 29
+breaks; the large checkpoint is kept since accuracy is the current priority.
 </p>
 
 <h2>Limitations</h2>
@@ -370,32 +369,30 @@ the SAM2 seeds come from annotated masks. The results measure naming an instrume
 once its location is given. They are classification metrics and are not comparable
 to the segmentation mAP that GraSP reports (TAPIS 89.85, TAPIS-VST 89.58, SlowFast
 74.33 mAP@0.5 IoU); the GraSP paper reports no classification-only baseline.</li>
-<li><b>Prior work overlap.</b> Following an instance across frames and voting on
-its class is not new in itself: ISINet (Gonz&aacute;lez et al., MICCAI 2020)
-applies a temporal consistency step to instance classes. What is specific here is
-gating tracking by vote disagreement, so only uncertain instances are tracked, and
-SAM2 propagation from the annotated mask. A flow-propagation baseline in the
-spirit of ISINet's temporal step (RAFT optical flow chaining the annotated mask 10
-frames each way, the same ensemble votes, a plain majority of frame labels) on the
-same 833 flagged instances gives 0.8448 accuracy / 0.8061 macro-F1. That is below
-the ensemble alone (0.9266 / 0.8898; 49 fixed, 283 broken) and far below SAM2
-tracking (0.9623 / 0.9351; exact McNemar p &lt; 0.001), probably because
-consecutive frames are far apart and the warped masks drift (frame rate not
-confirmed). It is not ISINet itself (its classifier and flow network are not used),
-and only one flow model was tried, untuned.</li>
-<li><b>Laparoscopic Grasper vs. Suction Instrument.</b> Closed jaws look
-identical to a suction tube in a still frame. Four fixes were ruled out
-(narrow and wide temporal search, action-state labels, targeted
-fine-tuning). This is a single-frame information limit, not a training gap.</li>
-<li><b>Same ceiling affects two more pairs</b> (Bipolar vs. Needle
-Driver, Monopolar vs. Suction): a distinguishing feature is sometimes
-just not visible in frame. Together the three pairs account for 59 of
-the ensemble's 210 pre-tracking mistakes.</li>
+<li><b>Prior work overlap.</b> ISINet (Gonz&aacute;lez et al., MICCAI 2020) applies a temporal
+consistency step to instance classes, so following an instance across frames and voting is not
+new; what is specific here is gating tracking by an uncertainty score and SAM2 propagation from
+the annotated mask. A RAFT optical-flow baseline in the spirit of ISINet's step (10 frames each
+way, same ensemble votes, plain majority, on the same 833 flagged instances) gives 0.8448 /
+0.8061 accuracy / macro-F1, below the ensemble alone (0.9266 / 0.8898; 49 fixed, 283 broken) and
+far below SAM2 tracking (0.9623 / 0.9351; exact McNemar p &lt; 0.001), probably because
+consecutive frames are far apart and the warped masks drift (frame rate not confirmed). It is not
+ISINet itself, and only one untuned flow model was tried.</li>
+<li><b>Closed-jaw ceiling.</b> Laparoscopic Grasper vs. Suction Instrument (closed jaws look
+identical to a suction tube in a still frame) and two more pairs (Bipolar vs. Needle Driver,
+Monopolar vs. Suction) account for 59 of the vote ensemble's 210 pre-tracking mistakes: a
+distinguishing feature is sometimes just not visible in frame. Four fixes were ruled out
+(narrow and wide temporal search, action-state labels, targeted fine-tuning), so this is a
+single-frame information limit, not a training gap.</li>
 <li><b>The gate passes some errors.</b> Of the retrained ensemble's 210
 errors, the 9% gate passes 29 and they are never tracked. Eight of them are
 unanimous across every pass and member, which no vote-based uncertainty can
 flag, because the models agree with each other on the wrong class. The gate
-value itself was chosen on the five test cases, so its accuracy is optimistic.</li>
+value itself was chosen on the five test cases, so its accuracy is optimistic; the evidential
+default's threshold was chosen on held-out fold1 cases.</li>
+<li><b>The shipped default is about a point below the alternative</b> (0.7 to 1.0 point at
+matched budgets, one seed end to end; ensemble alone varies 0.0031 across three seeds) and
+is not better calibrated than softmax. It is chosen for cost and defensibility.</li>
 </ul>
 
 <h3>Next steps</h3>
@@ -406,12 +403,9 @@ value itself was chosen on the five test cases, so its accuracy is optimistic.</
 
 <h2>Handoff</h2>
 <p class="small">
-Integration-ready package (trained ensemble + a single <code>predict()</code>
-call, no training/experiment code):
-<a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>.
-Its <code>master</code> branch now holds the vote-based pipeline described here,
-with the retrained weights (merged from pull request 1, 98% class agreement
-with this pipeline on 300 test instances, 10 of 10 on tracked instances).
+Integration package (<a href="https://github.com/volcanictv/grasp-instrument-classifier">github.com/volcanictv/grasp-instrument-classifier</a>):
+<code>master</code> holds the vote pipeline; the evidential default's checkpoints are on the
+lab machine, unreleased, with no evidential inference code in the package (pull request 3, not merged).
 </p>
 
 </div>
