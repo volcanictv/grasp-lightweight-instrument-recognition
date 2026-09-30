@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pickle
 import sys
 import time
 from collections import Counter
@@ -36,6 +37,7 @@ import numpy as np
 import torch
 import yaml
 from PIL import Image
+from pycocotools import mask as mask_codec
 
 from evaluate_temporal_track_ensemble import build_track_frame_nums, crop_from_box, crop_from_mask
 from surgical_ai.data.mask_utils import decode_instance_mask
@@ -51,6 +53,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split", default="test")
     parser.add_argument("--window", type=int, default=10)
     parser.add_argument("--min-iou", type=float, default=0.3)
+    parser.add_argument("--detections-cache", type=Path, default=None,
+                        help="pickle from scripts/cache_yolo_detections.py; skips YOLO inference")
     parser.add_argument("--coast", type=int, default=0, help="consecutive missed frames a direction survives")
     parser.add_argument("--center-fallback", action="store_true", help="also match detections against the center-frame mask")
     parser.add_argument("--yolo-conf", type=float, default=0.1)
@@ -67,18 +71,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def mask_iou(a: np.ndarray, b: np.ndarray) -> float:
-    union = np.logical_or(a, b).sum()
-    return float(np.logical_and(a, b).sum() / union) if union else 0.0
+def mask_iou(a: dict, b: dict) -> float:
+    return float(mask_codec.iou([a], [b], [0])[0][0])
 
 
-def walk_track(ref: np.ndarray, center: np.ndarray, frame_masks: list[list[np.ndarray]], min_iou: float,
-               coast: int, center_fallback: bool) -> dict[int, np.ndarray]:
-    """frame_masks is ordered outward from the center; returns {position: mask}. A direction ends after
-    more than `coast` consecutive frames with no detection at or above min_iou. With center_fallback a
-    detection also qualifies by its IoU with the center-frame mask, which recovers an instrument the
-    chain lost to one bad frame."""
-    track: dict[int, np.ndarray] = {}
+def encode(mask: np.ndarray) -> dict:
+    return mask_codec.encode(np.asfortranarray(mask.astype(np.uint8)))
+
+
+def walk_track(ref: dict, center: dict, frame_masks: list[list[dict]], min_iou: float,
+               coast: int, center_fallback: bool) -> dict[int, dict]:
+    """Masks are COCO RLE. frame_masks is ordered outward from the center; returns {position: mask}. A
+    direction ends after more than `coast` consecutive frames with no detection at or above min_iou. With
+    center_fallback a detection also qualifies by its IoU with the center-frame mask, which recovers an
+    instrument the chain lost to one bad frame."""
+    track: dict[int, dict] = {}
     misses = 0
     for pos, candidates in enumerate(frame_masks):
         scored = [(max(mask_iou(ref, m), mask_iou(center, m) if center_fallback else 0.0), m) for m in candidates]
@@ -92,6 +99,12 @@ def walk_track(ref: np.ndarray, center: np.ndarray, frame_masks: list[list[np.nd
             if misses > coast:
                 break
     return track
+
+
+def detect(yolo, paths: list[str], args: argparse.Namespace) -> list[list[dict]]:
+    results = yolo.predict(paths, conf=args.yolo_conf, imgsz=args.yolo_imgsz, retina_masks=True,
+                           device=args.device, verbose=False, stream=False)
+    return [[] if r.masks is None else [encode(m) for m in r.masks.data.cpu().numpy().astype(bool)] for r in results]
 
 
 def main() -> None:
@@ -124,7 +137,8 @@ def main() -> None:
         indices = list(range(len(ds.instances)))
     print(f"{len(indices)} of {len(ds.instances)} instances")
 
-    yolo = YOLO(str(args.yolo_weights))
+    cache = pickle.loads(args.detections_cache.read_bytes()) if args.detections_cache else None
+    yolo = None if cache is not None else YOLO(str(args.yolo_weights))
     results = []
     frame_store: dict[str, np.ndarray] = {}
     for n, idx in enumerate(indices):
@@ -137,15 +151,14 @@ def main() -> None:
 
         frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window)
         paths = [str(frames_root / case / f"{fn:05d}.jpg") for fn in frame_nums]
-        detections = yolo.predict(paths, conf=args.yolo_conf, imgsz=args.yolo_imgsz, retina_masks=True,
-                                  device=args.device, verbose=False, stream=False)
-        per_frame = [[] if r.masks is None else list(r.masks.data.cpu().numpy().astype(bool)) for r in detections]
+        per_frame = [cache[p] for p in paths] if cache is not None else detect(yolo, paths, args)
 
-        forward = walk_track(gt_mask, gt_mask, per_frame[center_idx + 1:], args.min_iou, args.coast, args.center_fallback)
-        backward = walk_track(gt_mask, gt_mask, per_frame[:center_idx][::-1], args.min_iou, args.coast, args.center_fallback)
+        gt_rle = encode(gt_mask)
+        forward = walk_track(gt_rle, gt_rle, per_frame[center_idx + 1:], args.min_iou, args.coast, args.center_fallback)
+        backward = walk_track(gt_rle, gt_rle, per_frame[:center_idx][::-1], args.min_iou, args.coast, args.center_fallback)
         track_masks = {center_idx: gt_mask}
-        track_masks.update({center_idx + 1 + i: m for i, m in forward.items()})
-        track_masks.update({center_idx - 1 - i: m for i, m in backward.items()})
+        track_masks.update({center_idx + 1 + i: mask_codec.decode(m).astype(bool) for i, m in forward.items()})
+        track_masks.update({center_idx - 1 - i: mask_codec.decode(m).astype(bool) for i, m in backward.items()})
         sorted_local_idxs = sorted(track_masks)
         frame_arrays = {li: np.array(Image.open(paths[li]).convert("RGB")) for li in sorted_local_idxs}
 
