@@ -17,6 +17,17 @@ report, not here:
 
 **https://volcanictv.github.io/grasp-lightweight-instrument-recognition/reports/grasp_report_2026-09-01.html**
 
+**Default region-classification pipeline (from 2026-09-29):** a four-member
+evidential ensemble (single deterministic pass per member), with instances whose
+epistemic score is at or above the fold1-chosen threshold sent to SAM2 tracking
+and an evidential frame-weighted vote. It is defined in
+`configs/pipeline_default.yaml`. The earlier MC-Dropout vote pipeline (80 passes,
+9% vote-disagreement gate) stays selectable there and is about 0.7 to 1.0 point
+more accurate at matched budgets on GraSP's official test set (single seed end to
+end); the evidential default is chosen for cost and defensibility, not accuracy,
+and is not better calibrated than softmax. Evidential checkpoints live on the lab
+machine and are not released.
+
 This file is setup and how-to-run only. I promise I will not make you read a
 research paper to figure out how to install torch.
 

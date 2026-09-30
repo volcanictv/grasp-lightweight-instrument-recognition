@@ -1,5 +1,11 @@
 # Evidential pipeline switch: evaluated and not adopted
 
+> **Superseded 2026-09-29.** The user later decided to ship the single-pass evidential
+> pipeline as the default anyway (cost and defensibility, not accuracy). The measurements
+> below stand: about 0.7 to 1.0 point below the vote pipeline at matched budgets
+> (`docs/reports/evidential_default/`). The default is now defined in
+> `configs/pipeline_default.yaml`.
+
 Requested by the user: replace the shipped MC-Dropout vote pipeline (base prediction and
 tracking gate) with the single-pass evidential ensemble outright, keeping domain-shift
 transfer as a disclosed con. Design pre-registered in `docs/DECISIONS.md`, 2026-09-28,

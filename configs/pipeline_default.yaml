@@ -1,0 +1,46 @@
+# Shipped default pipeline for per-instrument region classification on GraSP
+# (decision 2026-09-29: single-pass evidential gate is the default; the MC-Dropout
+# vote pipeline stays selectable as the higher-accuracy configuration).
+#
+# The numbers below are the official test set (2,861 instances, 5 cases), single seed
+# end to end. Sources: docs/reports/evidential_pipeline_switch/results.json (539 row),
+# docs/reports/evidential_default/results_exp1.json (budget-matched rows),
+# docs/reports/final_pipeline/ (vote pipeline).
+default: evidential
+
+pipelines:
+  evidential:
+    # Four members trained with the evidential (Dirichlet) loss, lambda 0.01, KL anneal
+    # 10 of 20 epochs, one deterministic forward pass each. Regenerate the ensemble config with:
+    #   python scripts/evidential_make_configs.py ensemble --arm E --fold official --seed 42 --lam 0.01 --anneal 10
+    # (checkpoints live on the lab machine under experiments/, not in this repo)
+    ensemble_from: scripts/evidential_make_configs.py
+    weight_resnet50_320: 0.40
+    member_alphas_combined_by: weighted_sum
+    gate:
+      signal: epistemic          # trace of the epistemic covariance, evaluation/evidential.py
+      threshold: 1.7e-05         # chosen on fold1 (members trained on fold2), applied unchanged
+      threshold_source: docs/reports/evidential_pipeline_switch/fold1_calibration.json
+    correction:
+      tracker: sam2_large
+      frames_each_way: 10
+      combine: evidential_frame_weighted   # frame weight = top mu_bar, final = argmax of sum(weight * mu_bar)
+    reference_results:
+      ensemble_alone: {accuracy: 0.9207, macro_f1: 0.8867}
+      gated_539_tracked: {accuracy: 0.9507, macro_f1: 0.9279}   # the threshold above
+      budget_833_tracked: {accuracy: 0.9521, macro_f1: 0.9242}  # same budget as the vote pipeline
+    passes_per_instance: 4   # one per member
+  vote:
+    # MC-Dropout vote pipeline: about 0.7 to 1.0 point more accurate at matched budgets, 80 passes.
+    ensemble_config: configs/region_ensemble_deepdropout.yaml
+    gate:
+      signal: vote_disagreement
+      threshold: 0.09
+    correction:
+      tracker: sam2_large
+      frames_each_way: 10
+      combine: uncertainty_weighted_vote
+    reference_results:
+      ensemble_alone: {accuracy: 0.9266, macro_f1: 0.8898}
+      gated_833_tracked: {accuracy: 0.9623, macro_f1: 0.9351}
+    passes_per_instance: 80  # 4 members x 20 stochastic passes
