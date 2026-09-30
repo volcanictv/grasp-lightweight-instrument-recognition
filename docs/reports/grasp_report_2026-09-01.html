@@ -47,9 +47,6 @@ code { background: var(--panel); padding: 1px 5px; border-radius: 3px; font-size
 .callout p { margin: 0.4em 0; }
 a { color: var(--blue); }
 .steps li { margin-bottom: 0.8em; }
-.tldr { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 0.5em 1em 0.3em; margin: 1em 0; }
-.tldr p, .tldr ul { margin: 0.4em 0; }
-.tldr li { margin: 0.25em 0; }
 .diagram { margin: 1em 0; }
 .diagram svg { width: 100%; height: auto; display: block; }
 .diagram .box rect { fill: var(--panel); stroke: var(--border); }
@@ -94,36 +91,93 @@ instruments and the class mix is imbalanced (rarest class has ~25x fewer
 examples than the most common). Tested against two public datasets never
 seen during training (EndoVis 2017, 2018).
 </p>
+<p>
+A four-model evidential ensemble names each instrument with 0.9207 accuracy on GraSP's official
+test set. Correcting only the 19% of instances it is unsure about, by propagating the annotated
+mask across nearby frames with SAM2, lifts that to 0.9507. How it is built and why are under
+How it works; the 80-pass MC-Dropout vote pipeline we built first is 0.3 to 0.5 points higher and
+is kept as the reference.
+</p>
 
-<div class="tldr">
-<p><b>TL;DR. Our four-model ensemble classifier works, and here is why.</b> Given an instrument's
-mask, it names the instrument (7 classes) with 0.9207 accuracy on GraSP's official test set.
-Correcting only the 19% of instances it doubts lifts that to 0.9507 (0.9577 averaged over three
-training seeds at a slightly larger budget). The 80-pass MC-Dropout vote pipeline we built first
-reaches 0.9623, only 0.3 to 0.5 points higher, so we ship the 4-pass version.</p>
+<h2>How it works</h2>
+<div class="diagram">
+<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If the evidential epistemic score is below the threshold (81.2% of instances), the ensemble prediction is final. Otherwise (18.8%) SAM2 propagates the mask across nearby frames, the ensemble classifies every frame, and the frames are combined by a confidence-weighted evidential vote into the final prediction.">
+<defs>
+<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+<path d="M0,0 L6,3 L0,6 Z" fill="#475569"></path>
+</marker>
+</defs>
+
+<g class="box"><rect x="8" y="20" width="118" height="50" rx="6"></rect>
+<text x="67" y="40" text-anchor="middle" font-size="12"><tspan x="67">Video frame</tspan><tspan x="67" dy="15">+ instance mask</tspan></text></g>
+
+<path class="arrow" d="M126,45 H166"></path>
+
+<g class="box"><rect x="166" y="20" width="118" height="50" rx="6"></rect>
+<text x="225" y="40" text-anchor="middle" font-size="12"><tspan x="225">Per-instrument</tspan><tspan x="225" dy="15">crop</tspan></text></g>
+
+<path class="arrow" d="M284,45 H324"></path>
+
+<g class="box"><rect x="324" y="20" width="118" height="50" rx="6"></rect>
+<text x="383" y="40" text-anchor="middle" font-size="12"><tspan x="383">4-model</tspan><tspan x="383" dy="15">ensemble</tspan></text></g>
+
+<path class="arrow" d="M442,45 H478"></path>
+
+<g class="decision">
+<polygon points="478,45 543,10 608,45 543,80"></polygon>
+<text x="543" y="41" text-anchor="middle" font-size="11"><tspan x="543">Epistemic score</tspan><tspan x="543" dy="13">&lt; threshold ?</tspan></text>
+</g>
+
+<path class="arrow" d="M608,45 C650,45 650,90 690,113"></path>
+<text class="branch-label" x="622" y="34">yes, 81.2%</text>
+
+<path class="arrow" d="M543,80 V150"></path>
+<text class="branch-label" x="551" y="118">no, 18.8%</text>
+
+<g class="box final"><rect x="630" y="88" width="120" height="50" rx="6"></rect>
+<text x="690" y="108" text-anchor="middle" font-size="12"><tspan x="690">Final</tspan><tspan x="690" dy="15">prediction</tspan></text></g>
+
+<g class="box"><rect x="324" y="150" width="140" height="50" rx="6"></rect>
+<text x="394" y="170" text-anchor="middle" font-size="12"><tspan x="394">SAM2 propagates mask</tspan><tspan x="394" dy="15">&plusmn;10 frames</tspan></text></g>
+
+<path class="arrow" d="M464,175 H484"></path>
+
+<g class="box"><rect x="484" y="150" width="140" height="50" rx="6"></rect>
+<text x="554" y="170" text-anchor="middle" font-size="12"><tspan x="554">Ensemble votes</tspan><tspan x="554" dy="15">on every frame</tspan></text></g>
+
+<path class="arrow" d="M624,175 H660"></path>
+
+<g class="box"><rect x="630" y="180" width="120" height="45" rx="6"></rect>
+<text x="690" y="197" text-anchor="middle" font-size="11"><tspan x="690">Combine</tspan><tspan x="690" dy="13">(weighted vote)</tspan></text></g>
+
+<path class="arrow" d="M690,180 V138"></path>
+</svg>
+</div>
+<p class="small">
+Shipped default: each member makes one deterministic pass, logits become Dirichlet
+evidence, evidences are combined with the ensemble weights, and an instance is
+tracked when its epistemic score is at or above the fold1-chosen threshold (18.8%).
+Each propagated frame is classified the same way, confident frames count for more, and
+the largest weighted total wins. The vote pipeline instead takes the plurality of 80
+stochastic votes and tracks where at least 9% disagree (29.1%).
+</p>
+<p><b>Why it is built this way.</b></p>
 <ul>
 <li><b>Per instrument, not per frame.</b> Frames hold 2 to 3 instruments, so each instrument's
 mask crop is classified on its own; whole-frame matching scores 0.36.</li>
-<li><b>Four different members vote.</b> Two ResNet-50s (320 px counts double) and two
-MobileNetV3-small models beat the best single model (0.9207 against 0.915), and their evidence
-says which predictions to doubt.</li>
-<li><b>Fix only what the model doubts.</b> Flagging 525 instances (18%) catches 82% of the
+<li><b>Four different members.</b> Two ResNet-50s (320 px counts double) and two
+MobileNetV3-small models beat the best single model (0.9207 against 0.915), and what they
+disagree on says which predictions to doubt.</li>
+<li><b>Correct only what the model doubts.</b> Flagging 525 instances (18%) catches 82% of the
 ensemble's errors, so a fraction of the compute delivers most of the gain.</li>
 <li><b>SAM2 supplies the missing evidence.</b> The annotated mask is propagated up to 10 frames
 each way, every frame is classified, and a confidence-weighted vote picks the class: at the
 shipped gate it fixes 121 instances and breaks 35. Optical-flow propagation scores 0.8448,
 below doing nothing, so the tracker matters.</li>
 <li><b>One pass instead of 80.</b> An evidential (Dirichlet) score gives the gate from a single
-forward pass per member, and ranks errors as well as softmax and better than the vote (AUROC
+forward pass per member and ranks errors as well as softmax and better than the vote (AUROC
 0.925 against 0.916 and 0.896).</li>
 </ul>
-<p><b>Next steps:</b> (1) try YOLO26 instead of SAM2 for the temporal correction, since tracking
-is the dominant cost (about 21 s per tracked instance); (2) switch to a three-member ensemble,
-because dropping the stretched MobileNet made no meaningful difference (ensemble alone 0.9264
-against 0.9240; with correction 0.9593 against 0.9577 at 833 instances, three seeds each).</p>
-<p class="small">Caveats: masks are ground truth (an oracle for location), the test set is five
-cases, and seed spread is about half a point.</p>
-</div>
 
 <h2>Results</h2>
 <p>
@@ -274,69 +328,6 @@ ImageNet (accuracy 0.9080 against 0.9116 on 2017, 0.8515 against 0.8794 on 2018,
 3 seeds), so there is no evidence that GraSP training transfers. The evidential
 ensemble trained the same way matches the vote ensemble (2018 after tracking 0.9266
 against 0.9279, McNemar p = 0.68).
-</p>
-
-<h2>How it works</h2>
-<div class="diagram">
-<svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram: frame and mask go to a per-instrument crop, then a 4-model ensemble. If the evidential epistemic score is below the threshold (81.2% of instances), the ensemble prediction is final. Otherwise (18.8%) SAM2 propagates the mask across nearby frames, the ensemble classifies every frame, and the frames are combined by a confidence-weighted evidential vote into the final prediction.">
-<defs>
-<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-<path d="M0,0 L6,3 L0,6 Z" fill="#475569"></path>
-</marker>
-</defs>
-
-<g class="box"><rect x="8" y="20" width="118" height="50" rx="6"></rect>
-<text x="67" y="40" text-anchor="middle" font-size="12"><tspan x="67">Video frame</tspan><tspan x="67" dy="15">+ instance mask</tspan></text></g>
-
-<path class="arrow" d="M126,45 H166"></path>
-
-<g class="box"><rect x="166" y="20" width="118" height="50" rx="6"></rect>
-<text x="225" y="40" text-anchor="middle" font-size="12"><tspan x="225">Per-instrument</tspan><tspan x="225" dy="15">crop</tspan></text></g>
-
-<path class="arrow" d="M284,45 H324"></path>
-
-<g class="box"><rect x="324" y="20" width="118" height="50" rx="6"></rect>
-<text x="383" y="40" text-anchor="middle" font-size="12"><tspan x="383">4-model</tspan><tspan x="383" dy="15">ensemble</tspan></text></g>
-
-<path class="arrow" d="M442,45 H478"></path>
-
-<g class="decision">
-<polygon points="478,45 543,10 608,45 543,80"></polygon>
-<text x="543" y="41" text-anchor="middle" font-size="11"><tspan x="543">Epistemic score</tspan><tspan x="543" dy="13">&lt; threshold ?</tspan></text>
-</g>
-
-<path class="arrow" d="M608,45 C650,45 650,90 690,113"></path>
-<text class="branch-label" x="622" y="34">yes, 81.2%</text>
-
-<path class="arrow" d="M543,80 V150"></path>
-<text class="branch-label" x="551" y="118">no, 18.8%</text>
-
-<g class="box final"><rect x="630" y="88" width="120" height="50" rx="6"></rect>
-<text x="690" y="108" text-anchor="middle" font-size="12"><tspan x="690">Final</tspan><tspan x="690" dy="15">prediction</tspan></text></g>
-
-<g class="box"><rect x="324" y="150" width="140" height="50" rx="6"></rect>
-<text x="394" y="170" text-anchor="middle" font-size="12"><tspan x="394">SAM2 propagates mask</tspan><tspan x="394" dy="15">&plusmn;10 frames</tspan></text></g>
-
-<path class="arrow" d="M464,175 H484"></path>
-
-<g class="box"><rect x="484" y="150" width="140" height="50" rx="6"></rect>
-<text x="554" y="170" text-anchor="middle" font-size="12"><tspan x="554">Ensemble votes</tspan><tspan x="554" dy="15">on every frame</tspan></text></g>
-
-<path class="arrow" d="M624,175 H660"></path>
-
-<g class="box"><rect x="630" y="180" width="120" height="45" rx="6"></rect>
-<text x="690" y="197" text-anchor="middle" font-size="11"><tspan x="690">Combine</tspan><tspan x="690" dy="13">(weighted vote)</tspan></text></g>
-
-<path class="arrow" d="M690,180 V138"></path>
-</svg>
-</div>
-<p class="small">
-Shipped default: each member makes one deterministic pass, logits become Dirichlet
-evidence, evidences are combined with the ensemble weights, and an instance is
-tracked when its epistemic score is at or above the fold1-chosen threshold (18.8%).
-Each propagated frame is classified the same way, confident frames count for more, and
-the largest weighted total wins. The vote pipeline instead takes the plurality of 80
-stochastic votes and tracks where at least 9% disagree (29.1%).
 </p>
 
 <h2>Uncertainty estimation</h2>
