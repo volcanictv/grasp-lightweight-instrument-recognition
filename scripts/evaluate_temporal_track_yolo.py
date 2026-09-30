@@ -58,6 +58,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save-every", type=int, default=50)
     parser.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--frame-logits-out", type=Path, default=None,
+                        help="npz of raw per-frame member logits, det_<index> shaped (frames, members, classes), "
+                             "the layout the evidential scorers read")
     parser.add_argument("--out", type=Path, required=True)
     return parser.parse_args()
 
@@ -113,6 +116,7 @@ def main() -> None:
 
     yolo = YOLO(str(args.yolo_weights))
     results = []
+    frame_store: dict[str, np.ndarray] = {}
     for n, idx in enumerate(indices):
         start = time.time()
         file_name, segmentation, box, label = ds.instances[idx]
@@ -147,15 +151,20 @@ def main() -> None:
             return crop_cache[key]
 
         valid_local_idxs = [li for li in sorted_local_idxs if get_crop(li, True) is not None]
-        per_frame_probs = []
+        per_frame_probs, per_frame_logits = [], []
         for li in valid_local_idxs:
             combined = np.zeros(len(class_names), dtype=np.float64)
+            member_logits = []
             for model, (transform, letterbox), weight in zip(models, transforms, weights):
                 image = transform(Image.fromarray(get_crop(li, letterbox))).unsqueeze(0).to(device)
                 with torch.no_grad():
-                    combined += weight * torch.softmax(model(image), dim=1).cpu().numpy()[0]
+                    logits = model(image)
+                member_logits.append(logits.float().cpu().numpy()[0])
+                combined += weight * torch.softmax(logits, dim=1).cpu().numpy()[0]
             per_frame_probs.append(combined)
+            per_frame_logits.append(np.stack(member_logits))
         per_frame_probs = np.stack(per_frame_probs)
+        frame_store[f"det_{idx}"] = np.stack(per_frame_logits)
 
         center_pos = valid_local_idxs.index(center_idx)
         single_pred = int(per_frame_probs[center_pos].argmax())
@@ -176,6 +185,9 @@ def main() -> None:
 
         if (n + 1) % args.save_every == 0 or n == len(indices) - 1:
             write_summary(args, results)
+            if args.frame_logits_out is not None:
+                args.frame_logits_out.parent.mkdir(parents=True, exist_ok=True)
+                np.savez_compressed(args.frame_logits_out, **frame_store)
 
 
 def write_summary(args: argparse.Namespace, results: list[dict]) -> None:
