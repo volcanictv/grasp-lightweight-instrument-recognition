@@ -51,6 +51,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split", default="test")
     parser.add_argument("--window", type=int, default=10)
     parser.add_argument("--min-iou", type=float, default=0.3)
+    parser.add_argument("--coast", type=int, default=0, help="consecutive missed frames a direction survives")
+    parser.add_argument("--center-fallback", action="store_true", help="also match detections against the center-frame mask")
     parser.add_argument("--yolo-conf", type=float, default=0.1)
     parser.add_argument("--yolo-imgsz", type=int, default=640)
     parser.add_argument("--error-cases-json", type=Path, default=None,
@@ -70,17 +72,25 @@ def mask_iou(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.logical_and(a, b).sum() / union) if union else 0.0
 
 
-def walk_track(ref: np.ndarray, frame_masks: list[list[np.ndarray]], min_iou: float) -> list[np.ndarray | None]:
-    """frame_masks is ordered outward from the center; returns one mask per
-    frame until the first frame with no detection at or above min_iou."""
-    track: list[np.ndarray | None] = []
-    for candidates in frame_masks:
-        scored = [(mask_iou(ref, m), m) for m in candidates]
+def walk_track(ref: np.ndarray, center: np.ndarray, frame_masks: list[list[np.ndarray]], min_iou: float,
+               coast: int, center_fallback: bool) -> dict[int, np.ndarray]:
+    """frame_masks is ordered outward from the center; returns {position: mask}. A direction ends after
+    more than `coast` consecutive frames with no detection at or above min_iou. With center_fallback a
+    detection also qualifies by its IoU with the center-frame mask, which recovers an instrument the
+    chain lost to one bad frame."""
+    track: dict[int, np.ndarray] = {}
+    misses = 0
+    for pos, candidates in enumerate(frame_masks):
+        scored = [(max(mask_iou(ref, m), mask_iou(center, m) if center_fallback else 0.0), m) for m in candidates]
         best = max(scored, key=lambda s: s[0], default=(0.0, None))
-        if best[1] is None or best[0] < min_iou:
-            break
-        ref = best[1]
-        track.append(ref)
+        if best[1] is not None and best[0] >= min_iou:
+            ref = best[1]
+            track[pos] = ref
+            misses = 0
+        else:
+            misses += 1
+            if misses > coast:
+                break
     return track
 
 
@@ -131,11 +141,11 @@ def main() -> None:
                                   device=args.device, verbose=False, stream=False)
         per_frame = [[] if r.masks is None else list(r.masks.data.cpu().numpy().astype(bool)) for r in detections]
 
-        forward = walk_track(gt_mask, per_frame[center_idx + 1:], args.min_iou)
-        backward = walk_track(gt_mask, per_frame[:center_idx][::-1], args.min_iou)
+        forward = walk_track(gt_mask, gt_mask, per_frame[center_idx + 1:], args.min_iou, args.coast, args.center_fallback)
+        backward = walk_track(gt_mask, gt_mask, per_frame[:center_idx][::-1], args.min_iou, args.coast, args.center_fallback)
         track_masks = {center_idx: gt_mask}
-        track_masks.update({center_idx + 1 + i: m for i, m in enumerate(forward)})
-        track_masks.update({center_idx - 1 - i: m for i, m in enumerate(backward)})
+        track_masks.update({center_idx + 1 + i: m for i, m in forward.items()})
+        track_masks.update({center_idx - 1 - i: m for i, m in backward.items()})
         sorted_local_idxs = sorted(track_masks)
         frame_arrays = {li: np.array(Image.open(paths[li]).convert("RGB")) for li in sorted_local_idxs}
 
@@ -194,7 +204,7 @@ def write_summary(args: argparse.Namespace, results: list[dict]) -> None:
     n = len(results)
     acc = lambda key: sum(r[key] for r in results) / n if n else float("nan")
     summary = {
-        "tracker": "yolo26", "yolo_weights": str(args.yolo_weights), "min_iou": args.min_iou, "yolo_conf": args.yolo_conf,
+        "tracker": "yolo26", "yolo_weights": str(args.yolo_weights), "min_iou": args.min_iou, "coast": args.coast, "center_fallback": args.center_fallback, "yolo_conf": args.yolo_conf,
         "split": args.split, "shard_id": 0, "num_shards": 1, "window": args.window, "n_instances": n,
         "single_frame_accuracy": acc("single_frame_correct"), "majority_vote_accuracy": acc("majority_vote_correct"),
         "avg_softmax_accuracy": acc("avg_softmax_correct"), "mean_seconds": acc("seconds"), "instances": results,
