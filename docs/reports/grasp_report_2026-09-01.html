@@ -103,7 +103,8 @@ seen during training (EndoVis 2017, 2018).
 <tr><td>+ tracking, 20% gate, pooled vote</td><td class="num">525</td><td class="num">0.9287</td><td class="num">0.9577</td></tr>
 <tr><td>+ tracking, 20% gate, uncertainty-weighted vote</td><td class="num">525</td><td class="num">0.9295</td><td class="num">0.9581</td></tr>
 <tr class="hi"><td>+ tracking, 9% gate, uncertainty-weighted vote (final pipeline)</td><td class="num">833</td><td class="num">0.9351</td><td class="num">0.9623</td></tr>
-<tr><td>Candidate: single-pass evidential ensemble + gate (not adopted)</td><td class="num">539</td><td class="num">0.9279</td><td class="num">0.9507</td></tr>
+<tr><td>Lighter candidate: single-pass evidential ensemble + gate, same 9% budget</td><td class="num">833</td><td class="num">0.9242</td><td class="num">0.9521</td></tr>
+<tr><td>Lighter candidate, at its own fold1-chosen threshold (4 passes, not 80)</td><td class="num">539</td><td class="num">0.9279</td><td class="num">0.9507</td></tr>
 </table>
 </div>
 <p class="small">
@@ -209,6 +210,9 @@ generalizes.
 <tr><td>EndoVis 2017</td><td>trained on EndoVis, 4-member vote ensemble</td><td class="num">19.9%</td><td class="num">0.9171</td><td class="num">0.8855</td></tr>
 <tr><td>EndoVis 2018</td><td>trained on EndoVis, 4-member vote ensemble</td><td class="num">27.2%</td><td class="num">0.8818</td><td class="num">0.8630</td></tr>
 <tr class="hi"><td>EndoVis 2018</td><td>+ SAM2 tracking (final pipeline)</td><td class="num">878 tracked</td><td class="num">0.9279</td><td class="num">0.9187</td></tr>
+<tr><td>EndoVis 2017</td><td>trained on EndoVis, single-pass evidential ensemble</td><td class="num">14.7%</td><td class="num">0.9214</td><td class="num">0.8896</td></tr>
+<tr><td>EndoVis 2018</td><td>trained on EndoVis, single-pass evidential ensemble</td><td class="num">27.0%</td><td class="num">0.8883</td><td class="num">0.8664</td></tr>
+<tr><td>EndoVis 2018</td><td>evidential + SAM2 tracking</td><td class="num">871 tracked</td><td class="num">0.9266</td><td class="num">0.9161</td></tr>
 </table>
 </div>
 <p class="small">
@@ -224,7 +228,10 @@ in the release.
 <p class="small">
 A single ResNet-50 started from GraSP weights is no better than one started from
 ImageNet (accuracy 0.9080 against 0.9116 on 2017, 0.8515 against 0.8794 on 2018,
-3 seeds), so there is no evidence that GraSP training transfers.
+3 seeds), so there is no evidence that GraSP training transfers. The evidential
+ensemble trained the same way behaves like the vote ensemble (2018 after tracking
+0.9266 against 0.9279, exact McNemar p = 0.68), so the gate carries over when the
+members are retrained, whichever signal drives it.
 </p>
 
 <h2>How it works</h2>
@@ -321,6 +328,11 @@ separate them.</li>
 (interval &minus;0.003 to +0.028) and AURC is the same. Its clearest edge is
 catching more errors in a fixed review budget, on one seed. It is not better
 calibrated (overconfident: confidence 0.960 against accuracy 0.921).</li>
+<li><b>Seed noise is about a third of a point.</b> Three seeds of the evidential
+ensemble give accuracy 0.9240 &plusmn; 0.0031 (0.9207 to 0.9266) and AUROC
+0.9225 &plusmn; 0.0076 (0.914 to 0.928). The reported 0.9207 is the lowest seed, and
+the base gap to the vote ensemble (0.9266) is inside one SD of the seed mean.
+The end-to-end one-point gap was measured on seed 42 only.</li>
 <li><b>End to end the signals land within about a point.</b> At matched budgets of
 525, 649 and 833 instances the evidential pipeline scores 0.9507, 0.9514 and
 0.9521 against the vote pipeline's 0.9581, 0.9595 and 0.9623 (single seed, different
