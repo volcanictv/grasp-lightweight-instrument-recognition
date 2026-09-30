@@ -321,10 +321,14 @@ expected to transfer to new cases and hardware, and AUROC says nothing about
 whether it does.</li>
 <li><b>Softmax confidence is documented as poorly calibrated</b> (Guo et al.,
 2017), and calibration degrades further under dataset shift (Ovadia et al.,
-2019). The part expected to drift is its operating point, not its ranking. This
-is not measured here.</li>
+2019). The expectation was that its operating point would drift under shift
+while its ranking would not. Measured on EndoVis (see the cross-dataset section),
+its threshold drifts by the same amount as the vote gate's, so this argument
+does not separate the two.</li>
 <li><b>Vote disagreement uses class votes only,</b> has no fitted parameters,
-and needs no softmax probability. That is the reason it is the gate.</li>
+and needs no softmax probability. That was the original reason for using it as
+the gate; our own measurements do not show it is more shift-stable than softmax
+or the evidential score, and it ranks errors worst of the three (below).</li>
 </ul>
 <p class="small">
 MC Dropout disagreement and softmax confidence carry the same information (rank
@@ -336,16 +340,50 @@ confidence (78.6% against 80.2% at 20%). Its blind spot is unanimous errors,
 where every pass and member agrees on the wrong class (8 of the 210).
 </p>
 <p class="small">
-Evidential (Dirichlet, variance-based) uncertainty (Duan et al., WACV 2024) was
-tried as a single-pass alternative to the 80-pass vote, now added to the table
-and chart above: 0.925 on official test, matching the 0.927 found earlier on
-held-out cases. It matches or beats the vote gate's AUROC at 1/80th the cost,
-and catches more of the vote gate's unanimous-error blind spot. But its
-threshold is less stable under real shift, not more: fixed to flag 25% of
-instances on GraSP, it flags 84&ndash;87% on EndoVis against the vote gate's
-78&ndash;83%. Not adopted, since threshold stability under shift is why the gate
-uses MC Dropout at all.
+Evidential (Dirichlet, variance-based) uncertainty (Duan et al., WACV 2024) is a
+single-pass alternative to the 80-pass vote: 0.925 AUROC on official test,
+matching the 0.927 found earlier on held-out cases, at 1/80th the cost, and it
+catches more of the vote gate's unanimous-error blind spot. Zero-shot on EndoVis
+its fixed threshold flags 84&ndash;87% of instances against the vote gate's
+78&ndash;83%, but softmax flags 79&ndash;84%, and the zero-shot error rate is
+47&ndash;54%, so flagging most instances is not clearly wrong and the comparison
+does not separate the signals. Retrained on EndoVis, the evidential gate behaves
+like the vote gate (2018 after SAM2 correction 0.9266 against 0.9279, exact
+McNemar p = 0.68). On GraSP official test, at matched correction budgets of 525,
+649 and 833 instances, the single-pass evidential pipeline scores 0.9507, 0.9514
+and 0.9521 against the vote pipeline's 0.9581, 0.9595 and 0.9623: about a point
+lower, single seed, with a different ensemble and combine rule.
 </p>
+<p class="small"><b>Beyond AUROC.</b> Other views of the same signals on official
+test, each scored against its own ensemble's errors (the vote and softmax come
+from the shipped ensemble, 0.9266; evidential from the seed-42 evidential
+ensemble, 0.9207, so this also compares two models, one seed each).</p>
+<div class="tablewrap">
+<table>
+<tr><th>signal</th><th class="num">AUROC</th><th class="num">AUPRC</th><th class="num">AURC (lower is better)</th><th class="num">errors caught in 833 flagged</th><th class="num">calibration error (ECE)</th></tr>
+<tr><td>MC Dropout vote disagreement</td><td class="num">0.896</td><td class="num">0.467</td><td class="num">0.0136</td><td class="num">86.2%</td><td class="num">0.025</td></tr>
+<tr><td>Softmax confidence</td><td class="num">0.915</td><td class="num">0.504</td><td class="num">0.0102</td><td class="num">90.0%</td><td class="num">0.032</td></tr>
+<tr class="hi"><td>Evidential epistemic score</td><td class="num">0.925</td><td class="num">0.527</td><td class="num">0.0103</td><td class="num">95.6%</td><td class="num">0.040</td></tr>
+</table>
+</div>
+<ul>
+<li><b>The vote ranks errors worst.</b> Softmax and the evidential score beat it on
+AUROC and AURC, with case-level intervals that exclude zero.</li>
+<li><b>Evidential against softmax is not resolved.</b> AUROC differs by +0.011
+(interval &minus;0.003 to +0.028), AURC is the same to four decimals, and AUPRC
+changes sign between official test and fold1. Its clearest edge is catching more
+errors inside a fixed review budget (95.6% against 90.0% at 833), on one seed
+and a different model.</li>
+<li><b>Calibration is not better.</b> The evidential mean probability is
+overconfident (mean confidence 0.960 against accuracy 0.921, ECE 0.040 against
+0.032 for softmax). A plain softmax of the evidential model's own logits
+calibrates better (ECE 0.026).</li>
+<li><b>Closed-jaw errors look the same to every signal.</b> The three similar
+pairs hold 59 of the 210 errors and are as epistemically uncertain as other
+errors, so the evidential split does not explain the single-frame ceiling: the
+gate flags them as often as other errors and correction fails because the
+information is not in the frame.</li>
+</ul>
 <p class="small">
 Tried patching the blind spot directly: add evidential uncertainty as a second
 trigger alongside the 9% gate, aimed only at unanimous errors. On held-out cases
