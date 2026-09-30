@@ -1,4 +1,4 @@
-"""Inline-SVG figures for docs/reports/grasp_report_2026-09-01.html, generated
+﻿"""Inline-SVG figures for docs/reports/grasp_report_2026-09-01.html, generated
 from the saved result files so every plotted number is traceable:
 
   votes      how one instrument's 80 votes become a prediction, an
@@ -224,10 +224,86 @@ def figure_perclass() -> str:
     return "".join(parts)
 
 
+def figure_uncertainty() -> str:
+    """Three panels from saved results: ROC, risk-coverage, reliability (official test)."""
+    roc = json.loads((REPORTS / "final_pipeline" / "roc_curves.json").read_text())["curves"]
+    m = json.loads((REPORTS / "uncertainty_metrics" / "results.json").read_text())["official_test"]
+    grid = m["rc_grid"]
+    sig = m["signals"]
+    cal = m["calibration"]
+    series = [("MC Dropout vote", BLUE, "", "MC Dropout vote disagreement", "B1_mc_vote_disagreement", "mc_vote_share"),
+              ("Softmax confidence", AQUA, "", "Softmax confidence (baseline)", "B2_softmax_confidence", "softmax_avg"),
+              ("Evidential epistemic", YELLOW, "6 4", "Evidential epistemic uncertainty (own prediction)", "S1_epistemic", "evidential_mu_bar")]
+    w, h = 1000, 400
+    pw, ph, py0 = 240, 240, 40
+    origins = [50, 380, 710]
+    parts = [svg_open(w, h, "Uncertainty signals on the official test set: ROC, risk-coverage and reliability")]
+
+    def axes(ox, xmax, ymax, xt, yt, fx, fy, xlabel, ylabel, title):
+        parts.append(text(ox, py0 - 16, title, INK, size=12, weight="600"))
+        for v in xt:
+            x = ox + pw * v / xmax
+            parts.append(line(x, py0, x, py0 + ph))
+            parts.append(text(x, py0 + ph + 15, fx(v), MUTED, anchor="middle", size=10))
+        for v in yt:
+            y = py0 + ph * (1 - v / ymax)
+            parts.append(line(ox, y, ox + pw, y))
+            parts.append(text(ox - 6, y + 3, fy(v), MUTED, anchor="end", size=10))
+        parts.append(line(ox, py0 + ph, ox + pw, py0 + ph, BASE))
+        parts.append(line(ox, py0, ox, py0 + ph, BASE))
+        parts.append(text(ox + pw / 2, py0 + ph + 34, xlabel, SUB, anchor="middle", size=10))
+        parts.append(f'<text transform="translate({ox - 34},{py0 + ph / 2}) rotate(-90)" fill="{SUB}" text-anchor="middle" font-size="10">{html.escape(ylabel)}</text>')
+
+    def poly(pts, colour, dash, tip):
+        d = f' stroke-dasharray="{dash}"' if dash else ""
+        parts.append(f'<polyline points="{pts}" fill="none" stroke="{colour}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"{d}><title>{html.escape(tip)}</title></polyline>')
+
+    # A: ROC
+    ox = origins[0]
+    axes(ox, 1, 1, [0, .2, .4, .6, .8, 1], [0, .2, .4, .6, .8, 1], lambda v: f"{v:.1f}", lambda v: f"{v:.1f}",
+         "Correct predictions flagged", "Errors caught", "A. ROC (rank errors above correct)")
+    parts.append(line(ox, py0 + ph, ox + pw, py0, MUTED, 1))
+    roc_order = [(s_[0], s_[1], s_[2], s_[3]) for s_ in series]
+    roc_order.insert(1, ("Between-member (dropout off)", ORANGE, "", "Between-member disagreement (dropout off)"))
+    for label, colour, dash, key in roc_order:
+        c = roc[key.replace(" (main method)", "")]
+        pts = " ".join(f"{ox + pw * f:.1f},{py0 + ph * (1 - t):.1f}" for f, t in zip(c["fpr"], c["tpr"]))
+        poly(pts, colour, dash, f"{label}: AUROC {c['auroc']:.3f}")
+
+    # B: risk-coverage
+    ox = origins[1]
+    ymax = 0.08
+    axes(ox, 1, ymax, [0, .25, .5, .75, 1], [0, .02, .04, .06, .08], lambda v: f"{v:.0%}", lambda v: f"{v:.0%}",
+         "Share of instances kept (most certain first)", "Error rate among kept", "B. Risk-coverage (lower is better)")
+    for label, colour, dash, _k, sk, _ck in series:
+        risks = sig[sk]["risk_coverage"]
+        pts = " ".join(f"{ox + pw * g:.1f},{py0 + ph * (1 - min(r, ymax) / ymax):.1f}" for g, r in zip(grid, risks))
+        poly(pts, colour, dash, f"{label}: AURC {sig[sk]['aurc']:.4f}")
+
+    # C: reliability
+    ox = origins[2]
+    axes(ox, 1, 1, [0, .2, .4, .6, .8, 1], [0, .2, .4, .6, .8, 1], lambda v: f"{v:.1f}", lambda v: f"{v:.1f}",
+         "Predicted confidence", "Actual accuracy", "C. Reliability (on the diagonal is calibrated)")
+    parts.append(line(ox, py0 + ph, ox + pw, py0, MUTED, 1))
+    for label, colour, dash, _k, _sk, ck in series:
+        bins = [b for b in cal[ck]["reliability"] if b["n"] >= 10]
+        pts = " ".join(f"{ox + pw * b['mean_confidence']:.1f},{py0 + ph * (1 - b['accuracy']):.1f}" for b in bins)
+        poly(pts, colour, dash, f"{label}: ECE {cal[ck]['ece_15bin']:.3f}")
+
+    entries = []
+    for label, colour, dash, _k, sk, ck in series:
+        entries.append((f"{label}  AUROC {roc[_k.replace(' (main method)', '')]['auroc']:.3f}, AURC {sig[sk]['aurc']:.4f}, ECE {cal[ck]['ece_15bin']:.3f}", colour, "line", dash))
+    entries.append((f"Between-member (dropout off)  AUROC {roc['Between-member disagreement (dropout off)']['auroc']:.3f} (panel A only)", ORANGE, "line", ""))
+    parts.append(legend(entries[:2], 50, 352, 18))
+    parts.append(legend(entries[2:], 520, 352, 18))
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def main() -> None:
     out_dir = REPORTS / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
-    for name, fn in (("votes", figure_votes), ("roc", figure_roc), ("sweep", figure_sweep), ("perclass", figure_perclass)):
+    for name, fn in (("votes", figure_votes), ("roc", figure_roc), ("uncertainty", figure_uncertainty), ("sweep", figure_sweep), ("perclass", figure_perclass)):
         path = out_dir / f"report_{name}.svg"
         path.write_text(fn(), encoding="utf-8")
         print(f"wrote {path} ({path.stat().st_size / 1024:.1f} KB)")
