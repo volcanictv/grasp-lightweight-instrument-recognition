@@ -36,7 +36,7 @@ def main() -> None:
     start = time.time()
     model.train(
         data=str(args.data), imgsz=cfg["data"]["image_size"], epochs=t["epochs"], patience=t["patience"],
-        batch=t["batch_size"], seed=t["seed"], deterministic=True, device=t["device"], workers=t["workers"],
+        batch=t["batch_size"], seed=t["seed"], val=t.get("val", True), deterministic=True, device=t["device"], workers=t["workers"],
         fliplr=t["fliplr"], flipud=t["flipud"], degrees=t["degrees"], hsv_h=t["hsv_h"],
         project=str(run_dir), name=run_id, exist_ok=False,
     )
