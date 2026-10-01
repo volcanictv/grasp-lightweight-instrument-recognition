@@ -16,14 +16,16 @@ from surgical_ai.realtime.core import BufferedFrame, Detection
 class YoloDetector:
     """YOLO26-seg as a stand-in for the lab detector; class-agnostic, only masks and scores are used."""
 
-    def __init__(self, weights: Path, device: str = "cuda:0", conf: float = 0.1, imgsz: int = 640):
+    def __init__(self, weights: Path, device: str = "cuda:0", conf: float = 0.25, imgsz: int = 640):
         from ultralytics import YOLO
 
         self.model, self.device, self.conf, self.imgsz = YOLO(str(weights)), device, conf, imgsz
 
     def detect(self, frame: np.ndarray) -> list[Detection]:
-        # ultralytics reads numpy frames as BGR; the pipeline carries RGB
-        result = self.model.predict(frame[..., ::-1], conf=self.conf, imgsz=self.imgsz, retina_masks=True, device=self.device, verbose=False)[0]
+        # ultralytics reads numpy frames as BGR; the pipeline carries RGB. NMS is class-agnostic because the class
+        # is ignored here: per-class NMS would report one instrument twice under two classes.
+        result = self.model.predict(frame[..., ::-1], conf=self.conf, imgsz=self.imgsz, retina_masks=True, agnostic_nms=True,
+                                    device=self.device, verbose=False)[0]
         if result.masks is None:
             return []
         masks = result.masks.data.cpu().numpy().astype(bool)
