@@ -7,7 +7,7 @@ stream:
 
 detector:
   name: yolo           # yolo (stand-in) | stub; the lab detector plugs in through surgical_ai.realtime.core.Detector
-  conf: 0.1
+  conf: 0.25
   imgsz: 640
 
 classifier:
