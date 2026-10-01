@@ -52,6 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ensemble-config", type=Path, default=REPO_ROOT / "configs" / "region_ensemble.yaml")
     parser.add_argument("--split", default="test")
     parser.add_argument("--window", type=int, default=10)
+    parser.add_argument("--causal", action="store_true", help="past frames only")
     parser.add_argument("--min-iou", type=float, default=0.3)
     parser.add_argument("--detections-cache", type=Path, default=None,
                         help="pickle from scripts/cache_yolo_detections.py; skips YOLO inference")
@@ -149,7 +150,7 @@ def main() -> None:
         gt_mask = decode_instance_mask(segmentation).astype(bool)
         area_pct = float(gt_mask.sum() / (segmentation["size"][0] * segmentation["size"][1]) * 100)
 
-        frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window)
+        frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window, 0 if args.causal else None)
         paths = [str(frames_root / case / f"{fn:05d}.jpg") for fn in frame_nums]
         per_frame = [cache[p] for p in paths] if cache is not None else detect(yolo, paths, args)
 
@@ -218,7 +219,7 @@ def write_summary(args: argparse.Namespace, results: list[dict]) -> None:
     acc = lambda key: sum(r[key] for r in results) / n if n else float("nan")
     summary = {
         "tracker": "yolo26", "yolo_weights": str(args.yolo_weights), "min_iou": args.min_iou, "coast": args.coast, "center_fallback": args.center_fallback, "yolo_conf": args.yolo_conf,
-        "split": args.split, "shard_id": 0, "num_shards": 1, "window": args.window, "n_instances": n,
+        "split": args.split, "shard_id": 0, "num_shards": 1, "window": args.window, "causal": args.causal, "n_instances": n,
         "single_frame_accuracy": acc("single_frame_correct"), "majority_vote_accuracy": acc("majority_vote_correct"),
         "avg_softmax_accuracy": acc("avg_softmax_correct"), "mean_seconds": acc("seconds"), "instances": results,
     }

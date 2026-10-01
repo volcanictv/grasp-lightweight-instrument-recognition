@@ -31,6 +31,7 @@ def main() -> None:
     ap.add_argument("--yolo-weights", type=Path, required=True)
     ap.add_argument("--split", default="fold1")
     ap.add_argument("--window", type=int, default=10)
+    ap.add_argument("--causal", action="store_true", help="cache past frames only")
     ap.add_argument("--yolo-conf", type=float, default=0.1)
     ap.add_argument("--yolo-imgsz", type=int, default=640)
     ap.add_argument("--error-cases-json", type=Path, required=True)
@@ -46,7 +47,7 @@ def main() -> None:
     paths: set[str] = set()
     for idx in indices:
         case, stem = ds.instances[idx][0].split("/")
-        nums, _ = build_track_frame_nums(frames_root, case, int(stem.replace(".jpg", "")), args.window)
+        nums, _ = build_track_frame_nums(frames_root, case, int(stem.replace(".jpg", "")), args.window, 0 if args.causal else None)
         paths.update(str(frames_root / case / f"{n:05d}.jpg") for n in nums)
     ordered = sorted(paths)
     print(f"{len(ordered)} unique frames for {len(indices)} instances")
