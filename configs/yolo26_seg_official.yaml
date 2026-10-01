@@ -1,0 +1,19 @@
+# fixed schedule, no per-epoch validation: official validates on the test cases, so best.pt selection is not allowed
+task: instance_segmentation_tracker
+model:
+  weights: yolo26s-seg.pt
+data:
+  split: official
+  image_size: 640
+training:
+  batch_size: 16
+  epochs: 60
+  patience: 60
+  seed: 42
+  val: false
+  device: 0
+  workers: 4
+  fliplr: 0.5
+  flipud: 0.0
+  degrees: 0.0
+  hsv_h: 0.0

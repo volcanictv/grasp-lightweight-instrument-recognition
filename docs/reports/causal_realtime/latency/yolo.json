@@ -1,0 +1,13 @@
+{
+ "stage": "yolo",
+ "device": "cuda:0",
+ "gpu": "NVIDIA TITAN Xp",
+ "yolo_weights": "experiments/yolo26_seg_fold1_20260930-125022/weights/best.pt",
+ "params_m": 11.439881,
+ "per_frame": {
+  "n": 200,
+  "median_ms": 10.50914404913783,
+  "p95_ms": 10.68783022928983,
+  "mean_ms": 10.529053437057883
+ }
+}

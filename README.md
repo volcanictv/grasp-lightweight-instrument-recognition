@@ -15,7 +15,7 @@ that," in increasing order of how precisely they answer it:
 Full results, figures, and the actual accuracy numbers live in the published
 report, not here:
 
-**https://volcanictv.github.io/grasp-lightweight-instrument-recognition/reports/grasp_report_2026-09-01.html**
+**https://volcanictv.github.io/grasp-lightweight-instrument-recognition/reports/classifier_report.html**
 
 **Default region-classification pipeline (from 2026-09-29):** a four-member
 evidential ensemble (single deterministic pass per member), with instances whose

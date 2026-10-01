@@ -1,0 +1,18 @@
+{
+ "stage": "propagate",
+ "device": "cuda:0",
+ "gpu": "NVIDIA TITAN Xp",
+ "params_m": 224.446642,
+ "per_instance": {
+  "n": 18,
+  "median_ms": 12438.968302565627,
+  "p95_ms": 12445.378737803549,
+  "mean_ms": 12438.732011631751
+ },
+ "per_propagated_frame": {
+  "n": 18,
+  "median_ms": 621.9484151282813,
+  "p95_ms": 622.2689368901774,
+  "mean_ms": 621.9366005815876
+ }
+}

@@ -55,6 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ensemble-config", type=Path, default=REPO_ROOT / "configs" / "region_ensemble.yaml")
     parser.add_argument("--split", default="test")
     parser.add_argument("--window", type=int, default=10)
+    parser.add_argument("--causal", action="store_true", help="past frames only (a live system has no future frames)")
     parser.add_argument("--shard-id", type=int, default=0)
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--error-cases-json", type=Path, default=None,
@@ -78,7 +79,9 @@ def parse_args() -> argparse.Namespace:
 def _write_frames(args: argparse.Namespace, frame_store: dict) -> None:
     arrays = {}
     for idx, (det, mc, center_pos, local_idxs) in frame_store.items():
-        arrays[f"det_{idx}"], arrays[f"mc_{idx}"] = det, mc
+        arrays[f"det_{idx}"] = det
+        if mc is not None:
+            arrays[f"mc_{idx}"] = mc
         arrays[f"center_{idx}"], arrays[f"frames_{idx}"] = np.array(center_pos), np.array(local_idxs)
     args.frame_logits_out.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.frame_logits_out, **arrays)
@@ -120,7 +123,10 @@ def crop_from_mask(frame: np.ndarray, mask: np.ndarray, letterbox: bool, letterb
     return crop
 
 
-def build_track_frame_nums(frames_root: Path, case: str, center_num: int, window: int) -> tuple[list[int], int]:
+def build_track_frame_nums(frames_root: Path, case: str, center_num: int, window: int,
+                           forward_window: int | None = None) -> tuple[list[int], int]:
+    """forward_window defaults to window; 0 gives the causal (past frames only) window."""
+    forward_window = window if forward_window is None else forward_window
     frame_nums = [center_num]
     for offset in range(1, window + 1):
         if (frames_root / case / f"{center_num - offset:05d}.jpg").exists():
@@ -128,7 +134,7 @@ def build_track_frame_nums(frames_root: Path, case: str, center_num: int, window
         else:
             break
     center_idx = len(frame_nums) - 1
-    for offset in range(1, window + 1):
+    for offset in range(1, forward_window + 1):
         if (frames_root / case / f"{center_num + offset:05d}.jpg").exists():
             frame_nums.append(center_num + offset)
         else:
@@ -182,7 +188,7 @@ def main() -> None:
         gt_mask = decode_instance_mask(segmentation).astype(bool)
         area_pct = float(gt_mask.sum() / (segmentation["size"][0] * segmentation["size"][1]) * 100)
 
-        frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window)
+        frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window, 0 if args.causal else None)
 
         tmp_dir = args.tmp_dir
         if tmp_dir.exists():
@@ -195,9 +201,10 @@ def main() -> None:
         predictor.add_new_mask(state, frame_idx=center_idx, obj_id=1, mask=gt_mask)
 
         track_masks: dict[int, np.ndarray] = {center_idx: gt_mask}
-        for frame_idx, _obj_ids, mask_logits in predictor.propagate_in_video(state):
-            if frame_idx != center_idx:
-                track_masks[frame_idx] = (mask_logits[0, 0] > 0).cpu().numpy()
+        if not args.causal:
+            for frame_idx, _obj_ids, mask_logits in predictor.propagate_in_video(state):
+                if frame_idx != center_idx:
+                    track_masks[frame_idx] = (mask_logits[0, 0] > 0).cpu().numpy()
         for frame_idx, _obj_ids, mask_logits in predictor.propagate_in_video(state, reverse=True):
             if frame_idx != center_idx:
                 track_masks[frame_idx] = (mask_logits[0, 0] > 0).cpu().numpy()
@@ -233,21 +240,23 @@ def main() -> None:
                 with torch.no_grad():
                     logits = model(image)
                     probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
-                    if args.mc_samples:
+                    if args.frame_logits_out is not None:
                         frame_det.append(logits.float().cpu().numpy()[0])
+                    if args.mc_samples:
                         enable_mc_dropout(model)
                         frame_mc.append(model(image.repeat(args.mc_samples, 1, 1, 1)).float().cpu().numpy())
                         model.eval()
                 combined += weight * probs
             per_frame_ensemble_probs.append(combined)
-            if args.mc_samples:
+            if args.frame_logits_out is not None:
                 det_frames.append(np.stack(frame_det))
+            if args.mc_samples:
                 mc_frames.append(np.stack(frame_mc))
         per_frame_ensemble_probs = np.stack(per_frame_ensemble_probs)
 
         center_pos = valid_local_idxs.index(center_idx) if center_idx in valid_local_idxs else 0
-        if args.mc_samples:
-            frame_store[idx] = (np.stack(det_frames), np.stack(mc_frames), center_pos, valid_local_idxs)
+        if args.frame_logits_out is not None:
+            frame_store[idx] = (np.stack(det_frames), np.stack(mc_frames) if mc_frames else None, center_pos, valid_local_idxs)
         single_pred = int(per_frame_ensemble_probs[center_pos].argmax())
 
         per_frame_preds = per_frame_ensemble_probs.argmax(axis=1)
@@ -267,11 +276,11 @@ def main() -> None:
 
         if (n + 1) % args.save_every == 0 or n == len(indices) - 1:
             _write_summary(args, results)
-            if args.mc_samples:
+            if args.frame_logits_out is not None:
                 _write_frames(args, frame_store)
 
     _write_summary(args, results)
-    if args.mc_samples:
+    if args.frame_logits_out is not None:
         _write_frames(args, frame_store)
 
 
@@ -282,7 +291,7 @@ def _write_summary(args: argparse.Namespace, results: list[dict]) -> None:
     avg_acc = sum(r["avg_softmax_correct"] for r in results) / n_total if n_total else float("nan")
     summary = {
         "split": args.split, "shard_id": args.shard_id, "num_shards": args.num_shards,
-        "window": args.window, "n_instances": n_total,
+        "window": args.window, "causal": args.causal, "n_instances": n_total,
         "single_frame_accuracy": single_acc, "majority_vote_accuracy": majority_acc, "avg_softmax_accuracy": avg_acc,
         "instances": results,
     }
