@@ -1,0 +1,38 @@
+{
+ "tracker": "yolo26s",
+ "k": 15,
+ "tau": 0.000575,
+ "n": 2861,
+ "base": {
+  "accuracy": 0.9143656064313177,
+  "macro_f1": 0.8834159288039949,
+  "per_class_f1": {
+   "Bipolar": 0.9158,
+   "Prograsp": 0.8032,
+   "LargeNeedle": 0.926,
+   "MonoScissors": 0.9662,
+   "Suction": 0.9066,
+   "ClipApplier": 0.9114,
+   "Grasper": 0.7547
+  }
+ },
+ "tracked": {
+  "threshold": 0.000575,
+  "tracked": 313,
+  "share": 0.10940230688570429,
+  "accuracy": 0.9241523942677385,
+  "macro_f1": 0.8898689855648627,
+  "fixed": 56,
+  "broken": 28
+ },
+ "per_class_f1": {
+  "Bipolar": 0.9249,
+  "Prograsp": 0.8078,
+  "LargeNeedle": 0.9473,
+  "MonoScissors": 0.9701,
+  "Suction": 0.9236,
+  "ClipApplier": 0.8974,
+  "Grasper": 0.7582
+ },
+ "mean_frames_used": 8.536741214057509
+}
