@@ -41,6 +41,9 @@ def main() -> None:
     ap.add_argument("--stub", action="store_true", help="stub detector and classifier: no models needed")
     ap.add_argument("--realtime", action="store_true", help="pace arrivals on the wall clock")
     ap.add_argument("--max-frames", type=int, default=None)
+    ap.add_argument("--sync-refine", action="store_true",
+                    help="finish every refinement before the next frame, so each frame's latency is its full cost (all "
+                         "instruments of a frame as one unit) with no queueing from earlier frames")
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
@@ -63,7 +66,7 @@ def main() -> None:
         tracker = adapters.SamStyleTracker(t["sam_config"], args.sam_checkpoint, args.device)
 
     pipeline = RealtimePipeline(detector, classifier, np.array(cfg["classifier"]["weights"]), cfg["gate"]["threshold"],
-                                tracker, t["look_back"])
+                                tracker, t["look_back"], synchronous_refine=args.sync_refine)
     if args.video:
         frames = stream.video_source(args.video)
     elif args.frames_dir:
@@ -76,7 +79,7 @@ def main() -> None:
 
     start = time.time()
     report = run_stream(pipeline, arrivals, hz, args.max_frames).to_dict()
-    report["extras"] = {"wall_seconds": time.time() - start, "paced": args.realtime, "tracker": t["name"], "stub": args.stub}
+    report["extras"] = {"wall_seconds": time.time() - start, "paced": args.realtime, "sync_refine": args.sync_refine, "tracker": t["name"], "stub": args.stub}
     try:
         import torch
 

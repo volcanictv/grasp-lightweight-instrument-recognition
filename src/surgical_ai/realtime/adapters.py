@@ -22,7 +22,8 @@ class YoloDetector:
         self.model, self.device, self.conf, self.imgsz = YOLO(str(weights)), device, conf, imgsz
 
     def detect(self, frame: np.ndarray) -> list[Detection]:
-        result = self.model.predict(frame, conf=self.conf, imgsz=self.imgsz, retina_masks=True, device=self.device, verbose=False)[0]
+        # ultralytics reads numpy frames as BGR; the pipeline carries RGB
+        result = self.model.predict(frame[..., ::-1], conf=self.conf, imgsz=self.imgsz, retina_masks=True, device=self.device, verbose=False)[0]
         if result.masks is None:
             return []
         masks = result.masks.data.cpu().numpy().astype(bool)
