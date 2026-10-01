@@ -25,7 +25,7 @@ from sklearn.metrics import f1_score
 import evidential_three_member_yolo as t
 
 
-def load(directory: Path) -> dict[int, tuple[np.ndarray, int]]:
+def load(directory: Path, prefix: str = "fold1") -> dict[int, tuple[np.ndarray, int]]:
     """index -> (frame logits, center position)."""
     centers_json: dict[int, int] = {}
     for path in directory.glob("*tracked_shard*.json"):
@@ -33,7 +33,7 @@ def load(directory: Path) -> dict[int, tuple[np.ndarray, int]]:
             if "frames_backward" in r:
                 centers_json[r["index"]] = r["frames_backward"]
     out = {}
-    for path in sorted(directory.glob("fold1_frames*.npz")):  # official files share the det_<idx> key space
+    for path in sorted(directory.glob(f"{prefix}_frames*.npz")):  # official files share the det_<idx> key space
         z = np.load(path)
         for key in z.files:
             if not key.startswith("det_"):
