@@ -1,0 +1,11 @@
+{
+ "stage": "match",
+ "device": "cuda:0",
+ "gpu": "NVIDIA TITAN Xp",
+ "per_instance": {
+  "n": 5,
+  "median_ms": 2.26927149342373,
+  "p95_ms": 2.2853307286277413,
+  "mean_ms": 2.2735753981396556
+ }
+}
