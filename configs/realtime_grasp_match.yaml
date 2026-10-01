@@ -1,0 +1,28 @@
+# Real-time (causal, 1 Hz) pipeline. Gate and look-back are the fold1-calibrated values locked in
+# docs/reports/causal_tracker_preregistration.md for tracker A (EdgeTAM); tracker B (YOLO26s matching) uses
+# look_back 15 and gate_threshold 5.75e-4.
+stream:
+  native_fps: 1
+  sample_hz: 1
+
+detector:
+  name: yolo           # yolo (stand-in) | stub; the lab detector plugs in through surgical_ai.realtime.core.Detector
+  conf: 0.1
+  imgsz: 640
+
+classifier:
+  ensemble_config: configs/evidential/ens_E_official_s42_lam0p01a10.yaml
+  members: [resnet50_320, baseline, letterbox_crop]
+  weights: [0.40, 0.30, 0.30]
+
+gate:
+  threshold: 0.000285
+
+tracker:
+  name: match
+  look_back: 20
+  sam_config: configs/edgetam.yaml
+  match:
+    min_iou: 0.1
+    coast: 3
+    center_fallback: true

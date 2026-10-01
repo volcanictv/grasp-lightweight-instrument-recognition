@@ -33,6 +33,10 @@ class StreamReport:
     refine_compute_ms: dict
     refined_frames_used: dict
     max_pending_refinements: int
+    s1: dict
+    instances_per_frame: dict
+    s1_values: list
+    frame_ms: list
     extras: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -71,4 +75,7 @@ def run_stream(pipeline: RealtimePipeline, arrivals: Iterable[tuple[int, np.ndar
         frame_latency_ms=percentiles(frame_latency), detect_ms=percentiles([o.detect_ms for o, _ in outputs]),
         classify_ms=percentiles([o.classify_ms for o, _ in outputs]), refine_latency_ms=percentiles(refine_latency),
         refine_compute_ms=percentiles(refine_compute), refined_frames_used=percentiles([float(u) for u in used]),
-        max_pending_refinements=max_pending)
+        max_pending_refinements=max_pending, s1=percentiles([r.s1 for o, _ in outputs for r in o.instances]),
+        instances_per_frame=percentiles([float(len(o.instances)) for o, _ in outputs]),
+        s1_values=[r.s1 for o, _ in outputs for r in o.instances],
+        frame_ms=[[len(o.instances), (o.done_at - a) * 1000, sum(1 for r in o.instances if r.gated)] for o, a in outputs])

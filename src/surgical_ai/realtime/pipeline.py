@@ -85,7 +85,7 @@ class RealtimePipeline:
     def _refine(self, history: list[BufferedFrame], frame: np.ndarray, mask: np.ndarray, logits: np.ndarray) -> Refined:
         start = time.perf_counter()
         past = self.tracker.track_back(history, frame, mask)
-        stack = [self.classifier.logits(history[pos].frame, m) for pos, m in sorted(past.items())] + [logits]
+        stack = [self.classifier.logits(history[pos].frame, m) for pos, m in sorted(past.items()) if m.any()] + [logits]  # a tracker may report a lost instrument as an empty mask
         label = fuse_frames(np.stack(stack), self.weights)
         return Refined(label, len(stack), time.perf_counter() - start, self.clock())
 
