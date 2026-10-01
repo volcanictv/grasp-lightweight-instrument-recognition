@@ -79,7 +79,9 @@ def parse_args() -> argparse.Namespace:
 def _write_frames(args: argparse.Namespace, frame_store: dict) -> None:
     arrays = {}
     for idx, (det, mc, center_pos, local_idxs) in frame_store.items():
-        arrays[f"det_{idx}"], arrays[f"mc_{idx}"] = det, mc
+        arrays[f"det_{idx}"] = det
+        if mc is not None:
+            arrays[f"mc_{idx}"] = mc
         arrays[f"center_{idx}"], arrays[f"frames_{idx}"] = np.array(center_pos), np.array(local_idxs)
     args.frame_logits_out.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.frame_logits_out, **arrays)
@@ -238,21 +240,23 @@ def main() -> None:
                 with torch.no_grad():
                     logits = model(image)
                     probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
-                    if args.mc_samples:
+                    if args.frame_logits_out is not None:
                         frame_det.append(logits.float().cpu().numpy()[0])
+                    if args.mc_samples:
                         enable_mc_dropout(model)
                         frame_mc.append(model(image.repeat(args.mc_samples, 1, 1, 1)).float().cpu().numpy())
                         model.eval()
                 combined += weight * probs
             per_frame_ensemble_probs.append(combined)
-            if args.mc_samples:
+            if args.frame_logits_out is not None:
                 det_frames.append(np.stack(frame_det))
+            if args.mc_samples:
                 mc_frames.append(np.stack(frame_mc))
         per_frame_ensemble_probs = np.stack(per_frame_ensemble_probs)
 
         center_pos = valid_local_idxs.index(center_idx) if center_idx in valid_local_idxs else 0
-        if args.mc_samples:
-            frame_store[idx] = (np.stack(det_frames), np.stack(mc_frames), center_pos, valid_local_idxs)
+        if args.frame_logits_out is not None:
+            frame_store[idx] = (np.stack(det_frames), np.stack(mc_frames) if mc_frames else None, center_pos, valid_local_idxs)
         single_pred = int(per_frame_ensemble_probs[center_pos].argmax())
 
         per_frame_preds = per_frame_ensemble_probs.argmax(axis=1)
@@ -272,11 +276,11 @@ def main() -> None:
 
         if (n + 1) % args.save_every == 0 or n == len(indices) - 1:
             _write_summary(args, results)
-            if args.mc_samples:
+            if args.frame_logits_out is not None:
                 _write_frames(args, frame_store)
 
     _write_summary(args, results)
-    if args.mc_samples:
+    if args.frame_logits_out is not None:
         _write_frames(args, frame_store)
 
 

@@ -31,6 +31,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tracker", action="append", required=True, help="name=directory")
     ap.add_argument("--ks", default="3,5,10,15,20")
+    ap.add_argument("--percentiles", default=",".join(str(p) for p in t.PERCENTILES),
+                    help="S1 percentiles that define the threshold grid; the lowest sets how many instances need tracking")
     ap.add_argument("--extract", type=Path, default=REPO_ROOT / "experiments_edl" / "extract" / "E_grasp_fold1_s42.npz")
     ap.add_argument("--config", type=Path, default=REPO_ROOT / "configs" / "evidential" / "ens_E_fold1_s42_lam0p01a10.yaml")
     ap.add_argument("--out", type=Path, required=True)
@@ -38,7 +40,7 @@ def main() -> None:
 
     order = t.member_order(args.config)
     y, base, s1 = t.base_scores(args.extract)
-    grid = sorted({round(float(x), 6) for x in np.percentile(s1, t.PERCENTILES)}, reverse=True)
+    grid = sorted({round(float(x), 6) for x in np.percentile(s1, [float(x) for x in args.percentiles.split(",")])}, reverse=True)
     need = np.where(s1 >= min(grid))[0]
     result: dict = {"base_accuracy": float((base == y).mean()), "grid": grid, "trackers": {}}
     for spec in args.tracker:
