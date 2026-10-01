@@ -33,7 +33,7 @@ def load(directory: Path) -> dict[int, tuple[np.ndarray, int]]:
             if "frames_backward" in r:
                 centers_json[r["index"]] = r["frames_backward"]
     out = {}
-    for path in sorted(directory.glob("*frames*.npz")):
+    for path in sorted(directory.glob("fold1_frames*.npz")):  # official files share the det_<idx> key space
         z = np.load(path)
         for key in z.files:
             if not key.startswith("det_"):
