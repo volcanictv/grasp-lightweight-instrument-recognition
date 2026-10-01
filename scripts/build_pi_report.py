@@ -192,6 +192,17 @@ def build() -> str:
     per_crop = sum(members[m]["median_ms"] for m in ("resnet50_320", "baseline", "letterbox_crop"))
     frame3 = lat["yolo"]["per_frame"]["median_ms"] + 3 * per_crop
     cfg_a = {"k": cal["trackers"]["edgetam"]["chosen_k"]}
+    both_in = off["edgetam"] is not None and off["yolo26s"] is not None
+    gain_note = ""
+    if both_in:
+        g = lambda a, b: 100 * (a - b)
+        fa = cal["trackers"]["edgetam"]["by_k"][str(cfg_a["k"])]["chosen_row"]["accuracy"] - cal["base"]
+        fb = cal["trackers"]["yolo26s"]["by_k"][str(cal["trackers"]["yolo26s"]["chosen_k"])]["chosen_row"]["accuracy"] - cal["base"]
+        oa = off["edgetam"]["tracked"]["accuracy"] - base["accuracy"]
+        ob = off["yolo26s"]["tracked"]["accuracy"] - base["accuracy"]
+        gain_note = (f" Causal tracking adds {100 * oa:+.1f} points (A) and {100 * ob:+.1f} points (B) of accuracy over the classifier alone on the "
+                     f"official test, against {100 * fa:+.1f} and {100 * fb:+.1f} on fold1, so the fold1 gain did not fully carry over. Both sit below the "
+                     f"offline reference, which also uses future frames and a fourth member.")
 
     def res_row(label, tracked, win, acc, f1, cls="", note=""):
         return f'<tr class="{cls}"><td>{label}</td><td>{win}</td><td class="n">{tracked}</td><td class="n">{f4(acc)}</td><td class="n">{f4(f1)}</td><td class="small">{note}</td></tr>'
@@ -261,7 +272,7 @@ def build() -> str:
 </ul>
 <h2>Official test results</h2>
 <table><tr><th>configuration</th><th>window</th><th class="n">tracked</th><th class="n">accuracy</th><th class="n">macro-F1</th><th>note</th></tr>{''.join(rows)}</table>
-<p class="small">One training seed. Settings for A and B were chosen on fold1 (members trained on the other cases) and locked before this run (docs/reports/causal_tracker_preregistration.md). Instances within a case share patient, camera and instrument units, so the effective sample is closer to 5 than {base['n']:,}.</p>
+<p class="small">One training seed. Settings for A and B were chosen on fold1 (members trained on the other cases) and locked before this run (docs/reports/causal_tracker_preregistration.md). Instances within a case share patient, camera and instrument units, so the effective sample is closer to 5 than {base['n']:,}.{gain_note}</p>
 <h2>Per-class F1, official test</h2>
 <div class="row2"><div><table><tr><th>class</th><th class="n">n</th><th class="n">alone</th><th class="n">A</th><th class="n">B</th><th class="n">ref</th><th class="n">recall, alone</th></tr>{pc_rows}</table>
 <p class="small">alone: 3-member classifier. A, B: with causal tracking. ref: 4-member evidential + SAM2-large, offline.</p></div><div>{perclass_figure([("alone", BLUE, f1_base3), ("A", ORANGE, f1_a), ("B", AQUA, f1_b)])}</div></div>
@@ -283,7 +294,7 @@ def build() -> str:
 <p class="small">A 1 Hz stream gives 1000 ms per frame. Always-on cost leaves most of the budget free; tracking runs only for gated instruments, in the background if needed. Detector time is a stand-in and will change with the final detector.</p>
 <h2>Status and next</h2>
 <ul>
-<li>Pending cells above fill from the official runs of A and B; nothing was changed after seeing them.</li>
+<li>{"Official results for A and B are in; the settings were locked before the run and not changed after it." if both_in else "Pending cells above fill from the official runs of A and B; nothing is changed after seeing them."}</li>
 <li>Next: plug the lab detector into the real-time harness, replay 30 fps footage sampled at 1 Hz, and measure end-to-end latency and deadline misses.</li>
 <li>Code and weights: github.com/volcanictv/grasp-instrument-classifier (vote pipeline today; evidential code not yet released).</li>
 </ul>
