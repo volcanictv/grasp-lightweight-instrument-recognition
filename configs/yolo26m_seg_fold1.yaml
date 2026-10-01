@@ -1,0 +1,17 @@
+task: instance_segmentation_tracker
+model:
+  weights: yolo26m-seg.pt
+data:
+  split: fold1
+  image_size: 640
+training:
+  batch_size: 8
+  epochs: 60
+  patience: 15
+  seed: 42
+  device: 0
+  workers: 3
+  fliplr: 0.5
+  flipud: 0.0
+  degrees: 0.0
+  hsv_h: 0.0
