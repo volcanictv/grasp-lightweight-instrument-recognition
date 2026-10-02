@@ -108,7 +108,8 @@ def main() -> None:
         delta = a[0] - base[0]
         verdict = "baseline" if arm == "baseline" else ("IMPROVEMENT" if delta > max(a[1], base[1]) else "no resolvable effect" if delta > -max(a[1], base[1]) else "WORSE")
         summary[arm] = {"seeds": a[2], "accuracy": a, "macro_f1": f, "crop_accuracy": c, "ycrop_accuracy": y, "delta_accuracy_vs_baseline": delta, "verdict": verdict}
-        print(f"{arm:<10}{a[2]:>6}{a[0]:>10.4f}+-{a[1]:.4f}{f[0]:>10.4f}+-{f[1]:.4f}{c[0]:>10.4f}+-{c[1]:.4f}{(f"{y[0]:>10.4f}+-{y[1]:.4f}" if y else ""):>18}   {verdict} ({delta:+.4f})")
+        ystr = f"{y[0]:>10.4f}+-{y[1]:.4f}" if y else ""
+        print(f"{arm:<10}{a[2]:>6}{a[0]:>10.4f}+-{a[1]:.4f}{f[0]:>10.4f}+-{f[1]:.4f}{c[0]:>10.4f}+-{c[1]:.4f}{ystr:>18}   {verdict} ({delta:+.4f})")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps({"fold": args.fold, "per_seed": {a: {str(s): r for s, r in d.items()} for a, d in rows.items()}, "summary": summary}, indent=1))
 
