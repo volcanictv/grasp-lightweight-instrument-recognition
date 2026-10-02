@@ -75,6 +75,9 @@ def parse_args() -> argparse.Namespace:
                               "logits (deterministic + MC) to --frame-logits-out; the softmax path is unchanged")
     parser.add_argument("--frame-logits-out", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--masks-out", type=Path, default=None,
+                        help="pickle of the tracked masks, {instance index: {frame offset: (frame number, COCO RLE)}}, so another ensemble "
+                             "can classify the same tracks later without repeating the propagation")
     parser.add_argument("--init-masks", type=Path, default=None,
                         help="pickle of {instance index: COCO RLE}: start every track from this predicted mask (a segmentor's) instead of the ground-truth mask")
     return parser.parse_args()
@@ -175,6 +178,7 @@ def main() -> None:
         assert args.frame_logits_out is not None, "--mc-samples needs --frame-logits-out"
         torch.manual_seed(args.seed)
     frame_store: dict = {}
+    mask_store: dict = {}
 
     if args.error_cases_json is not None:
         error_data = json.loads(args.error_cases_json.read_text())
@@ -220,6 +224,9 @@ def main() -> None:
                 track_masks[frame_idx] = (mask_logits[0, 0] > 0).cpu().numpy()
 
         sorted_local_idxs = sorted(track_masks)
+        if args.masks_out is not None:
+            mask_store[idx] = {li - center_idx: (frame_nums[li], mask_codec.encode(np.asfortranarray(track_masks[li].astype(np.uint8))))
+                               for li in sorted_local_idxs}
         frame_arrays = {li: np.array(Image.open(tmp_dir / f"{li:05d}.jpg").convert("RGB")) for li in sorted_local_idxs}
 
         # two crop variants per frame -- letterbox=True (3 of 4 members) and letterbox=False (baseline mobilenet)
@@ -286,12 +293,17 @@ def main() -> None:
 
         if (n + 1) % args.save_every == 0 or n == len(indices) - 1:
             _write_summary(args, results)
+            if args.masks_out is not None:
+                args.masks_out.parent.mkdir(parents=True, exist_ok=True)
+                args.masks_out.write_bytes(pickle.dumps({"case_of": {i: ds.instances[i][0].split("/")[0] for i in mask_store}, "masks": mask_store}))
             if args.frame_logits_out is not None:
                 _write_frames(args, frame_store)
 
     _write_summary(args, results)
     if args.frame_logits_out is not None:
         _write_frames(args, frame_store)
+    if args.masks_out is not None:
+        args.masks_out.write_bytes(pickle.dumps({"case_of": {i: ds.instances[i][0].split("/")[0] for i in mask_store}, "masks": mask_store}))
 
 
 def _write_summary(args: argparse.Namespace, results: list[dict]) -> None:
