@@ -54,6 +54,7 @@ def main() -> None:
     ap.add_argument("--arms", nargs="+", required=True)
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     ap.add_argument("--heldout-neighbour-dir", type=Path, required=True)
+    ap.add_argument("--heldout-yolo-neighbour-dir", type=Path, default=None, help="also score YOLO-style held-out crops")
     ap.add_argument("--data-root", type=Path, required=True)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--out", type=Path, required=True)
@@ -81,23 +82,33 @@ def main() -> None:
                                 str(args.heldout_neighbour_dir), "--json-split", args.fold, "--data-root", str(args.data_root),
                                 "--device", args.device, "--out", str(crops_out)], check=True, cwd=REPO_ROOT)
             crops = json.loads(crops_out.read_text())
+            ycrops = None
+            if args.heldout_yolo_neighbour_dir:
+                ycrops_out = EXP / "arms_extract" / f"{arm}_{args.fold}_s{seed}_ycrops.json"
+                if not ycrops_out.exists():
+                    subprocess.run([sys.executable, "scripts/eval_on_neighbour_crops.py", "--ensemble-config", str(cfg), "--neighbour-dir",
+                                    str(args.heldout_yolo_neighbour_dir), "--json-split", args.fold, "--data-root", str(args.data_root),
+                                    "--device", args.device, "--out", str(ycrops_out)], check=True, cwd=REPO_ROOT)
+                ycrops = json.loads(ycrops_out.read_text())
             from sklearn.metrics import f1_score
             rows.setdefault(arm, {})[seed] = {"accuracy": float((pred == y).mean()), "macro_f1": float(f1_score(y, pred, average="macro", labels=range(7))),
-                                              "crop_accuracy": crops["accuracy"], "crop_macro_f1": crops["macro_f1"]}
+                                              "crop_accuracy": crops["accuracy"], "crop_macro_f1": crops["macro_f1"],
+                                              **({"ycrop_accuracy": ycrops["accuracy"], "ycrop_macro_f1": ycrops["macro_f1"]} if ycrops else {})}
 
     def stat(arm: str, key: str) -> tuple[float, float, int]:
         v = np.array([r[key] for r in rows.get(arm, {}).values()])
         return (float(v.mean()), float(v.std(ddof=1)) if len(v) > 1 else 0.0, len(v)) if len(v) else (float("nan"), 0.0, 0)
 
     summary = {}
-    print(f"{'arm':<10}{'seeds':>6}{'acc':>16}{'macro-F1':>16}{'crop acc':>16}   decision vs baseline (accuracy)")
+    print(f"{'arm':<10}{'seeds':>6}{'acc':>16}{'macro-F1':>16}{'edgetam crops':>16}{'yolo crops':>18}   decision vs baseline (accuracy)")
     for arm in args.arms:
         a, f, c = stat(arm, "accuracy"), stat(arm, "macro_f1"), stat(arm, "crop_accuracy")
+        y = stat(arm, "ycrop_accuracy") if args.heldout_yolo_neighbour_dir else None
         base = stat("baseline", "accuracy")
         delta = a[0] - base[0]
         verdict = "baseline" if arm == "baseline" else ("IMPROVEMENT" if delta > max(a[1], base[1]) else "no resolvable effect" if delta > -max(a[1], base[1]) else "WORSE")
-        summary[arm] = {"seeds": a[2], "accuracy": a, "macro_f1": f, "crop_accuracy": c, "delta_accuracy_vs_baseline": delta, "verdict": verdict}
-        print(f"{arm:<10}{a[2]:>6}{a[0]:>10.4f}+-{a[1]:.4f}{f[0]:>10.4f}+-{f[1]:.4f}{c[0]:>10.4f}+-{c[1]:.4f}   {verdict} ({delta:+.4f})")
+        summary[arm] = {"seeds": a[2], "accuracy": a, "macro_f1": f, "crop_accuracy": c, "ycrop_accuracy": y, "delta_accuracy_vs_baseline": delta, "verdict": verdict}
+        print(f"{arm:<10}{a[2]:>6}{a[0]:>10.4f}+-{a[1]:.4f}{f[0]:>10.4f}+-{f[1]:.4f}{c[0]:>10.4f}+-{c[1]:.4f}{(f"{y[0]:>10.4f}+-{y[1]:.4f}" if y else ""):>18}   {verdict} ({delta:+.4f})")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps({"fold": args.fold, "per_seed": {a: {str(s): r for s, r in d.items()} for a, d in rows.items()}, "summary": summary}, indent=1))
 

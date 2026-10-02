@@ -35,7 +35,7 @@ def arm_stem(arm: str, member: str, fold: str, seed: int) -> str:
     return f"arm{arm}_{member}_{fold}_s{seed}"
 
 
-def arm_config(arm: str, member: str, fold: str, seed: int, neighbour_dir: str | list | None) -> dict:
+def arm_config(arm: str, member: str, fold: str, seed: int, neighbour_dir: str | list | None, yolo_neighbour_dir: str | list | None = None) -> dict:
     cfg = mk.train_config("E", member, fold, seed, 0.01, 10)
     if fold == "official":
         # fixed schedule: last-epoch weights, validated on a split inside the training data, so the test cases
@@ -44,8 +44,17 @@ def arm_config(arm: str, member: str, fold: str, seed: int, neighbour_dir: str |
         cfg["data"]["val_split_override"] = "fold1"
     if "P" in arm:
         cfg["data"]["mask_perturb_prob"] = PROB
-    if "N" in arm:
-        cfg["data"]["neighbour_dir"] = neighbour_dir
+
+    def as_list(v):
+        return [] if v is None else ([v] if isinstance(v, str) else list(v))
+
+    dirs = []
+    if "N" in arm:  # N: EdgeTAM neighbours; NY: EdgeTAM and YOLO neighbours mixed
+        dirs += as_list(neighbour_dir)
+    if "Y" in arm:  # Y: YOLO-tracker neighbours only
+        dirs += as_list(yolo_neighbour_dir)
+    if dirs:
+        cfg["data"]["neighbour_dir"] = dirs[0] if len(dirs) == 1 else dirs
         cfg["data"]["neighbour_prob"] = PROB
     return cfg
 
@@ -57,9 +66,10 @@ def finished(stem: str) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fold", choices=["fold1", "fold2", "official"], required=True)
-    ap.add_argument("--arms", nargs="+", required=True, choices=["P", "N", "PN"])
+    ap.add_argument("--arms", nargs="+", required=True, choices=["P", "N", "PN", "Y", "NY"])
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     ap.add_argument("--neighbour-dir", nargs="+", default=None, help="neighbour crops of the TRAINING cases (several dirs for official)")
+    ap.add_argument("--yolo-neighbour-dir", nargs="+", default=None, help="YOLO-tracker neighbour crops of the training cases (arms Y, NY)")
     ap.add_argument("--data-root", type=Path, required=True)
     ap.add_argument("--python", default="/home/yzx/miniconda3/envs/surgical/bin/python")
     ap.add_argument("--gpus", nargs="+", type=int, default=[0, 1])
@@ -71,7 +81,7 @@ def main() -> None:
         for seed in args.seeds:
             for member in MEMBERS:
                 stem = arm_stem(arm, member, args.fold, seed)
-                (OUT / f"{stem}.yaml").write_text(yaml.safe_dump(arm_config(arm, member, args.fold, seed, args.neighbour_dir[0] if args.neighbour_dir and len(args.neighbour_dir) == 1 else args.neighbour_dir), sort_keys=False))
+                (OUT / f"{stem}.yaml").write_text(yaml.safe_dump(arm_config(arm, member, args.fold, seed, args.neighbour_dir, args.yolo_neighbour_dir), sort_keys=False))
                 if not finished(stem):
                     jobs.append((member, stem))
     jobs.sort(key=lambda j: MEMBERS.index(j[0]))  # the long ResNet-320 jobs first for balance
