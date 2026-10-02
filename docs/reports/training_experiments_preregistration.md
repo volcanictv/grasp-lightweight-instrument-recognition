@@ -49,3 +49,18 @@ arms P and N on fold1 (scripts/run_training_arms.py), scoring (scripts/evaluate_
 confirmation. Results land in docs/reports/training_arms/. Neighbour crops of a fold are generated from the ground-truth
 masks of that fold's instruments, so the held-out fold's neighbour crops are used only for the secondary metric and
 never for training.
+
+## Addendum, written before the fold2 result exists: the final official-split model
+
+Run only if arm N improves on fold1 (it did: the rule was met) and is confirmed on fold2 (same sign, mean accuracy above the
+fold2 baseline). Arm P did not help on fold1 accuracy, so P+N is not run.
+
+- Three members (resnet50_320, baseline, letterbox_crop), arm N, trained on the 8 official training cases with
+  neighbour crops from the fold1 and fold2 generator outputs, seed 42 (the seed of the existing tracker-A members).
+- Fixed schedule: 20 epochs, the last epoch's weights, no checkpoint selection. Validation during training uses the fold1
+  cases, which are inside the training data, so the test cases are not touched while training (`training.select_best: false`,
+  `data.val_split_override: fold1`).
+- Evaluated once on the official test in the tracker-A pipeline with nothing else changed: gate threshold 2.85e-4 on the new
+  ensemble's S1, EdgeTAM, 20 causal past frames. Reported next to the baseline A row, ensemble alone and with tracking, with
+  the number of instruments the unchanged threshold sends to tracking. A larger or smaller tracked share than the baseline
+  is reported as is, not corrected.

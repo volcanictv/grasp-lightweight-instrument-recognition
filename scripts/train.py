@@ -204,6 +204,9 @@ def _setup_multilabel_task(config: dict, args: argparse.Namespace, device: torch
 
 def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.device):
     train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    # official resolves validation to the test cases; a final model whose schedule is fixed in advance validates on a
+    # split that is inside its own training data instead, so the test cases are never touched during training
+    val_split = config["data"].get("val_split_override", val_split)
     image_size = config["data"]["image_size"]
     augmentation = config["data"].get("augmentation", "default")
 
@@ -876,7 +879,7 @@ def main() -> None:
     history, best_metrics = fit(
         model, train_loader, val_loader, loss_fn, optimizer, class_names, device,
         epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
-        evaluate_fn=evaluate_fn,
+        evaluate_fn=evaluate_fn, select_best=config["training"].get("select_best", True),
     )
     duration_sec = time.time() - start
 

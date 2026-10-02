@@ -121,12 +121,17 @@ def fit(
     epochs: int,
     checkpoint_path: Path,
     evaluate_fn=evaluate,
+    select_best: bool = True,
 ) -> tuple[TrainHistory, MultiLabelMetrics | RegionClassificationMetrics]:
     """`evaluate_fn` defaults to Task A's `evaluate` (unchanged behavior for
     every existing call site). Pass `evaluate_region` for Task B -- the only
     requirement on its return type is a `.macro_f1` field, which both
     metrics dataclasses have, so the epoch loop and checkpoint selection
     below don't need to know which task they're running.
+
+    `select_best=False` saves the last epoch's weights instead of the best
+    validation epoch: a fixed schedule, for runs whose validation split must
+    not drive any choice (the official-split final models).
     """
     trainable, total = count_parameters(model)
     logger.info(
@@ -158,7 +163,7 @@ def fit(
             epoch, epochs, train_loss, val_loss, train_metrics.macro_f1, val_metrics.macro_f1,
         )
 
-        if val_metrics.macro_f1 > best_f1:
+        if (select_best and val_metrics.macro_f1 > best_f1) or (not select_best and epoch == epochs):
             best_f1 = val_metrics.macro_f1
             best_metrics = val_metrics
             checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
