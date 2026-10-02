@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pickle
 import shutil
 import sys
 from collections import Counter
@@ -42,6 +43,7 @@ import numpy as np
 import torch
 import yaml
 from PIL import Image
+from pycocotools import mask as mask_codec
 
 from analyze_uncertainty_signals import enable_mc_dropout
 from surgical_ai.data.mask_utils import decode_instance_mask
@@ -73,6 +75,8 @@ def parse_args() -> argparse.Namespace:
                               "logits (deterministic + MC) to --frame-logits-out; the softmax path is unchanged")
     parser.add_argument("--frame-logits-out", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--init-masks", type=Path, default=None,
+                        help="pickle of {instance index: COCO RLE}: start every track from this predicted mask (a segmentor's) instead of the ground-truth mask")
     return parser.parse_args()
 
 
@@ -154,6 +158,7 @@ def main() -> None:
     weight_320 = ensemble_config["weight_resnet50_320"]
     w_rest = (1 - weight_320) / (len(members_cfg) - 1)
 
+    init_masks = pickle.loads(args.init_masks.read_bytes()) if args.init_masks else None
     ds = GraspRegionDataset(args.data_root, args.split, letterbox=True)
     class_names = ds.class_names_ordered()
 
@@ -185,7 +190,12 @@ def main() -> None:
         file_name, segmentation, box, label = ds.instances[idx]
         case, frame_stem = file_name.split("/")
         center_num = int(frame_stem.replace(".jpg", ""))
-        gt_mask = decode_instance_mask(segmentation).astype(bool)
+        if init_masks is None:
+            gt_mask = decode_instance_mask(segmentation).astype(bool)
+        else:
+            gt_mask = mask_codec.decode(init_masks[idx]).astype(bool)
+            if not gt_mask.any():
+                continue
         area_pct = float(gt_mask.sum() / (segmentation["size"][0] * segmentation["size"][1]) * 100)
 
         frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window, 0 if args.causal else None)

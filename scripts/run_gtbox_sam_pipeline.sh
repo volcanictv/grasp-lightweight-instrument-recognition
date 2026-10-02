@@ -1,0 +1,51 @@
+#!/bin/bash
+# Unattended full run of the PI's direction (ground-truth box -> SAM mask -> evidential classifier -> gate -> SAM2-large
+# tracking of the predicted mask -> label -> mIoU / IoU / mcIoU). Waits for the masks of the chosen variant, classifies them,
+# tracks the instruments the gate and the budgets need (non-causal, 10 frames each way, accuracy first), scores.
+# Usage (titanxp, repo root): scripts/run_gtbox_sam_pipeline.sh finetuned
+set -uo pipefail
+VARIANT=${1:-finetuned}
+cd ~/grasp_yolo26
+export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
+PY=/home/yzx/miniconda3/envs/surgical/bin/python
+ENS=configs/evidential/ens_E_official_s42_lam0p01a10.yaml
+D=experiments/gtbox_sam/$VARIANT
+LOG=experiments/gtbox_sam/pipeline_$VARIANT.log
+say() { echo "[$(date +%H:%M:%S)] $*" | tee -a $LOG; }
+
+say "waiting for the $VARIANT masks"
+until [ -f $D/summary.json ]; do sleep 60; done
+say "masks ready: $($PY -c "import json;d=json.load(open('$D/summary.json'));print('mean mask IoU', round(d['mean_mask_iou'],4), 'IoU>=0.5', round(d['iou_ge_0.5'],4))")"
+
+$PY scripts/extract_logits_from_masks.py --masks $D/masks.pkl --ensemble-config $ENS --device cuda:0 --out $D/logits.npz >> $LOG 2>&1
+say "single-pass logits done"
+
+$PY - <<E >> $LOG 2>&1
+import json, sys
+sys.path.insert(0, "scripts"); sys.path.insert(0, "src")
+import numpy as np
+from evidential_seeds_e2e_eval import CONFIGS, alpha_mix
+from surgical_ai.evaluation.evidential import variance_scores
+z = np.load("$D/logits.npz")
+alpha = alpha_mix(lambda k: z["det_" + k], CONFIGS["four"])
+s1 = variance_scores(alpha)["epistemic"]
+need = set(np.where((s1 >= 1.7e-5) & z["done"])[0].tolist()) | set(np.argsort(-s1, kind="stable")[:833].tolist())
+need = sorted(i for i in need if z["done"][i])
+print(f"tracking {len(need)} instruments")
+for shard in (0, 1):
+    json.dump({"errors": [{"index": int(i)} for i in need[shard::2]]}, open(f"$D/track_shard{shard}.json", "w"))
+E
+mkdir -p $D/tracked
+say "tracking, two GPUs"
+for g in 0 1; do
+  $PY scripts/evaluate_temporal_track_ensemble.py --split test --window 10 --ensemble-config $ENS \
+    --sam2-checkpoint ~/sam2/checkpoints/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml \
+    --init-masks $D/masks.pkl --error-cases-json $D/track_shard$g.json --tmp-dir /tmp/gtbox_track_$g \
+    --frame-logits-out $D/tracked/frames_shard$g.npz --device cuda:$g --out $D/tracked/tracked_shard$g.json > $D/track$g.log 2>&1 &
+done
+wait
+say "tracking done"
+mkdir -p docs/reports/gtbox_sam
+$PY scripts/gtbox_sam_final_eval.py --masks $D/masks.pkl --logits $D/logits.npz --tracked-dir $D/tracked --out docs/reports/gtbox_sam/$VARIANT.json >> $LOG 2>&1
+say "scored"
+echo done > $D/pipeline.done
