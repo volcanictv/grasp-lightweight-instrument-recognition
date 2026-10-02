@@ -38,7 +38,7 @@ def main() -> None:
     ap.add_argument("--json-split", required=True, choices=["fold1", "fold2"])
     ap.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     ap.add_argument("--device", default="cuda:0")
-    ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
     device = torch.device(args.device)
