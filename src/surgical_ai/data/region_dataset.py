@@ -24,6 +24,8 @@ segmentation's recorded size and fails loudly instead.
 
 from __future__ import annotations
 
+import json
+import random
 from pathlib import Path
 from typing import Callable
 
@@ -34,6 +36,49 @@ from torch.utils.data import Dataset
 
 from surgical_ai.data import splits, statistics
 from surgical_ai.data.mask_utils import decode_instance_mask
+
+
+def instance_key(file_name: str, box: tuple[int, int, int, int]) -> str:
+    """Stable id of one annotated instance, shared by the neighbour generator and the dataset."""
+    x, y, w, h = box
+    return f"{file_name}|{x},{y},{w},{h}"
+
+
+def perturb_mask(mask: np.ndarray, rng: random.Random) -> np.ndarray:
+    """A label-preserving mask corruption of the kinds a tracker makes: boundary slop (dilate or erode by 2 to 8%
+    of the instrument's size) or a lost tip (cut 5 to 15% off one end along the major axis). Returns the input
+    unchanged if the corruption would empty the mask."""
+    from scipy import ndimage
+
+    ys, xs = np.nonzero(mask)
+    if len(xs) < 50:
+        return mask
+    size = float(np.sqrt(len(xs)))
+    op = rng.choice(["dilate", "erode", "truncate"])
+    if op in ("dilate", "erode"):
+        steps = max(1, int(round(size * rng.uniform(0.02, 0.08))))
+        out = ndimage.binary_dilation(mask, iterations=steps) if op == "dilate" else ndimage.binary_erosion(mask, iterations=steps)
+    else:
+        pts = np.stack([xs, ys], axis=1).astype(np.float64)
+        centred = pts - pts.mean(axis=0)
+        axis = np.linalg.eigh(centred.T @ centred / len(pts))[1][:, -1]
+        proj = centred @ axis
+        cut = np.percentile(proj, 100 * rng.uniform(0.05, 0.15)) if rng.random() < 0.5 else np.percentile(proj, 100 * (1 - rng.uniform(0.05, 0.15)))
+        keep = proj >= cut if cut <= np.median(proj) else proj <= cut
+        out = np.zeros_like(mask)
+        out[ys[keep], xs[keep]] = True
+    return out if out.any() else mask
+
+
+def load_neighbour_meta(neighbour_dir: str | Path | list) -> dict[str, list[tuple[Path, dict]]]:
+    """key -> [(crop path, info)] merged over one or several generator output directories."""
+    dirs = neighbour_dir if isinstance(neighbour_dir, (list, tuple)) else [neighbour_dir]
+    merged: dict[str, list[tuple[Path, dict]]] = {}
+    for d in dirs:
+        d = Path(d)
+        for key, items in json.loads((d / "meta.json").read_text()).items():
+            merged.setdefault(key, []).extend((d / "crops" / it["file"], it) for it in items)
+    return merged
 
 
 def _pad_to_square(crop: np.ndarray) -> np.ndarray:
@@ -58,6 +103,9 @@ class GraspRegionDataset(Dataset):
         context_expand: bool = False,
         context_area_threshold: float = 0.04,
         context_expand_factor: float = 2.0,
+        mask_perturb_prob: float = 0.0,
+        neighbour_dir: str | Path | list | None = None,
+        neighbour_prob: float = 0.0,
     ):
         """`letterbox=True` pads the mask-cropped instance to a square (zeros,
         matching the mask-zeroed background already used) before any resize
@@ -118,6 +166,9 @@ class GraspRegionDataset(Dataset):
         self.context_expand = context_expand
         self.context_area_threshold = context_area_threshold
         self.context_expand_factor = context_expand_factor
+        self.mask_perturb_prob = mask_perturb_prob
+        self.neighbour_prob = neighbour_prob
+        self._neighbours = load_neighbour_meta(neighbour_dir) if neighbour_dir else {}
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -151,7 +202,26 @@ class GraspRegionDataset(Dataset):
     def __len__(self) -> int:
         return len(self.instances)
 
+    def _neighbour_item(self, idx: int) -> tuple[torch.Tensor, torch.Tensor] | None:
+        """Tracker-style crop of the same physical instrument at a nearby frame, same label by construction."""
+        file_name, _seg, box, label_idx = self.instances[idx]
+        options = self._neighbours.get(instance_key(file_name, box))
+        if not options:
+            return None
+        path, _info = random.choice(options)
+        crop = np.array(Image.open(path).convert("RGB"))
+        if self.letterbox:
+            ch, cw = crop.shape[:2]
+            if max(ch, cw) / max(1, min(ch, cw)) >= self.letterbox_min_aspect:
+                crop = _pad_to_square(crop)
+        image = Image.fromarray(crop)
+        return (self.transform(image) if self.transform is not None else image), torch.tensor(label_idx, dtype=torch.long)
+
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        if self._neighbours and random.random() < self.neighbour_prob:
+            item = self._neighbour_item(idx)
+            if item is not None:
+                return item
         file_name, segmentation, (x, y, w, h), label_idx = self.instances[idx]
         frame = np.array(Image.open(self.frames_root / file_name).convert("RGB"))
         height, width = frame.shape[:2]
@@ -171,6 +241,10 @@ class GraspRegionDataset(Dataset):
             )
 
         mask = decode_instance_mask(segmentation)
+        if self.mask_perturb_prob and random.random() < self.mask_perturb_prob:
+            mask = perturb_mask(mask.astype(bool), random).astype(mask.dtype)
+            ys, xs = np.nonzero(mask)
+            x, y, w, h = int(xs.min()), int(ys.min()), int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)
 
         if self.crop_mode == "tip":
             crop = self._tip_crop(frame, mask, x, y, w, h, height, width)

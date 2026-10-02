@@ -220,10 +220,17 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
         context_expand=context_expand, context_area_threshold=context_area_threshold,
         context_expand_factor=context_expand_factor,
     )
+    neighbour_dir = config["data"].get("neighbour_dir")
+    if neighbour_dir:
+        neighbour_dir = [p if Path(p).is_absolute() else REPO_ROOT / p for p in ([neighbour_dir] if isinstance(neighbour_dir, str) else neighbour_dir)]
+    train_only = dict(
+        mask_perturb_prob=config["data"].get("mask_perturb_prob", 0.0),
+        neighbour_dir=neighbour_dir, neighbour_prob=config["data"].get("neighbour_prob", 0.0),
+    )
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
         transform=build_transforms(image_size, train=True, augmentation=augmentation),
-        **region_kwargs,
+        **region_kwargs, **train_only,
     )
     val_ds = GraspRegionDataset(
         args.data_root, val_split, transform=build_transforms(image_size, train=False),
