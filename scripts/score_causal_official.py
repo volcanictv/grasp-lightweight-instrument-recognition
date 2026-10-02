@@ -26,7 +26,8 @@ def main() -> None:
     ap.add_argument("--name", required=True)
     ap.add_argument("--dir", type=Path, required=True)
     ap.add_argument("--k", type=int, required=True)
-    ap.add_argument("--tau", type=float, required=True)
+    ap.add_argument("--tau", type=float, default=None, help="gate threshold on S1")
+    ap.add_argument("--budget", type=int, default=None, help="instead of a threshold, track the top-N instruments by S1 (budget-matched row)")
     ap.add_argument("--extract", type=Path, default=REPO_ROOT / "experiments_edl" / "extract" / "E_grasp_official_s42.npz")
     ap.add_argument("--config", type=Path, default=REPO_ROOT / "configs" / "evidential" / "ens_E_official_s42_lam0p01a10.yaml")
     ap.add_argument("--out", type=Path, required=True)
@@ -34,7 +35,15 @@ def main() -> None:
 
     order = t.member_order(args.config)
     y, base, s1 = t.base_scores(args.extract)
-    flag = s1 >= args.tau
+    if (args.tau is None) == (args.budget is None):
+        raise SystemExit("give exactly one of --tau and --budget")
+    if args.budget:
+        rank = np.argsort(-s1, kind="stable")
+        flag = np.zeros(len(y), bool)
+        flag[rank[:args.budget]] = True
+        args.tau = float(s1[rank[args.budget - 1]])
+    else:
+        flag = s1 >= args.tau
     tr = load(args.dir, prefix="official")
     missing = [int(i) for i in np.where(flag)[0] if int(i) not in tr]
     if missing:

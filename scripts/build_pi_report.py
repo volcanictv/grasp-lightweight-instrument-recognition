@@ -179,6 +179,16 @@ def latency_table() -> str:
             f'The detector is a stand-in (YOLO26s-seg).{info}</p>')
 
 
+def budget_rows(p: dict, y: np.ndarray, row) -> str:
+    """Exploratory: the same trackers and look-backs with the gate widened to track as many instruments as SAM2
+    (539). Shown only once the extra instruments have been tracked; never used to choose a setting."""
+    if "A539" not in p or "B539" not in p:
+        return ""
+    return ('<tr class="sep"><td colspan="4">Budget-matched to SAM2 (539 tracked), exploratory: same settings, wider gate</td></tr>'
+            + row("+ EdgeTAM (causal, 20 past frames)", metrics(y, np.array(p["A539"]["pred"])), sum(p["A539"]["gated"]))
+            + row("+ YOLO26s-seg (causal, 15 past frames)", metrics(y, np.array(p["B539"]["pred"])), sum(p["B539"]["gated"])))
+
+
 def build() -> str:
     p = json.loads((RT / "official_predictions.json").read_text())
     y = np.array(p["y"])
@@ -194,6 +204,7 @@ def build() -> str:
         + row("3-member ensemble, no tracking", base3, 0)
         + row("+ EdgeTAM (causal, 20 past frames)", a, sum(p["A"]["gated"]), "hi")
         + row("+ YOLO26s-seg (causal, 15 past frames)", b, sum(p["B"]["gated"]), "hi")
+        + budget_rows(p, y, row)
         + '<tr class="sep"><td colspan="4">Offline benchmark only: uses future frames, cannot run live</td></tr>'
         + row("4-member ensemble + SAM2-large (10 past + 10 future frames)", s, sum(p["S"]["gated"]), "off")
         + f'</table><p class="cap">Official test, 5 cases, {len(y):,} instances, one training seed.</p>')
