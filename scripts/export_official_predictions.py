@@ -32,11 +32,17 @@ from compare_trackers_causal import load
 from surgical_ai.evaluation.evidential import alpha_from_logits, variance_scores
 
 
-def causal_predictions(directory: Path, k: int, tau: float, config: Path, extract: Path) -> dict:
+def causal_predictions(directory: Path, k: int, tau: float | None, config: Path, extract: Path, budget: int | None = None) -> dict:
     order = t.member_order(config)
     y, base, s1 = t.base_scores(extract)
     tr = load(directory, prefix="official")
-    flag = s1 >= tau
+    if budget:
+        rank = np.argsort(-s1, kind="stable")
+        flag = np.zeros(len(y), bool)
+        flag[rank[:budget]] = True
+        tau = float(s1[rank[budget - 1]])
+    else:
+        flag = s1 >= tau
     tracked = {}
     for i in np.where(flag)[0]:
         logits, c = tr[int(i)]
@@ -85,7 +91,12 @@ def main() -> None:
         "B": causal_predictions(args.yolo_dir, 15, 0.000575, args.config, args.extract),
         "S": sam2_reference(args.extract, args.gate_dir, args.default_dir, 1.7e-5),
     }
-    for name in ("A", "B"):
+    for name, directory, k in (("A539", args.edgetam_dir, 20), ("B539", args.yolo_dir, 15)):
+        try:  # budget-matched rows exist only once the extra instruments are tracked
+            result[name] = causal_predictions(directory, k, None, args.config, args.extract, budget=539)
+        except KeyError:
+            print(name, "skipped: tracking for the 539 budget is incomplete")
+    for name in [n for n in ("A", "B", "A539", "B539") if n in result]:
         p = np.array(result[name]["pred"])
         print(name, f"accuracy {(p == y).mean():.4f} macro-F1 {f1_score(y, p, average='macro', labels=range(7)):.4f}")
     args.out.parent.mkdir(parents=True, exist_ok=True)
