@@ -64,3 +64,12 @@ fold2 baseline). Arm P did not help on fold1 accuracy, so P+N is not run.
   ensemble's S1, EdgeTAM, 20 causal past frames. Reported next to the baseline A row, ensemble alone and with tracking, with
   the number of instruments the unchanged threshold sends to tracking. A larger or smaller tracked share than the baseline
   is reported as is, not corrected.
+
+## Addendum 2, written 2026-10-02 09:45 before any tracked result of the final model exists
+
+The first addendum named only tracker A. The final arm-N model is also run through tracker B, with the settings locked in
+docs/reports/causal_tracker_preregistration.md and nothing changed: YOLO26s-seg, 15 causal past frames, gate threshold 5.75e-4
+on the new ensemble's S1, matching min-iou 0.1, coast 3, centre-frame fallback, official-split YOLO weights
+(scripts/final_arm_official_eval_yolo.sh). It reuses the single-frame extraction made for tracker A. Both rows are reported
+whatever they show. Observed before tracking: the new ensemble alone scores 0.9112 on the official test (baseline 0.9144), and the
+unchanged thresholds send 736 (A) and 634 (B) instruments to tracking, against 373 and 313 for the baseline members.
