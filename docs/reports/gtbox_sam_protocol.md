@@ -36,3 +36,20 @@ Fixed before any test-set mask of the new segmentor was produced.
 - Test use: one pass of the chosen configuration over the official test boxes, then the same unchanged pipeline as the first run
   (single-pass logits, three evidential seeds, SAM2-large tracking, gating, top 833 headline, seed 43 headline). The result is
   reported next to the first run whatever it is. Nothing about the classifier, gate or budgets changes.
+
+## Addendum, 2026-10-03 (second): mask-refinement network after the segmentor
+
+Fixed before the refiner is trained or any test mask is refined.
+
+- Network: scripts/train_mask_refiner.py, a U-Net with an ImageNet ResNet-34 encoder. Input is a square crop (1.25 x the longer box side,
+  384 px) of the image, SAM's mask logits and the box; output is SAM's logits plus a learned correction, zero at initialisation,
+  forced to background outside the ground-truth box. SAM is the enc4 + flip-average segmentor of the previous addendum.
+- Cross-fitting, so the refiner trains on masks of the quality it will meet on unseen frames: training crops are fold2 frames
+  segmented by a SAM trained on fold1 only (same recipe, 5 epochs, enc4_f1); dev crops are fold1 frames segmented by the existing
+  SAM trained on fold2 only. The refiner's epoch is chosen on fold1 mean mask IoU in crop space. The test cases are used by nothing
+  until the acceptance check below passes.
+- Acceptance: the refiner is used on the test cases only if its full-resolution fold1 mean mask IoU (apply_mask_refiner.py, paste-back
+  inside the box) is at least 0.005 above the SAM fold1 mean mask IoU of 0.9086 and also above the same paste-back applied to SAM's
+  own logits. Otherwise it is dropped and the result stays the previous run. One refiner, one test pass; no second try on test.
+- If accepted: refined masks replace SAM's masks and the unchanged pipeline reruns as variant gtft_ref (single-pass logits, three
+  seeds, tracking, gating, top 833, seed 43 headline), reported next to the other two runs.
