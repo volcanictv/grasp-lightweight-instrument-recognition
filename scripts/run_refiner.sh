@@ -15,20 +15,30 @@ S=experiments/sam2_gtbox
 mkdir -p $R
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 
-$PY scripts/dump_refiner_crops.py --weights $S/enc4/weights.pt --tta --split fold1 --device cuda:0 --out $R/fold1_enc4.npz > $R/dump_fold1.log 2>&1
-say "dev crops: $(tail -n 1 $R/dump_fold1.log)"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+if [ ! -f $R/fold1_enc4.npz ]; then
+  $PY scripts/dump_refiner_crops.py --weights $S/enc4/weights.pt --tta --split fold1 --device cuda:0 --out $R/fold1_enc4.npz > $R/dump_fold1.log 2>&1
+  say "dev crops: $(tail -n 1 $R/dump_fold1.log)"
+fi
 
 say "waiting for the fold1-trained SAM"
 until grep -q "saved epoch 5" $S/enc4_f1.log 2>/dev/null; do sleep 120; done
 say "fold1-trained SAM done: $(grep -E 'epoch 5/5' $S/enc4_f1.log | cut -c1-160)"
 
-$PY scripts/dump_refiner_crops.py --weights $S/enc4_f1/weights.pt --tta --split fold2 --device cuda:1 --out $R/fold2_encB.npz > $R/dump_fold2.log 2>&1
-say "training crops: $(tail -n 1 $R/dump_fold2.log)"
+if [ ! -f $R/fold2_encB.npz ]; then
+  $PY scripts/dump_refiner_crops.py --weights $S/enc4_f1/weights.pt --tta --split fold2 --device cuda:1 --out $R/fold2_encB.npz > $R/dump_fold2.log 2>&1
+  say "training crops: $(tail -n 1 $R/dump_fold2.log)"
+fi
 
-$PY scripts/train_mask_refiner.py --train $R/fold2_encB.npz --dev $R/fold1_enc4.npz --out-dir $R/run1 --device cuda:0 > $R/train.log 2>&1
+rm -rf $R/run1
+$PY scripts/train_mask_refiner.py --train $R/fold2_encB.npz --dev $R/fold1_enc4.npz --out-dir $R/run1 --device cuda:1 > $R/train.log 2>&1
 say "refiner trained: $(tail -n 1 $R/train.log)"
+if ! grep -q "^best dev refined IoU" $R/train.log; then
+  say "refiner training FAILED, no verdict (see $R/train.log)"
+  exit 1
+fi
 
-$PY scripts/apply_mask_refiner.py --crops $R/fold1_enc4.npz --weights $R/run1/weights.pt --split fold1 --out-dir $R/run1 --device cuda:0 > $R/apply_fold1.log 2>&1
+$PY scripts/apply_mask_refiner.py --crops $R/fold1_enc4.npz --weights $R/run1/weights.pt --split fold1 --out-dir $R/run1 --device cuda:1 > $R/apply_fold1.log 2>&1
 VERDICT=$($PY - <<'E'
 import json
 d = json.load(open("experiments/refiner/run1/fold1_summary.json"))

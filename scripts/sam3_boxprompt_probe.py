@@ -95,9 +95,10 @@ def main() -> None:
                     preds = []
                     for box in boxes:
                         inputs = proc(images=image, input_boxes=[[box]], input_boxes_labels=[[1]], return_tensors="pt").to(args.device)
-                        inputs["pixel_values"] = inputs["pixel_values"].to(dtype)
+                        inputs = {k: (v.to(dtype) if torch.is_tensor(v) and v.is_floating_point() else v) for k, v in inputs.items()}
                         out = model(**inputs)
                         res = proc.post_process_instance_segmentation(out, threshold=0.05, mask_threshold=0.5, target_sizes=inputs["original_sizes"].tolist())[0]
+                        res = {k: v.float() if torch.is_tensor(v) and v.is_floating_point() else v for k, v in res.items()}
                         best, best_iou = None, 0.0
                         for k in range(len(res["scores"])):
                             o = box_iou(np.array(box), res["boxes"][k].float().cpu().numpy())

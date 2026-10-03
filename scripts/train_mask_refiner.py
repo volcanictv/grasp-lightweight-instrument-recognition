@@ -46,7 +46,7 @@ def seg_loss(logits: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
 
 
 @torch.no_grad()
-def evaluate(model: MaskRefiner, d: dict, device: str, bs: int = 32) -> dict:
+def evaluate(model: MaskRefiner, d: dict, device: str, bs: int = 8) -> dict:
     model.eval()
     n = len(d["img"])
     base, ref = [], []
@@ -67,7 +67,7 @@ def main() -> None:
     ap.add_argument("--train", type=Path, required=True)
     ap.add_argument("--dev", type=Path, required=True)
     ap.add_argument("--epochs", type=int, default=12)
-    ap.add_argument("--batch-size", type=int, default=12)
+    ap.add_argument("--batch-size", type=int, default=6)
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--encoder-lr", type=float, default=1e-4)
     ap.add_argument("--device", default="cuda:0")
