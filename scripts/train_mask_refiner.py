@@ -90,6 +90,7 @@ def main() -> None:
     base = evaluate(model, dev, args.device)
     print(f"[{time.strftime('%H:%M:%S')}] epoch 0 dev {base}", flush=True)
     best = base["refined_iou"]
+    torch.save(model.state_dict(), args.out_dir / "weights.pt")  # the identity network, kept if no epoch beats SAM
     for epoch in range(1, args.epochs + 1):
         model.train()
         order = np.random.permutation(len(train["img"]))
