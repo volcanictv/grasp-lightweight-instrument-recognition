@@ -1,0 +1,93 @@
+{
+ "args": {
+  "train_split": "fold2",
+  "dev_split": "fold1",
+  "sam_checkpoint": "/home/yzx/sam2/checkpoints/sam2.1_hiera_large.pt",
+  "sam_config": "configs/sam2.1/sam2.1_hiera_l.yaml",
+  "data_root": "/home/yzx/Desktop/Classification Surgurical Tools/GraSP",
+  "device": "cuda:1",
+  "epochs": "8",
+  "fixed_epochs": "None",
+  "lr": "0.0001",
+  "encoder_lr": "1e-05",
+  "unfreeze_blocks": "4",
+  "jitter": "0.03",
+  "max_instances": "6",
+  "limit": "None",
+  "tta": "True",
+  "out_dir": "experiments/sam2_gtbox/enc4"
+ },
+ "log": [
+  {
+   "epoch": 0,
+   "mean_iou": 0.8545173432910441,
+   "iou_ge_0.5": 0.9731066460587326,
+   "iou_ge_0.75": 0.8534775888717157,
+   "n": 3235
+  },
+  {
+   "epoch": 1,
+   "train_loss": 0.09676828880110473,
+   "mean_iou": 0.8979405462336861,
+   "iou_ge_0.5": 0.9904173106646059,
+   "iou_ge_0.75": 0.9289026275115919,
+   "n": 3235
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.08379421198403325,
+   "mean_iou": 0.8993952264527588,
+   "iou_ge_0.5": 0.9885625965996909,
+   "iou_ge_0.75": 0.9369397217928903,
+   "n": 3235
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.07999363172463768,
+   "mean_iou": 0.9032625010254588,
+   "iou_ge_0.5": 0.9910355486862442,
+   "iou_ge_0.75": 0.9394126738794436,
+   "n": 3235
+  },
+  {
+   "epoch": 4,
+   "train_loss": 0.07550191791987451,
+   "mean_iou": 0.902932901969498,
+   "iou_ge_0.5": 0.9913446676970634,
+   "iou_ge_0.75": 0.9415765069551777,
+   "n": 3235
+  },
+  {
+   "epoch": 5,
+   "train_loss": 0.07343054830085645,
+   "mean_iou": 0.9059178503731744,
+   "iou_ge_0.5": 0.9919629057187017,
+   "iou_ge_0.75": 0.9437403400309119,
+   "n": 3235
+  },
+  {
+   "epoch": 6,
+   "train_loss": 0.07013341621093255,
+   "mean_iou": 0.9037076570017423,
+   "iou_ge_0.5": 0.9891808346213292,
+   "iou_ge_0.75": 0.9406491499227202,
+   "n": 3235
+  },
+  {
+   "epoch": 7,
+   "train_loss": 0.06739452423390553,
+   "mean_iou": 0.9040700333950069,
+   "iou_ge_0.5": 0.990726429675425,
+   "iou_ge_0.75": 0.9403400309119011,
+   "n": 3235
+  },
+  {
+   "epoch": 8,
+   "train_loss": 0.06737634582992463,
+   "mean_iou": 0.9052527989387175,
+   "iou_ge_0.5": 0.99258114374034,
+   "iou_ge_0.75": 0.9434312210200927,
+   "n": 3235
+  }
+ ]
+}
