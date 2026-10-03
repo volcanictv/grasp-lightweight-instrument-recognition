@@ -53,3 +53,20 @@ Fixed before the refiner is trained or any test mask is refined.
   own logits. Otherwise it is dropped and the result stays the previous run. One refiner, one test pass; no second try on test.
 - If accepted: refined masks replace SAM's masks and the unchanged pipeline reruns as variant gtft_ref (single-pass logits, three
   seeds, tracking, gating, top 833, seed 43 headline), reported next to the other two runs.
+
+## Addendum, 2026-10-03 (third): fine-tuning SAM3 as the segmentor
+
+Fixed before any SAM3 fine-tune result exists. Motivation: zero-shot SAM3 (Sam3TrackerModel, GT-box prompts) scores 0.862 mean mask IoU on a
+157-instrument fold1 sample against 0.911 for the fine-tuned SAM2 on the same instruments, so it can only matter if fine-tuned the same way.
+
+- Protocol: as for SAM2 (scripts/finetune_sam3_gtbox.py): train on fold2, choose the epoch on fold1 by mean mask IoU (each epoch on every
+  third fold1 frame), then score the best checkpoint on all fold1 frames, plain and flip-averaged. 3 epochs. Test cases are not used.
+- Variants: S3a, mask decoder and prompt encoder only; S3b, those plus the FPN neck and the last four ViT layers (the SAM2 analogue of the
+  enc4 variant). Reference for both: SAM2 enc4 with flip averaging, fold1 mean mask IoU 0.9086 (plain 0.9059).
+- Adoption: the variant with the higher flip-averaged fold1 IoU replaces SAM2 only if that IoU is at least 0.9136 (0.005 above SAM2).
+  A SAM2 + SAM3 ensemble (mean of the two models' flip-averaged mask logits, best SAM3 variant) is scored on fold1 as well and adopted
+  instead if it is at least 0.9136 and above both members.
+- If something is adopted: one pass over the official test boxes, then the unchanged pipeline as variant gtft_sam3 (three seeds,
+  tracking, gating, top 833, seed 43 headline), reported next to the other runs. If nothing is adopted, SAM2 stays and the SAM3 result is
+  reported as tried.
+- Not part of this: clipping masks to the given box (a separate, free post-process measured on fold1 at +0.004) is decided separately.
