@@ -37,7 +37,9 @@ CLASSES = ["Bipolar Forceps", "Prograsp Forceps", "Large Needle Driver", "Monopo
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--variant", required=True, choices=["zeroshot", "finetuned"])
+    ap.add_argument("--variant", required=True, choices=["zeroshot", "finetuned", "gtft"])
+    ap.add_argument("--weights", type=Path, default=None, help="gtft: weights.pt of scripts/finetune_sam2_gtbox.py")
+    ap.add_argument("--tta", action="store_true", help="gtft: average the mask logits of the image and its horizontal flip")
     ap.add_argument("--decoder-checkpoint", type=Path, default=None)
     ap.add_argument("--split", default="test")
     ap.add_argument("--sam-checkpoint", type=Path, default=Path.home() / "sam2" / "checkpoints" / "sam2.1_hiera_large.pt")
@@ -53,7 +55,11 @@ def main() -> None:
     predictor = SAM2ImagePredictor(build_sam2(args.sam_config, str(args.sam_checkpoint), device=args.device))
     if args.variant == "finetuned":
         predictor.model.sam_mask_decoder.load_state_dict(torch.load(args.decoder_checkpoint, map_location=args.device))
-    predictor.model.sam_mask_decoder.eval()
+    if args.variant == "gtft":
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from finetune_sam2_gtbox import box_logits, embed
+        predictor.model.load_state_dict(torch.load(args.weights, map_location=args.device), strict=False)
+    predictor.model.eval()
 
     ds = GraspRegionDataset(args.data_root, args.split, letterbox=True)
     by_frame: dict[str, list[int]] = defaultdict(list)
@@ -67,11 +73,25 @@ def main() -> None:
             break
         frame = np.array(Image.open(frames_root / file_name).convert("RGB"))
         with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
-            predictor.set_image(frame)
+            if args.variant == "gtft":
+                boxes = np.array([[b[0], b[1], b[0] + b[2], b[1] + b[3]] for b in (ds.instances[i][2] for i in indices)], dtype=np.float32)
+                embed(predictor, frame, grad=False)
+                logits = box_logits(predictor, boxes)[0].float()
+                if args.tta:
+                    embed(predictor, frame[:, ::-1].copy(), grad=False)
+                    fboxes = boxes.copy()
+                    fboxes[:, [0, 2]] = frame.shape[1] - boxes[:, [2, 0]]
+                    logits = (logits + box_logits(predictor, fboxes)[0].float().flip(-1)) / 2
+                frame_masks = {i: (lg[0] > 0).cpu().numpy() for i, lg in zip(indices, logits)}
+            else:
+                predictor.set_image(frame)
             for idx in indices:
                 _fn, seg, (x, y, w, h), _label = ds.instances[idx]
-                pred, _score, _ = predictor.predict(box=np.array([x, y, x + w, y + h], dtype=np.float32), multimask_output=False)
-                m = pred[0] > 0
+                if args.variant == "gtft":
+                    m = frame_masks[idx]
+                else:
+                    pred, _score, _ = predictor.predict(box=np.array([x, y, x + w, y + h], dtype=np.float32), multimask_output=False)
+                    m = pred[0] > 0
                 masks[idx] = mask_codec.encode(np.asfortranarray(m.astype(np.uint8)))
                 gt = decode_instance_mask(seg).astype(bool)
                 union = float(np.logical_or(m, gt).sum())

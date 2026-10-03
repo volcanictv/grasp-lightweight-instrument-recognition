@@ -95,6 +95,7 @@ def jitter(boxes: np.ndarray, hw: tuple[int, int], frac: float) -> np.ndarray:
 
 @torch.no_grad()
 def evaluate(predictor, ds, tta: bool, limit: int | None) -> dict:
+    predictor.model.eval()
     ious = []
     for file_name, anns in ds.samples[:limit]:
         boxes, masks = instances(ds, file_name, anns, None)

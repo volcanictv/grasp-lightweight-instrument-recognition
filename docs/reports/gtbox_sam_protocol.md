@@ -21,3 +21,18 @@ Fixed choices:
   comparison and is labelled as one.
 
 If the scores are poor, the classifier is not tuned against them: that would be a separate piece of work with its own plan.
+
+## Addendum, 2026-10-03: segmentor fine-tuned on ground-truth boxes with a dev-fold checkpoint choice
+
+Fixed before any test-set mask of the new segmentor was produced.
+
+- Motivation: the decoder behind the first run was chosen on validation loss over the test cases, and the segmentor ceiling
+  (oracle classes: mIoU 89.29, mcIoU 85.93) bounds every number. The new segmentor is trained with scripts/finetune_sam2_gtbox.py on
+  fold2 and its epoch is chosen on fold1 by mean per-instrument mask IoU. The test cases play no part in training or selection.
+- Variants run in parallel on fold1: decoder only (dec) and decoder plus the last four Hiera blocks and the FPN neck (enc4).
+  Zero-shot fold1 mean mask IoU is 0.8545; the best epoch of each is its own best fold1 IoU.
+- Rule: the variant with the higher best fold1 mean IoU is used, with its best-epoch weights (trained on fold2 only, no retrain on
+  all cases). Horizontal-flip averaging of the mask logits is used if and only if it raises fold1 mean IoU for that checkpoint.
+- Test use: one pass of the chosen configuration over the official test boxes, then the same unchanged pipeline as the first run
+  (single-pass logits, three evidential seeds, SAM2-large tracking, gating, top 833 headline, seed 43 headline). The result is
+  reported next to the first run whatever it is. Nothing about the classifier, gate or budgets changes.
