@@ -204,6 +204,9 @@ def _setup_multilabel_task(config: dict, args: argparse.Namespace, device: torch
 
 def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.device):
     train_split, val_split = splits.resolve_train_val_split(config["data"]["split"])
+    # official resolves validation to the test cases; a final model whose schedule is fixed in advance validates on a
+    # split that is inside its own training data instead, so the test cases are never touched during training
+    val_split = config["data"].get("val_split_override", val_split)
     image_size = config["data"]["image_size"]
     augmentation = config["data"].get("augmentation", "default")
 
@@ -220,10 +223,17 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
         context_expand=context_expand, context_area_threshold=context_area_threshold,
         context_expand_factor=context_expand_factor,
     )
+    neighbour_dir = config["data"].get("neighbour_dir")
+    if neighbour_dir:
+        neighbour_dir = [p if Path(p).is_absolute() else REPO_ROOT / p for p in ([neighbour_dir] if isinstance(neighbour_dir, str) else neighbour_dir)]
+    train_only = dict(
+        mask_perturb_prob=config["data"].get("mask_perturb_prob", 0.0),
+        neighbour_dir=neighbour_dir, neighbour_prob=config["data"].get("neighbour_prob", 0.0),
+    )
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
         transform=build_transforms(image_size, train=True, augmentation=augmentation),
-        **region_kwargs,
+        **region_kwargs, **train_only,
     )
     val_ds = GraspRegionDataset(
         args.data_root, val_split, transform=build_transforms(image_size, train=False),
@@ -869,7 +879,7 @@ def main() -> None:
     history, best_metrics = fit(
         model, train_loader, val_loader, loss_fn, optimizer, class_names, device,
         epochs=config["training"]["epochs"], checkpoint_path=checkpoint_path,
-        evaluate_fn=evaluate_fn,
+        evaluate_fn=evaluate_fn, select_best=config["training"].get("select_best", True),
     )
     duration_sec = time.time() - start
 
