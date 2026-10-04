@@ -13,8 +13,7 @@ mkdir -p experiments/sam3
 ARGS="--out-dir experiments/sam3/$VARIANT --device $DEV --epochs 3"
 if [ "$VARIANT" = enc4 ]; then
   ARGS="$ARGS --unfreeze-layers 4"
-  until grep -q "fold1 scoring finished" experiments/yolo_fold1_eval.log 2>/dev/null; do sleep 120; done
 fi
 echo "[$(date +%H:%M:%S)] SAM3 fine-tune $VARIANT on $DEV"
-~/sam3_venv/bin/python scripts/finetune_sam3_gtbox.py $ARGS 2>&1 | grep -v -i "warn\|Loading weights\|rope_theta\|sam3_video"
+~/sam3_venv/bin/python -u scripts/finetune_sam3_gtbox.py $ARGS 2>&1 | grep --line-buffered -v -i "warn\|Loading weights\|rope_theta\|sam3_video"
 echo "[$(date +%H:%M:%S)] SAM3 fine-tune $VARIANT finished"

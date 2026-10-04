@@ -30,13 +30,14 @@ from finetune_sam2_gtbox import instances, jitter, seg_loss
 from surgical_ai.data.detection_dataset import GraspDetectionDataset
 
 TRAINABLE_PREFIXES = ("mask_decoder", "prompt_encoder", "vision_encoder.neck", "vision_encoder.backbone.layers")
+USE_FP16 = False  # Pascal GPUs (Titan Xp) run fp16 about 3x slower than fp32, so the default is fp32; --fp16 for newer GPUs
 
 
 def predict(model, proc, image: Image.Image, boxes: np.ndarray, device: str, grad: bool) -> tuple[torch.Tensor, torch.Tensor]:
     """Mask logits (n, 1, H, W) at the image size and predicted IoUs for n boxes of one image."""
     inputs = proc(images=image, input_boxes=[boxes.tolist()], return_tensors="pt")
     pixel_values = inputs["pixel_values"].to(device)
-    with torch.set_grad_enabled(grad), torch.autocast("cuda", dtype=torch.float16):
+    with torch.set_grad_enabled(grad), torch.autocast("cuda", dtype=torch.float16, enabled=USE_FP16):
         emb = model.get_image_embeddings(pixel_values)
     emb = [e.float() for e in emb]
     out = model(image_embeddings=emb, input_boxes=inputs["input_boxes"].to(device).float(), multimask_output=False)
@@ -54,7 +55,9 @@ def evaluate(model, proc, ds, tta: bool, stride: int, device: str) -> dict:
     """Mean mask IoU over every stride-th frame; with tta, plain and flip-averaged scores from the same forward passes."""
     model.eval()
     plain, flip = [], []
-    for file_name, anns in ds.samples[::stride]:
+    for k, (file_name, anns) in enumerate(ds.samples[::stride]):
+        if k and k % 100 == 0:
+            print(f"  eval {k} frames, mean IoU so far {np.mean(flip if tta else plain):.4f}", flush=True)
         boxes, masks = instances(ds, file_name, anns, None)
         if not len(boxes):
             continue
@@ -89,6 +92,7 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--encoder-lr", type=float, default=1e-5)
     ap.add_argument("--unfreeze-layers", type=int, default=0)
+    ap.add_argument("--fp16", action="store_true", help="fp16 autocast with a half-precision frozen encoder (slow on Pascal GPUs)")
     ap.add_argument("--jitter", type=float, default=0.03)
     ap.add_argument("--max-instances", type=int, default=6)
     ap.add_argument("--dev-stride", type=int, default=3, help="per-epoch dev check on every k-th dev frame (the final check uses --final-stride)")
@@ -102,7 +106,9 @@ def main() -> None:
     model = Sam3TrackerModel.from_pretrained(args.model).to(args.device)
     proc = Sam3TrackerProcessor.from_pretrained(args.model)
     model.requires_grad_(False)
-    model.vision_encoder.half()
+    if args.fp16:
+        globals()["USE_FP16"] = True
+        model.vision_encoder.half()
     groups = [{"params": [*model.mask_decoder.parameters(), *model.prompt_encoder.parameters()], "lr": args.lr}]
     for p in groups[0]["params"]:
         p.requires_grad_(True)
@@ -160,6 +166,8 @@ def main() -> None:
             torch.nn.utils.clip_grad_norm_([p for g in groups for p in g["params"]], 1.0)
             opt.step()
             total, n = total + loss.item(), n + 1
+            if n % 100 == 0:
+                say(f"  epoch {epoch}: {n}/{n_frames} train frames, loss {total / n:.4f}")
         dev = evaluate(model, proc, dev_ds, False, args.dev_stride, args.device)
         say(f"epoch {epoch}/{args.epochs} train_loss {total / max(n, 1):.4f} dev/{args.dev_stride} {dev}")
         log.append({"epoch": epoch, "train_loss": total / max(n, 1), **dev})
