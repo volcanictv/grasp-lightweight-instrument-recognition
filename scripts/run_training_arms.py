@@ -73,18 +73,21 @@ def main() -> None:
     ap.add_argument("--data-root", type=Path, required=True)
     ap.add_argument("--python", default="/home/yzx/miniconda3/envs/surgical/bin/python")
     ap.add_argument("--gpus", nargs="+", type=int, default=[0, 1])
+    ap.add_argument("--members", nargs="+", default=MEMBERS, choices=list(mk.MEMBERS),
+                    help="default: the three members of the training experiments; add resnet50_224 for the four-member evidential ensemble of the GT-box pipeline")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
 
     jobs = []
     for arm in args.arms:
         for seed in args.seeds:
-            for member in MEMBERS:
+            for member in args.members:
                 stem = arm_stem(arm, member, args.fold, seed)
                 (OUT / f"{stem}.yaml").write_text(yaml.safe_dump(arm_config(arm, member, args.fold, seed, args.neighbour_dir, args.yolo_neighbour_dir), sort_keys=False))
                 if not finished(stem):
                     jobs.append((member, stem))
-    jobs.sort(key=lambda j: MEMBERS.index(j[0]))  # the long ResNet-320 jobs first for balance
+    order = ["resnet50_320", "resnet50_224", "baseline", "letterbox_crop"]
+    jobs.sort(key=lambda j: order.index(j[0]))  # the long ResNet jobs first for balance
     print(len(jobs), "trainings to run", flush=True)
     q: queue.Queue = queue.Queue()
     for j in jobs:

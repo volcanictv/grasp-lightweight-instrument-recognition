@@ -8,7 +8,11 @@ export CUDA_HOME=/usr/local/cuda-11.1
 export PATH=$CUDA_HOME/bin:$PATH
 export TORCH_CUDA_ARCH_LIST="6.1"
 export MAX_JOBS=2
-[ -d ~/tapis_venv ] || /usr/bin/python3.8 -m venv ~/tapis_venv
+if [ ! -x ~/tapis_venv/bin/pip ]; then  # the system python has no ensurepip (no python3.8-venv package), so use virtualenv
+  rm -rf ~/tapis_venv
+  /usr/bin/python3.8 -m pip install -q --user virtualenv
+  /usr/bin/python3.8 -m virtualenv -q ~/tapis_venv
+fi
 P=~/tapis_venv/bin/pip
 $P install -q -U pip wheel setuptools==59.5.0
 say "torch"

@@ -70,3 +70,20 @@ Fixed before any SAM3 fine-tune result exists. Motivation: zero-shot SAM3 (Sam3T
   tracking, gating, top 833, seed 43 headline), reported next to the other runs. If nothing is adopted, SAM2 stays and the SAM3 result is
   reported as tried.
 - Not part of this: clipping masks to the given box (a separate, free post-process measured on fold1 at +0.004) is decided separately.
+
+## Addendum, 2026-10-04: tracker-style crops (arm N) in the GT-box pipeline
+
+Fixed before the arm-N members are trained or scored in this pipeline. Requested by the user; the classifier is otherwise unchanged.
+
+- What changes: the evidential members are trained with the registered arm N (docs/reports/training_experiments_preregistration.md: with
+  probability 0.5 the training crop is replaced by a stored EdgeTAM crop of the same instrument one to five frames away; confirmed on fold1
+  +0.0063 and fold2 +0.0085 accuracy). All four members (resnet50_320, resnet50_224, baseline, letterbox_crop) for seeds 42, 43 and 44 are
+  trained on the official split with the existing fixed 20-epoch schedule and last-epoch weights, validated on fold1 inside the training data
+  (scripts/run_training_arms.py --members ..., scripts/make_armN_ensemble_configs.py). The three seed-42 members of the earlier official
+  run are reused. Nothing else changes: same frames, weights 0.4/0.2/0.2/0.2, evidential fusion, gate budget top 833, seed 43 headline.
+- Evaluation: one pass on the official test cases, in the same pipeline, with the same SAM masks and the same SAM2-large tracked masks as the
+  baseline-member run it is compared with (gtft_ens, or gtft if the ensemble run is not used): single-pass logits from the arm-N members, tracks
+  reclassified with them, gate by the arm-N ensemble's own S1 with the top-833 budget as the headline (the fold1-chosen threshold would shift with the
+  members' confidence, so it is reported but not the headline). Instruments in the arm-N top 833 that the baseline run did not track are tracked in an additional pass before
+  scoring, so the arm is not handicapped by a smaller tracked set.
+- Reported next to the baseline-member run whatever it is; the two are not mixed per seed or per case.
