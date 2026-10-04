@@ -40,7 +40,7 @@ from surgical_ai.evaluation.evidential import alpha_from_logits, variance_scores
 from surgical_ai.evaluation.semantic_iou import aggregate, frame_class_ious, paint
 
 PUBLISHED_TEST = {  # GraSP paper (arXiv 2401.11174v3), Table 4, instrument segmentation, test set
-    "TAPIS (Mask2Former R50 + video transformer)": {"mAP@0.5 box": 89.85, "mAP@0.5 segm": 89.10, "mIoU": 86.61, "IoU": 83.38, "mcIoU": 77.42},
+    "TAPIS (Mask2Former Swin-L + video transformer)": {"mAP@0.5 box": 89.85, "mAP@0.5 segm": 89.10, "mIoU": 86.61, "IoU": 83.38, "mcIoU": 77.42},
     "TAPIS-VST": {"mAP@0.5 box": 90.29, "mAP@0.5 segm": 89.58, "mIoU": 86.36, "IoU": 83.51, "mcIoU": 77.54},
     "SlowFast": {"mAP@0.5 box": 74.33, "mAP@0.5 segm": 71.32, "mIoU": 77.16, "IoU": 72.26, "mcIoU": 58.75},
 }
