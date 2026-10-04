@@ -9,7 +9,7 @@ export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
 PY=/home/yzx/miniconda3/envs/surgical/bin/python
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 say "waiting for the gtft_ens pipeline"
-until [ -f experiments/gtbox_sam/gtft_ens/pipeline.done ]; do sleep 120; done
+until [ -f experiments/gtbox_sam/gtft_ens/pipeline.done ] && [ -f experiments/latency.done ]; do sleep 120; done  # the latency suite needs idle GPUs first
 say "training arm N, four members, seeds 42 43 44 (official split)"
 $PY scripts/run_training_arms.py --fold official --arms N --seeds 42 43 44 --members resnet50_320 resnet50_224 baseline letterbox_crop \
   --neighbour-dir experiments/temporal_neighbors/fold1 experiments/temporal_neighbors/fold2 --data-root "$GRASP_DATA_ROOT"
