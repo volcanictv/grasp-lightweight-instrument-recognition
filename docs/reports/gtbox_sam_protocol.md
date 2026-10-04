@@ -87,3 +87,16 @@ Fixed before the arm-N members are trained or scored in this pipeline. Requested
   members' confidence, so it is reported but not the headline). Instruments in the arm-N top 833 that the baseline run did not track are tracked in an additional pass before
   scoring, so the arm is not handicapped by a smaller tracked set.
 - Reported next to the baseline-member run whatever it is; the two are not mixed per seed or per case.
+
+## Addendum, 2026-10-04 (second): box clipping and the ensemble in the scoring, with the oracle-box caveat
+
+Written before the ensemble run (gtft_ens) is scored.
+
+- Fold1 evidence (scripts/postproc_study.py, docs/reports/gtbox_sam/postproc_fold1.json, 3,235 instruments, four cases): SAM2 alone 0.9086; SAM2 + SAM3
+  ensemble with equal weights 0.9131; plus clipping the mask to the given box 0.9163. Fill holes, largest component, polygon simplification, erosion, a
+  threshold bias and logit smoothing do not help (or hurt) and are not used. Tuning on one half of the cases and scoring on the other gave +0.0074 and +0.0064.
+- Scoring: scripts/gtbox_sam_final_eval.py now writes every configuration twice, the segmentor's masks as they are and clipped to the given box
+  (rows suffixed "+box clip"). Both are always reported. The unclipped rows stay the registered headline.
+- Caveat to state wherever the clipped numbers appear: the ground-truth boxes are the tight bounding boxes of the ground-truth masks, so clipping to them uses
+  the true mask extent. With a detector's own boxes the gain would be smaller or negative. The clipped rows are therefore oracle-box results only.
+- First observation, on the already scored SAM2-only run (seed 43, top 833): unclipped mIoU 86.54 / IoU 85.33 / mcIoU 77.78, clipped 86.77 / 85.56 / 78.01.

@@ -95,6 +95,15 @@ def main() -> None:
         by_frame[file_name].append(idx)
     sam = {idx: mask_codec.decode(rle).astype(bool) for idx, rle in masks.items()}
 
+    def clip_to_box(mask: np.ndarray, box: tuple) -> np.ndarray:
+        """The mask restricted to the given ground-truth box (pixel centres inside it); the box is an input of the pipeline, so this costs nothing."""
+        x, y, w, h = box
+        inside = ((np.arange(mask.shape[0]) + 0.5 >= y) & (np.arange(mask.shape[0]) + 0.5 <= y + h))[:, None] & \
+                 ((np.arange(mask.shape[1]) + 0.5 >= x) & (np.arange(mask.shape[1]) + 0.5 <= x + w))[None, :]
+        return mask & inside
+
+    sam_clip = {idx: clip_to_box(m, ds.instances[idx][2]) for idx, m in sam.items()}
+
     def final_labels(flag: np.ndarray) -> tuple[np.ndarray, np.ndarray, int]:
         pred, score, missing = base.copy(), mu.max(axis=1).copy(), 0
         for i in np.where(flag & done)[0]:
@@ -104,14 +113,15 @@ def main() -> None:
                 missing += 1
         return pred, score, missing
 
-    def score_config(pred: np.ndarray, score: np.ndarray) -> dict:
+    def score_config(pred: np.ndarray, score: np.ndarray, clip: bool = False) -> dict:
+        used = sam_clip if clip else sam
         frames = []
         for file_name, indices in by_frame.items():
             if any(i not in masks for i in indices):  # a partial run: only frames whose instruments were all segmented
                 continue
             shape = tuple(ds.instances[indices[0]][1]["size"])
             gt = paint(shape, [(decode_instance_mask(ds.instances[i][1]).astype(bool), int(y[i]) + 1, 0.0) for i in indices])
-            insts = [(sam[i], int(pred[i]) + 1, float(score[i])) for i in indices if i in sam and done[i]]
+            insts = [(used[i], int(pred[i]) + 1, float(score[i])) for i in indices if i in used and done[i]]
             frames.append(frame_class_ious(paint(shape, insts), gt))
         out = aggregate(frames)
         keep = done
@@ -120,17 +130,22 @@ def main() -> None:
         return out
 
     results = {"instruments": int(len(y)), "classified": int(done.sum())}
-    results["single pass"] = score_config(base, mu.max(axis=1))
-    results["oracle classes"] = score_config(y, np.ones(len(y)))
+    def record(name: str, pred: np.ndarray, score: np.ndarray, **extra) -> None:
+        """Each configuration twice: the segmentor's masks as they are, and clipped to the given box ("+box clip")."""
+        results[name] = {**score_config(pred, score), **extra}
+        results[f"{name} +box clip"] = {**score_config(pred, score, clip=True), **extra}
+
+    record("single pass", base, mu.max(axis=1))
+    record("oracle classes", y, np.ones(len(y)))
     flag = s1 >= args.tau
     pred, score, missing = final_labels(flag)
-    results[f"gated (tau {args.tau:.1e})"] = {**score_config(pred, score), "tracked": int(flag.sum()), "tracks_missing": missing}
+    record(f"gated (tau {args.tau:.1e})", pred, score, tracked=int(flag.sum()), tracks_missing=missing)
     rank = np.argsort(-s1, kind="stable")
     for budget in args.budgets:
         flag = np.zeros(len(y), bool)
         flag[rank[:budget]] = True
         pred, score, missing = final_labels(flag)
-        results[f"gated (top {budget})"] = {**score_config(pred, score), "tracked": budget, "tracks_missing": missing}
+        record(f"gated (top {budget})", pred, score, tracked=budget, tracks_missing=missing)
     results["published_test"] = PUBLISHED_TEST
     results["published_crossval"] = PUBLISHED_CROSSVAL
 

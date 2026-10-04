@@ -1,0 +1,134 @@
+{
+ "instruments": 3235,
+ "cases": [
+  "CASE001",
+  "CASE004",
+  "CASE014",
+  "CASE015"
+ ],
+ "has_sam3": true,
+ "sam2_alone": 0.9085929306992225,
+ "sam3_alone": 0.9075844703555896,
+ "ensemble_plain": 0.9130724379362003,
+ "tuning_steps": [
+  {
+   "stage": "w",
+   "values": {
+    "1.0": 0.90859,
+    "0.7": 0.91254,
+    "0.5": 0.91307,
+    "0.3": 0.91208,
+    "0.0": 0.90758
+   },
+   "chosen": 0.5
+  },
+  {
+   "stage": "bias",
+   "values": {
+    "-1.5": 0.9098,
+    "-1.0": 0.91181,
+    "-0.5": 0.91292,
+    "0.0": 0.91307,
+    "0.5": 0.91225,
+    "1.0": 0.91036,
+    "1.5": 0.90728
+   },
+   "chosen": 0.0
+  },
+  {
+   "stage": "clip",
+   "values": {
+    "False": 0.91307,
+    "True": 0.91632
+   },
+   "chosen": true
+  },
+  {
+   "stage": "fill",
+   "values": {
+    "False": 0.91632,
+    "True": 0.91461
+   },
+   "chosen": false
+  },
+  {
+   "stage": "largest",
+   "values": {
+    "False": 0.91632,
+    "True": 0.91194
+   },
+   "chosen": false
+  },
+  {
+   "stage": "sigma",
+   "values": {
+    "0.0": 0.91632,
+    "0.7": 0.91636,
+    "1.5": 0.91636
+   },
+   "chosen": 0.7
+  },
+  {
+   "stage": "poly",
+   "values": {
+    "0.0": 0.91636,
+    "1.5": 0.91378,
+    "3.0": 0.91036
+   },
+   "chosen": 0.0
+  },
+  {
+   "stage": "morph",
+   "values": {
+    "0": 0.91636,
+    "1": 0.91618,
+    "-1": 0.9094
+   },
+   "chosen": 0
+  }
+ ],
+ "chosen": {
+  "w": 0.5,
+  "bias": 0.0,
+  "clip": true,
+  "fill": false,
+  "largest": false,
+  "sigma": 0.7,
+  "poly": 0.0,
+  "morph": 0
+ },
+ "tuned_on_all": 0.9163625664079271,
+ "half_split": [
+  {
+   "tuned_on_half": 0,
+   "config": {
+    "w": 0.5,
+    "bias": 0.5,
+    "clip": true,
+    "fill": false,
+    "largest": false,
+    "sigma": 1.5,
+    "poly": 0.0,
+    "morph": 1
+   },
+   "held_out_default": 0.905370013448224,
+   "held_out_tuned": 0.9127553317773847
+  },
+  {
+   "tuned_on_half": 1,
+   "config": {
+    "w": 0.5,
+    "bias": -1.0,
+    "clip": true,
+    "fill": false,
+    "largest": false,
+    "sigma": 0.7,
+    "poly": 0.0,
+    "morph": 0
+   },
+   "held_out_default": 0.9112472047148421,
+   "held_out_tuned": 0.9175657854334057
+  }
+ ],
+ "held_out_gain": 0.006851949523862144
+}
