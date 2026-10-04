@@ -11,7 +11,8 @@ SEEDS="42 43 44"
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
 PY=/home/yzx/miniconda3/envs/surgical/bin/python
-ens() { echo configs/evidential/ens_E_official_s$1_lam0p01a10.yaml; }
+ENS_TPL=${ENS_TPL:-configs/evidential/ens_E_official_s%s_lam0p01a10.yaml}  # %s = seed; the arm N run sets configs/arms/ens4_N_official_s%s.yaml
+ens() { printf "$ENS_TPL" "$1"; }
 D=experiments/gtbox_sam/$VARIANT
 LOG=experiments/gtbox_sam/pipeline_$VARIANT.log
 say() { echo "[$(date +%H:%M:%S)] $*" | tee -a $LOG; }

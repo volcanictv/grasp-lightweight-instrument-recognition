@@ -92,6 +92,7 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--encoder-lr", type=float, default=1e-5)
     ap.add_argument("--unfreeze-layers", type=int, default=0)
+    ap.add_argument("--save-last", action="store_true", help="always keep the last epoch's weights (final runs whose dev fold is inside the training data)")
     ap.add_argument("--fp16", action="store_true", help="fp16 autocast with a half-precision frozen encoder (slow on Pascal GPUs)")
     ap.add_argument("--jitter", type=float, default=0.03)
     ap.add_argument("--max-instances", type=int, default=6)
@@ -171,7 +172,7 @@ def main() -> None:
         dev = evaluate(model, proc, dev_ds, False, args.dev_stride, args.device)
         say(f"epoch {epoch}/{args.epochs} train_loss {total / max(n, 1):.4f} dev/{args.dev_stride} {dev}")
         log.append({"epoch": epoch, "train_loss": total / max(n, 1), **dev})
-        if dev["mean_iou"] > best:
+        if args.save_last or dev["mean_iou"] > best:
             best, best_epoch = dev["mean_iou"], epoch
             torch.save({k: v for k, v in model.state_dict().items() if k.startswith(TRAINABLE_PREFIXES)}, args.out_dir / "weights.pt")
         (args.out_dir / "log.json").write_text(json.dumps({"args": {k: str(v) for k, v in vars(args).items()}, "log": log}, indent=1))

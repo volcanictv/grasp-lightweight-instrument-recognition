@@ -100,3 +100,22 @@ Written before the ensemble run (gtft_ens) is scored.
 - Caveat to state wherever the clipped numbers appear: the ground-truth boxes are the tight bounding boxes of the ground-truth masks, so clipping to them uses
   the true mask extent. With a detector's own boxes the gain would be smaller or negative. The clipped rows are therefore oracle-box results only.
 - First observation, on the already scored SAM2-only run (seed 43, top 833): unclipped mIoU 86.54 / IoU 85.33 / mcIoU 77.78, clipped 86.77 / 85.56 / 78.01.
+
+## Addendum, 2026-10-04 (third): the final configuration and the final test run
+
+Fixed before any component of it is trained. The final test numbers come from this one configuration; nothing below is chosen on test scores.
+
+- Segmentor: SAM2.1-large (decoder, prompt encoder, last four Hiera blocks and neck trained) and SAM3 (decoder, prompt encoder, neck and last four ViT layers trained),
+  each trained on all eight official training cases (the "train" split) with the schedules the fold experiments fixed: SAM2 five epochs, SAM3 three epochs, the
+  last epoch's weights, no checkpoint selection on any data (fold1 is inside the training data, so it is only monitored). Masks: equal-weight mean of the two
+  models' flip-averaged mask logits, threshold 0. Test frames only at the final pass.
+- Classifier: the arm N members of the four-member evidential ensemble for seeds 42, 43 and 44 (addendum of 2026-10-04), same weights, evidential fusion and
+  gate (top 833 headline; the fold1-chosen threshold is reported but is not the headline because arm N shifts the members' confidence). SAM2-large tracking of every instrument
+  in the union of the three seeds' gated sets, run for the final masks, so no flagged instrument lacks a track.
+- Scoring: mIoU, IoU and mcIoU on the official test cases, every configuration twice, unclipped (the headline) and clipped to the given box (oracle-box variant only,
+  see the previous addendum). Headline seed: the seed with the highest fold1 accuracy of the arm N three-member ensembles (docs/reports/training_arms/fold1.json), with
+  the three-seed mean and spread beside it.
+- Ablation ladder reported with it, all on the same test cases: (1) gtft: SAM2 masks, baseline members; (2) gtft_ens: SAM2 + SAM3 ensemble masks (fold-trained on fold2), baseline
+  members; (3) gtft_ens_armN: the same masks and tracks with the arm N members; (4) final: all-case segmentors, arm N members. Rungs 1 to 3 already exist or run first; the final is
+  the registered headline. If a rung is worse than the one below it, it is still reported.
+- Comparison: TAPIS (Swin-L Mask2Former + MViT), TAPIS-VST and SlowFast on the GraSP test set. Oracle-box caveat stated with every table.
