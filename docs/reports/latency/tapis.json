@@ -1,0 +1,36 @@
+{
+ "gpu": "NVIDIA TITAN Xp",
+ "frame": "/home/yzx/Desktop/Classification Surgurical Tools/GraSP/frames-001/frames/CASE002/05381.jpg",
+ "frame_hw": [
+  800,
+  1280
+ ],
+ "clip": [
+  16,
+  224,
+  224
+ ],
+ "regions": 5,
+ "params_m": {
+  "mask2former_swinl": 215.503228,
+  "mvit_tapis": 44.383527
+ },
+ "mask2former": {
+  "mean_ms": 439.23892753897235,
+  "median_ms": 439.15786303114146,
+  "p95_ms": 442.2116039786488,
+  "n": 100
+ },
+ "video_model": {
+  "mean_ms": 44.783142323140055,
+  "median_ms": 44.809910003095865,
+  "p95_ms": 45.952223939821124,
+  "n": 100
+ },
+ "total": {
+  "mean_ms": 484.0220698621124,
+  "median_ms": 483.5869774688035,
+  "p95_ms": 487.26820293813944,
+  "n": 100
+ }
+}
