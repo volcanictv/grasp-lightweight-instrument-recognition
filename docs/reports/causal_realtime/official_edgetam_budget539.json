@@ -1,0 +1,38 @@
+{
+ "tracker": "edgetam",
+ "k": 20,
+ "tau": 3.0703144147992134e-05,
+ "n": 2861,
+ "base": {
+  "accuracy": 0.9143656064313177,
+  "macro_f1": 0.8834159288039949,
+  "per_class_f1": {
+   "Bipolar": 0.9158,
+   "Prograsp": 0.8032,
+   "LargeNeedle": 0.926,
+   "MonoScissors": 0.9662,
+   "Suction": 0.9066,
+   "ClipApplier": 0.9114,
+   "Grasper": 0.7547
+  }
+ },
+ "tracked": {
+  "threshold": 3.0703144147992134e-05,
+  "tracked": 539,
+  "share": 0.188395665851101,
+  "accuracy": 0.9297448444599791,
+  "macro_f1": 0.9000312221349392,
+  "fixed": 104,
+  "broken": 60
+ },
+ "per_class_f1": {
+  "Bipolar": 0.9222,
+  "Prograsp": 0.7866,
+  "LargeNeedle": 0.9652,
+  "MonoScissors": 0.9799,
+  "Suction": 0.938,
+  "ClipApplier": 0.8919,
+  "Grasper": 0.8163
+ },
+ "mean_frames_used": 17.602968460111317
+}
