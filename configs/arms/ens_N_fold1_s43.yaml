@@ -1,0 +1,17 @@
+weight_resnet50_320: 0.4
+members:
+- checkpoint: experiments/armN_resnet50_320_fold1_s43_20261002-014320/best.pt
+  model: resnet50
+  image_size: 320
+  letterbox: true
+  label: resnet50_320
+- checkpoint: experiments/armN_baseline_fold1_s43_20261002-031302/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: false
+  label: baseline
+- checkpoint: experiments/armN_letterbox_crop_fold1_s43_20261002-042748/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: true
+  label: letterbox_crop

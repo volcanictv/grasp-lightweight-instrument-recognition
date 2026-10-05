@@ -77,6 +77,8 @@ def main() -> None:
     ap.add_argument("--split", default="test")
     ap.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--save-frames", type=Path, default=None,
+                    help="also pickle every configuration's per-frame class IoUs ({config: [(frame, class_ious, gt_classes)]}) for scripts/bootstrap_cis.py")
     args = ap.parse_args()
 
     weights = CONFIGS["four"]
@@ -113,16 +115,21 @@ def main() -> None:
                 missing += 1
         return pred, score, missing
 
+    last: dict = {}
+
     def score_config(pred: np.ndarray, score: np.ndarray, clip: bool = False) -> dict:
         used = sam_clip if clip else sam
-        frames = []
+        frames, named = [], []
         for file_name, indices in by_frame.items():
             if any(i not in masks for i in indices):  # a partial run: only frames whose instruments were all segmented
                 continue
             shape = tuple(ds.instances[indices[0]][1]["size"])
             gt = paint(shape, [(decode_instance_mask(ds.instances[i][1]).astype(bool), int(y[i]) + 1, 0.0) for i in indices])
             insts = [(used[i], int(pred[i]) + 1, float(score[i])) for i in indices if i in used and done[i]]
-            frames.append(frame_class_ious(paint(shape, insts), gt))
+            result = frame_class_ious(paint(shape, insts), gt)
+            frames.append(result)
+            named.append((file_name, *result))
+        last["frames"] = named
         out = aggregate(frames)
         keep = done
         out["instance_accuracy"] = float((pred[keep] == y[keep]).mean())
@@ -130,10 +137,14 @@ def main() -> None:
         return out
 
     results = {"instruments": int(len(y)), "classified": int(done.sum())}
+    frame_log: dict[str, list] = {}
+
     def record(name: str, pred: np.ndarray, score: np.ndarray, **extra) -> None:
         """Each configuration twice: the segmentor's masks as they are, and clipped to the given box ("+box clip")."""
         results[name] = {**score_config(pred, score), **extra}
+        frame_log[name] = last["frames"]
         results[f"{name} +box clip"] = {**score_config(pred, score, clip=True), **extra}
+        frame_log[f"{name} +box clip"] = last["frames"]
 
     record("single pass", base, mu.max(axis=1))
     record("oracle classes", y, np.ones(len(y)))
@@ -151,6 +162,9 @@ def main() -> None:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=1))
+    if args.save_frames:
+        args.save_frames.parent.mkdir(parents=True, exist_ok=True)
+        args.save_frames.write_bytes(pickle.dumps(frame_log))
     print(f"{'configuration':<26}{'mIoU':>8}{'IoU':>8}{'mcIoU':>8}{'inst acc':>10}{'macro-F1':>10}")
     for name, r in results.items():
         if isinstance(r, dict) and "mIoU" in r:

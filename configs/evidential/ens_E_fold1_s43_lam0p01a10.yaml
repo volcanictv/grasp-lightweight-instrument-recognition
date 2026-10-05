@@ -1,0 +1,22 @@
+weight_resnet50_320: 0.4
+members:
+- checkpoint: experiments/edl_E_resnet50_320_fold1_s43_lam0p01a10_20260921-183249/best.pt
+  model: resnet50
+  image_size: 320
+  letterbox: true
+  label: resnet50_320
+- checkpoint: experiments/edl_E_resnet50_224_fold1_s43_lam0p01a10_20260921-201653/best.pt
+  model: resnet50
+  image_size: 224
+  letterbox: true
+  label: resnet50_224
+- checkpoint: experiments/edl_E_baseline_fold1_s43_lam0p01a10_20260921-220359/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: false
+  label: baseline
+- checkpoint: experiments/edl_E_letterbox_crop_fold1_s43_lam0p01a10_20260921-231659/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: true
+  label: letterbox_crop
