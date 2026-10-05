@@ -1,0 +1,16 @@
+{
+ "variant": "final",
+ "instruments": 2861,
+ "mean_mask_iou": 0.9076660851511766,
+ "iou_ge_0.5": 0.9926599091226844,
+ "iou_ge_0.75": 0.9391821041593849,
+ "per_class_mean_iou": {
+  "Bipolar Forceps": 0.9023034130939396,
+  "Prograsp Forceps": 0.8243768058658626,
+  "Large Needle Driver": 0.9352115100355507,
+  "Monopolar Curved Scissors": 0.950994409241547,
+  "Suction Instrument": 0.8675410459151408,
+  "Clip Applier": 0.910453922718295,
+  "Laparoscopic Grasper": 0.8486498739008352
+ }
+}

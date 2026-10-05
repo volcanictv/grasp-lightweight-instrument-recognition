@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pickle
 import shutil
 import sys
 from collections import Counter
@@ -42,6 +43,7 @@ import numpy as np
 import torch
 import yaml
 from PIL import Image
+from pycocotools import mask as mask_codec
 
 from analyze_uncertainty_signals import enable_mc_dropout
 from surgical_ai.data.mask_utils import decode_instance_mask
@@ -73,6 +75,11 @@ def parse_args() -> argparse.Namespace:
                               "logits (deterministic + MC) to --frame-logits-out; the softmax path is unchanged")
     parser.add_argument("--frame-logits-out", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--masks-out", type=Path, default=None,
+                        help="pickle of the tracked masks, {instance index: {frame offset: (frame number, COCO RLE)}}, so another ensemble "
+                             "can classify the same tracks later without repeating the propagation")
+    parser.add_argument("--init-masks", type=Path, default=None,
+                        help="pickle of {instance index: COCO RLE}: start every track from this predicted mask (a segmentor's) instead of the ground-truth mask")
     return parser.parse_args()
 
 
@@ -154,6 +161,7 @@ def main() -> None:
     weight_320 = ensemble_config["weight_resnet50_320"]
     w_rest = (1 - weight_320) / (len(members_cfg) - 1)
 
+    init_masks = pickle.loads(args.init_masks.read_bytes()) if args.init_masks else None
     ds = GraspRegionDataset(args.data_root, args.split, letterbox=True)
     class_names = ds.class_names_ordered()
 
@@ -170,6 +178,7 @@ def main() -> None:
         assert args.frame_logits_out is not None, "--mc-samples needs --frame-logits-out"
         torch.manual_seed(args.seed)
     frame_store: dict = {}
+    mask_store: dict = {}
 
     if args.error_cases_json is not None:
         error_data = json.loads(args.error_cases_json.read_text())
@@ -185,7 +194,12 @@ def main() -> None:
         file_name, segmentation, box, label = ds.instances[idx]
         case, frame_stem = file_name.split("/")
         center_num = int(frame_stem.replace(".jpg", ""))
-        gt_mask = decode_instance_mask(segmentation).astype(bool)
+        if init_masks is None:
+            gt_mask = decode_instance_mask(segmentation).astype(bool)
+        else:
+            gt_mask = mask_codec.decode(init_masks[idx]).astype(bool)
+            if not gt_mask.any():
+                continue
         area_pct = float(gt_mask.sum() / (segmentation["size"][0] * segmentation["size"][1]) * 100)
 
         frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window, 0 if args.causal else None)
@@ -210,6 +224,9 @@ def main() -> None:
                 track_masks[frame_idx] = (mask_logits[0, 0] > 0).cpu().numpy()
 
         sorted_local_idxs = sorted(track_masks)
+        if args.masks_out is not None:
+            mask_store[idx] = {li - center_idx: (frame_nums[li], mask_codec.encode(np.asfortranarray(track_masks[li].astype(np.uint8))))
+                               for li in sorted_local_idxs}
         frame_arrays = {li: np.array(Image.open(tmp_dir / f"{li:05d}.jpg").convert("RGB")) for li in sorted_local_idxs}
 
         # two crop variants per frame -- letterbox=True (3 of 4 members) and letterbox=False (baseline mobilenet)
@@ -276,12 +293,17 @@ def main() -> None:
 
         if (n + 1) % args.save_every == 0 or n == len(indices) - 1:
             _write_summary(args, results)
+            if args.masks_out is not None:
+                args.masks_out.parent.mkdir(parents=True, exist_ok=True)
+                args.masks_out.write_bytes(pickle.dumps({"case_of": {i: ds.instances[i][0].split("/")[0] for i in mask_store}, "masks": mask_store}))
             if args.frame_logits_out is not None:
                 _write_frames(args, frame_store)
 
     _write_summary(args, results)
     if args.frame_logits_out is not None:
         _write_frames(args, frame_store)
+    if args.masks_out is not None:
+        args.masks_out.write_bytes(pickle.dumps({"case_of": {i: ds.instances[i][0].split("/")[0] for i in mask_store}, "masks": mask_store}))
 
 
 def _write_summary(args: argparse.Namespace, results: list[dict]) -> None:

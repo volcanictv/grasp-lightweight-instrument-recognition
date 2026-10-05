@@ -1,0 +1,24 @@
+task: region_classification
+model:
+  name: resnet50
+  pretrained: true
+  freeze_backbone: false
+data:
+  split: fold1
+  image_size: 320
+  augmentation: default
+  letterbox_crop: true
+  neighbour_dir: experiments/temporal_neighbors_yolo/fold2
+  neighbour_prob: 0.5
+loss:
+  type: evidential
+  class_weights: true
+  edl_lambda: 0.01
+  edl_anneal_epochs: 10
+  edl_clamp: 10.0
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001
+  backbone_lr: 0.0001
+  seed: 44

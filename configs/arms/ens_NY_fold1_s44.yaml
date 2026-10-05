@@ -1,0 +1,17 @@
+weight_resnet50_320: 0.4
+members:
+- checkpoint: experiments/armNY_resnet50_320_fold1_s44_20261002-131242/best.pt
+  model: resnet50
+  image_size: 320
+  letterbox: true
+  label: resnet50_320
+- checkpoint: experiments/armNY_baseline_fold1_s44_20261002-142426/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: false
+  label: baseline
+- checkpoint: experiments/armNY_letterbox_crop_fold1_s44_20261002-160824/best.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: true
+  label: letterbox_crop

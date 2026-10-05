@@ -1,0 +1,53 @@
+{
+ "args": {
+  "train_split": "fold2",
+  "dev_split": "fold1",
+  "model": "facebook/sam3",
+  "data_root": "/home/yzx/Desktop/Classification Surgurical Tools/GraSP",
+  "device": "cuda:0",
+  "epochs": "3",
+  "lr": "0.0001",
+  "encoder_lr": "1e-05",
+  "unfreeze_layers": "0",
+  "fp16": "False",
+  "jitter": "0.03",
+  "max_instances": "6",
+  "dev_stride": "3",
+  "final_stride": "1",
+  "limit": "None",
+  "out_dir": "experiments/sam3/dec"
+ },
+ "log": [
+  {
+   "epoch": 0,
+   "mean_iou": 0.8676084928548412,
+   "iou_ge_0.5": 0.9793038570084666,
+   "iou_ge_0.75": 0.8861712135465664,
+   "n": 1063
+  },
+  {
+   "epoch": 1,
+   "train_loss": 0.09362467186859351,
+   "mean_iou": 0.9014772845974064,
+   "iou_ge_0.5": 0.9952963311382879,
+   "iou_ge_0.75": 0.9379115710253998,
+   "n": 1063
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.08500092047977653,
+   "mean_iou": 0.90401831533016,
+   "iou_ge_0.5": 0.9943555973659455,
+   "iou_ge_0.75": 0.9444967074317968,
+   "n": 1063
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.08145600132766206,
+   "mean_iou": 0.9052788969961444,
+   "iou_ge_0.5": 0.993414863593603,
+   "iou_ge_0.75": 0.9482596425211665,
+   "n": 1063
+  }
+ ]
+}

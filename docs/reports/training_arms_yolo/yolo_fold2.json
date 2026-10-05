@@ -1,0 +1,147 @@
+{
+ "fold": "fold2",
+ "per_seed": {
+  "baseline": {
+   "42": {
+    "accuracy": 0.9168654173764906,
+    "macro_f1": 0.8880294653340932,
+    "crop_accuracy": 0.8875800054973102,
+    "crop_macro_f1": 0.8281133261234397,
+    "ycrop_accuracy": 0.8860936071961133,
+    "ycrop_macro_f1": 0.8236669348083071
+   }
+  },
+  "N": {
+   "42": {
+    "accuracy": 0.9253833049403748,
+    "macro_f1": 0.9024217875443975,
+    "crop_accuracy": 0.8999489535477284,
+    "crop_macro_f1": 0.8419936385356932,
+    "ycrop_accuracy": 0.899225551974602,
+    "ycrop_macro_f1": 0.8466383588019246
+   }
+  },
+  "Y": {
+   "42": {
+    "accuracy": 0.9226575809199319,
+    "macro_f1": 0.8871889476985897,
+    "crop_accuracy": 0.8897003965916677,
+    "crop_macro_f1": 0.8284010647237282,
+    "ycrop_accuracy": 0.8923469142334889,
+    "ycrop_macro_f1": 0.8346282410650808
+   }
+  },
+  "NY": {
+   "42": {
+    "accuracy": 0.9192504258943782,
+    "macro_f1": 0.8960943981574528,
+    "crop_accuracy": 0.8908783916440884,
+    "crop_macro_f1": 0.8302001079066691,
+    "ycrop_accuracy": 0.8937899850882678,
+    "ycrop_macro_f1": 0.8399440936049853
+   }
+  }
+ },
+ "summary": {
+  "baseline": {
+   "seeds": 1,
+   "accuracy": [
+    0.9168654173764906,
+    0.0,
+    1
+   ],
+   "macro_f1": [
+    0.8880294653340932,
+    0.0,
+    1
+   ],
+   "crop_accuracy": [
+    0.8875800054973102,
+    0.0,
+    1
+   ],
+   "ycrop_accuracy": [
+    0.8860936071961133,
+    0.0,
+    1
+   ],
+   "delta_accuracy_vs_baseline": 0.0,
+   "verdict": "baseline"
+  },
+  "N": {
+   "seeds": 1,
+   "accuracy": [
+    0.9253833049403748,
+    0.0,
+    1
+   ],
+   "macro_f1": [
+    0.9024217875443975,
+    0.0,
+    1
+   ],
+   "crop_accuracy": [
+    0.8999489535477284,
+    0.0,
+    1
+   ],
+   "ycrop_accuracy": [
+    0.899225551974602,
+    0.0,
+    1
+   ],
+   "delta_accuracy_vs_baseline": 0.008517887563884163,
+   "verdict": "IMPROVEMENT"
+  },
+  "Y": {
+   "seeds": 1,
+   "accuracy": [
+    0.9226575809199319,
+    0.0,
+    1
+   ],
+   "macro_f1": [
+    0.8871889476985897,
+    0.0,
+    1
+   ],
+   "crop_accuracy": [
+    0.8897003965916677,
+    0.0,
+    1
+   ],
+   "ycrop_accuracy": [
+    0.8923469142334889,
+    0.0,
+    1
+   ],
+   "delta_accuracy_vs_baseline": 0.005792163543441253,
+   "verdict": "IMPROVEMENT"
+  },
+  "NY": {
+   "seeds": 1,
+   "accuracy": [
+    0.9192504258943782,
+    0.0,
+    1
+   ],
+   "macro_f1": [
+    0.8960943981574528,
+    0.0,
+    1
+   ],
+   "crop_accuracy": [
+    0.8908783916440884,
+    0.0,
+    1
+   ],
+   "ycrop_accuracy": [
+    0.8937899850882678,
+    0.0,
+    1
+   ],
+   "delta_accuracy_vs_baseline": 0.002385008517887588,
+   "verdict": "IMPROVEMENT"
+  }
+ }
+}
