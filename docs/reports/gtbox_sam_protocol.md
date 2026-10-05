@@ -134,3 +134,27 @@ While packaging the weights, the SAM3 delta (the tensors that differ from the ba
 - The SAM2 fine-tune is not affected: its own forward pass has no such decorator and its delta holds the decoder, prompt encoder, neck and last four Hiera blocks
   (169 tensors).
 - Not tested: whether really training the SAM3 encoder would help. The flag now prints a warning.
+
+## Addendum, 2026-10-05 (second): can the GT-box pipeline run in real time
+
+Fixed before any run of it. The PI direction parked the real-time goal on 2026-10-02; the user restarted it on 2026-10-05. Ground-truth boxes stay the input (a detector is out of scope).
+
+- Definition. Online and causal: one keyframe per second, only frames up to the current one, mean end-to-end latency at most 1.0 s per keyframe on one Titan Xp
+  (Pascal, no fast half precision; fp32 unless a stage is measured faster in another precision). Budget split: segmentation at most 0.5 s, classification and
+  overhead at most 0.15 s, tracking amortised at most 0.35 s per keyframe. Latency is measured per stage on 60 test frames (scripts/benchmark_gtbox_stage_latency.py)
+  and, for tracking, in a streaming replay. What a faster GPU would allow is not measured and is not claimed.
+- Rung S (segmenter speed). SAM2.1 small and tiny fine-tuned with the large model's dev recipe (fold2 training cases, last four Hiera blocks and neck unfrozen,
+  dev fold1, checkpoint chosen on fold1 mean mask IoU without flip). Reference: the large model's fold1 value for the same recipe (0.9059 without flip, 0.9086 with).
+  Rule: take the fastest variant whose fold1 no-flip mean IoU is within 0.005 of the large model's; if none qualifies, keep the large model. Flip averaging is used
+  only if the chosen segmenter with flip stays within the 0.5 s segmentation budget.
+- Rung A (no tracking). The chosen segmenter trained on all eight training cases with the same fixed schedule as the final run (last epoch, no checkpoint choice;
+  the all-case SAM2-large weights already exist), test masks, the arm N four-member evidential ensemble of seeds 42, 43 and 44 on those masks, no gate, no tracking.
+- Rung B (causal tracking). Rung A plus EdgeTAM tracking of the gated instruments over the past 20 frames only, initialised from the segmenter's mask, the
+  tracker, look-back and combine unchanged from the causal preregistration (docs/reports/causal_tracker_preregistration.md). Gate: the 539 most uncertain instruments
+  (19%, the budget of the fold1-chosen threshold) and the same threshold 2.85e-4 of that preregistration, both reported; nothing is tuned on test. Streaming
+  replay reports the amortised tracking time per keyframe.
+- Rung C (association fusion, no tracker). Each instrument's belief is fused with the beliefs of earlier instruments matched by box overlap in the previous k
+  keyframes, no ground-truth identity used. Settings (overlap threshold from {0.3, 0.5}, k from {3, 5, 10}) chosen on fold1 only with the fold2-trained members,
+  by the rule of the causal preregistration (highest fold1 accuracy, then the cheapest within 0.001). If fold1 shows no gain, rung C is reported as negative and not run on test.
+- Scoring. mIoU, IoU and mcIoU as in the final run (unclipped headline), three seeds, beside the non-causal final (87.37 / 86.22 / 78.33) and TAPIS. Every rung is
+  reported whatever the result. Segmenters are trained once, so the seed spread covers the classifier only. The oracle-box caveat applies to every row.
