@@ -102,6 +102,11 @@ def main() -> None:
     ap.add_argument("--out-dir", type=Path, required=True)
     args = ap.parse_args()
     random.seed(0), np.random.seed(0), torch.manual_seed(0)
+    if args.unfreeze_layers:
+        print("WARNING: --unfreeze-layers has no effect on the weights. Sam3TrackerModel.get_image_embeddings is decorated with @torch.no_grad() "
+              "(transformers 5.18), so no gradient reaches the neck or the ViT layers; only the mask decoder and prompt encoder are trained. "
+              "The runs reported as 'plus the last four ViT layers' were decoder-only runs. To train the encoder, call the vision encoder "
+              "directly instead of get_image_embeddings.", flush=True)
 
     from transformers import Sam3TrackerModel, Sam3TrackerProcessor
     model = Sam3TrackerModel.from_pretrained(args.model).to(args.device)

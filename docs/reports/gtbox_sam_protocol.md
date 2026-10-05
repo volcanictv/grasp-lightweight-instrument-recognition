@@ -119,3 +119,18 @@ Fixed before any component of it is trained. The final test numbers come from th
   members; (3) gtft_ens_armN: the same masks and tracks with the arm N members; (4) final: all-case segmentors, arm N members. Rungs 1 to 3 already exist or run first; the final is
   the registered headline. If a rung is worse than the one below it, it is still reported.
 - Comparison: TAPIS (Swin-L Mask2Former + MViT), TAPIS-VST and SlowFast on the GraSP test set. Oracle-box caveat stated with every table.
+
+## Correction, 2026-10-05: the SAM3 "encoder" variant did not train the encoder
+
+While packaging the weights, the SAM3 delta (the tensors that differ from the base model) contained only the mask decoder and prompt encoder: 106 tensors,
+14.6 MB, none from the neck or the ViT layers. The cause is that `Sam3TrackerModel.get_image_embeddings` is decorated with `@torch.no_grad()` in transformers
+5.18, so no gradient reached the encoder in scripts/finetune_sam3_gtbox.py, and `--unfreeze-layers 4` changed nothing in the weights. Consequences:
+
+- The third addendum's variants S3a (decoder only) and S3b (decoder plus neck and last four ViT layers) were both decoder-only runs. They differ only in
+  the training mode of the encoder (train mode for S3b, which has no effect under no_grad apart from dropout and drop-path if any) and in random state.
+  The fold1 results (0.9073 and 0.9076 flip-averaged) are two replicates of the same recipe.
+- The final SAM3 (all eight training cases, `--unfreeze-layers 4`) is also decoder-only. All reported numbers are what that model produced; only the
+  description "plus the last four ViT layers" is wrong and is withdrawn everywhere it appears.
+- The SAM2 fine-tune is not affected: its own forward pass has no such decorator and its delta holds the decoder, prompt encoder, neck and last four Hiera blocks
+  (169 tensors).
+- Not tested: whether really training the SAM3 encoder would help. The flag now prints a warning.
