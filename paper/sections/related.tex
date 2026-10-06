@@ -1,16 +1,20 @@
 \section{Related work}
 \label{sec:related}
 
-\paragraph{Instrument segmentation and recognition.}
-ISINet \citep{gonzalez2020isinet} and MATIS \citep{ayobi2023matis} cast instrument segmentation in surgical video as instance segmentation with temporal consistency.
-TAPIS \citep{ayobi2024pixel} pairs a Mask2Former detector \citep{cheng2022mask2former} with a video transformer and is the reference on GraSP.
-\todo{add the two or three most relevant recent surgical-tool segmentation papers and verify the LACOSTE and ESCAPE references from the earlier notes before citing}
+\paragraph{Surgical instrument segmentation and recognition.}
+ISINet \citep{gonzalez2020isinet} treats instrument segmentation as instance segmentation with a temporal consistency module, and MATIS \citep{ayobi2023matis} replaces the convolutional backbone with masked-attention transformers and adds a video transformer for the class.
+The GraSP benchmark and its TAPIS model \citep{ayobi2024pixel} extend this line to a holistic, multi-task setting: a Mask2Former detector \citep{cheng2022mask2former} proposes instrument regions and a video transformer classifies them from a clip around the keyframe.
+Text-promptable segmentation \citep{zhou2023tpsis} conditions the mask decoder on instrument names so that new instrument types can be handled without relabelling.
+These methods detect, segment and classify jointly and apply the same temporal context to every instrument; to our knowledge none of them uses an uncertainty estimate to decide where temporal context is needed.
 
-\paragraph{Promptable segmentation.}
-SAM2 \citep{ravi2024sam2} segments and propagates masks through video from a box or mask prompt, and SAM3 \citep{carion2025sam3} extends the family.
-We use both as box-prompted segmenters and use SAM2 for propagation; EdgeTAM \citep{zhou2025edgetam} is a lighter tracker that we use for the causal variant.
+\paragraph{Promptable and foundation segmentation.}
+SAM \citep{kirillov2023sam} introduced segmentation from points and boxes, MedSAM \citep{ma2024medsam} adapted it to medical images, and SAM2 \citep{ravi2024sam2} added propagation of a mask through video.
+SAM3 \citep{carion2025sam3} adds concept prompts.
+In surgery these models are used zero-shot or lightly fine-tuned; recent work from our group prompts SAM3 with a generic text prompt and classifies the masked regions with a vision-language model \citep{poudel2026sam3}.
+We instead give the model a box, fine-tune its decoder (and, for SAM2, its last encoder blocks) on the benchmark, and leave classification to a dedicated light classifier, which is what lets us attach an uncertainty to it.
+EdgeTAM \citep{zhou2025edgetam} is a lighter tracker in the same family, which we use for the causal variant.
 
 \paragraph{Uncertainty.}
-MC dropout \citep{gal2016dropout} estimates uncertainty from stochastic forward passes, and softmax confidence is the usual baseline; both are known to be poorly calibrated under shift \citep{guo2017calibration,ovadia2019trust}.
-Evidential deep learning \citep{sensoy2018evidential} places a Dirichlet distribution over the class probabilities in one pass, and \citet{duan2024evidential} give variance-based scores that separate epistemic from aleatoric uncertainty; we use their epistemic score.
-\todo{one sentence on uncertainty-gated correction in medical video, if a close prior work exists}
+MC dropout \citep{gal2016dropout} estimates uncertainty from many stochastic forward passes and softmax confidence is the usual cheap baseline; both are poorly calibrated under dataset shift \citep{guo2017calibration,ovadia2019trust}.
+Evidential deep learning \citep{sensoy2018evidential} places a Dirichlet distribution over the class probabilities and obtains a belief and its uncertainty in one pass; \citet{duan2024evidential} derive variance-based scores that separate epistemic from aleatoric uncertainty, and we use their epistemic score as the gate.
+Unlike a vote or a softmax, such a score can stay high when all ensemble members agree on the wrong class, because it also reflects how much evidence the members gathered.

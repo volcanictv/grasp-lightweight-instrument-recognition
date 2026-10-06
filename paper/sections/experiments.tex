@@ -35,8 +35,8 @@ To bound the effect we also report the gate threshold chosen on a held-out fold 
 \begin{figure}[htbp]
 \floatconts
   {fig:whisker}
-  {\caption{Final pipeline against TAPIS. Whiskers show the 95\% bootstrap interval over the five test cases.}}
-  {\includegraphics[width=0.85\linewidth]{figures/whisker.png}}
+  {\caption{Left: final pipeline against TAPIS, whiskers show the 95\% bootstrap interval over the five test cases. Right: IoU per class of the final pipeline; the Laparoscopic Grasper is weakest because closed jaws look like a suction tube in a single frame.}}
+  {\includegraphics[width=0.49\linewidth]{figures/whisker.pdf}\hfill\includegraphics[width=0.49\linewidth]{figures/classes.pdf}}
 \end{figure}
 
 IoU is clearly above TAPIS, mIoU is modestly above, and mcIoU is comparable (TAPIS lies inside our interval, Figure~\ref{fig:whisker}).
@@ -65,14 +65,7 @@ Because the boxes are given, the IoU margin is the one most inflated by the comp
 Steps of 0.3 points or less are inside the seed spread.
 Adding SAM3 raises the mask IoU against the ground truth from 0.900 to 0.906.
 Tracker-style crops help most on the Prograsp Forceps and cost some accuracy on the Large Needle Driver (IoU 61 to 67 and 90 to 86).
-Figure~\ref{fig:classes} gives the per-class IoU of the final pipeline; the Laparoscopic Grasper is weakest because closed jaws look like a suction tube in a single frame.
-
-\begin{figure}[htbp]
-\floatconts
-  {fig:classes}
-  {\caption{Per-class IoU of the final pipeline.}}
-  {\includegraphics[width=0.85\linewidth]{figures/classes.png}}
-\end{figure}
+The per-class IoU is in Figure~\ref{fig:whisker} (right).
 
 \subsection{Evidential versus MC-dropout uncertainty}
 \label{sec:uncertainty}
@@ -96,8 +89,8 @@ Figure~\ref{fig:classes} gives the per-class IoU of the final pipeline; the Lapa
 \begin{figure}[htbp]
 \floatconts
   {fig:roc}
-  {\caption{ROC curves for flagging wrong predictions on the held-out fold (mean of three seeds).}}
-  {\includegraphics[width=0.5\linewidth]{figures/roc.png}}
+  {\caption{Left: ROC curves for flagging wrong predictions on the held-out fold (mean of three seeds). Right: accuracy against the share of instruments sent to tracking on the held-out fold; the circle is the chosen threshold.}}
+  {\includegraphics[width=0.45\linewidth]{figures/roc.pdf}\hfill\includegraphics[width=0.52\linewidth]{figures/gate.pdf}}
 \end{figure}
 
 The evidential score ranks errors at least as well as an MC-dropout vote at one eightieth of the forward passes (Table~\ref{tab:uncertainty}, Figure~\ref{fig:roc}).
@@ -105,15 +98,8 @@ It also flags errors on which every member predicts the same wrong class, which 
 \todo{one sentence on the earlier softmax-gated pipeline as a baseline, and on EndoVis retraining, if we keep them; otherwise leave them out}
 
 \paragraph{Gate threshold.}
-Figure~\ref{fig:gate} shows the held-out sweep.
+Figure~\ref{fig:roc} (right) shows the held-out sweep.
 Accuracy is flat beyond about 15\% of instruments tracked, so the exact threshold matters little.
-
-\begin{figure}[htbp]
-\floatconts
-  {fig:gate}
-  {\caption{Accuracy against the share of instruments sent to tracking, held-out fold. The circle is the chosen threshold.}}
-  {\includegraphics[width=0.85\linewidth]{figures/gate.png}}
-\end{figure}
 
 \subsection{Causal real-time variant}
 \label{sec:realtime}
