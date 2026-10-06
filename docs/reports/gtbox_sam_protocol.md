@@ -170,3 +170,13 @@ after the EdgeTAM scores were seen (disclosed: its settings are not chosen with 
   threshold of the causal preregistration) and, separately, the 539 most uncertain. Nothing is tuned.
 - Reported beside rung B, whatever the result. Latency: YOLO per frame from docs/reports/causal_realtime/latency/yolo.json (10.5 ms median), matching on the CPU
   measured in the run.
+
+## Addendum, 2026-10-06 (second): causal SAM2-large propagation
+
+Fixed before the run. The final pipeline tracks with SAM2-large over 10 frames on each side of the keyframe, which uses future frames. This run makes the propagation causal and measures what it costs.
+
+- Tracker: SAM2-large (the same checkpoint and configuration as the final run), propagated backward only from the keyframe over the 20 past frames (21 frames with the keyframe; `--causal --window 20` of scripts/evaluate_temporal_track_ensemble.py),
+  initialised from the segmenter's mask. The look-back of 20 matches rung B (EdgeTAM) so the two causal trackers are compared like for like. Classifier, evidential fusion and frame combine unchanged. No setting is tuned.
+- Two runs. (a) The final pipeline's masks (all-case SAM2 + SAM3 ensemble, arm N members, seeds 42, 43, 44): only the tracker changes from non-causal to causal, scored beside the non-causal final (87.37 / 86.22 / 78.33). (b) The real-time pipeline's masks (SAM2-tiny with flip, rung A) with SAM2-large in place of EdgeTAM, scored beside rung B.
+- Gates, both reported: the 539 most uncertain instruments, S1 >= 2.85e-4 (the causal preregistration's threshold), and for run (a) also the 833 most uncertain (the final run's headline budget). Tracks are made once for the union over the three seeds of the instruments any of these gates selects.
+- Scoring as in the final run (mIoU, IoU, mcIoU, unclipped headline, three seeds). Reported whatever the result. SAM2-large's cost is unchanged (about 21 frames per tracked instrument), so this run answers accuracy, not speed.
