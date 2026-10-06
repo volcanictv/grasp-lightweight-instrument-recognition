@@ -38,6 +38,6 @@ Get-ChildItem $repoPaper -Exclude "README.md", "build" | Copy-Item -Destination 
 & git add -A
 & git diff --cached --quiet
 if ($LASTEXITCODE -eq 0) { "nothing to push"; exit 0 }
-& git -c user.name="Aryan Bhatt" -c user.email="ab1340@rit.edu" commit -q -m $Message
+& git -c user.name="Aryan Bhatta" -c user.email="ab1340@rit.edu" commit -q -m $Message
 G push origin HEAD:main
 "pushed: $Message"
