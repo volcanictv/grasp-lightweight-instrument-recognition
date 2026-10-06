@@ -68,6 +68,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--frame-logits-out", type=Path, default=None,
                         help="npz of raw per-frame member logits, det_<index> shaped (frames, members, classes), "
                              "the layout the evidential scorers read")
+    parser.add_argument("--init-masks", type=Path, default=None,
+                        help="pickle of {instance index: COCO RLE}: start every track from this predicted mask (a segmentor's) instead of the ground-truth mask")
     parser.add_argument("--out", type=Path, required=True)
     return parser.parse_args()
 
@@ -139,6 +141,7 @@ def main() -> None:
     print(f"{len(indices)} of {len(ds.instances)} instances")
 
     cache = pickle.loads(args.detections_cache.read_bytes()) if args.detections_cache else None
+    init_masks = pickle.loads(args.init_masks.read_bytes()) if args.init_masks else None
     yolo = None if cache is not None else YOLO(str(args.yolo_weights))
     results = []
     frame_store: dict[str, np.ndarray] = {}
@@ -147,7 +150,12 @@ def main() -> None:
         file_name, segmentation, box, label = ds.instances[idx]
         case, frame_stem = file_name.split("/")
         center_num = int(frame_stem.replace(".jpg", ""))
-        gt_mask = decode_instance_mask(segmentation).astype(bool)
+        if init_masks is None:
+            gt_mask = decode_instance_mask(segmentation).astype(bool)
+        else:
+            gt_mask = mask_codec.decode(init_masks[idx]).astype(bool)
+            if not gt_mask.any():
+                continue
         area_pct = float(gt_mask.sum() / (segmentation["size"][0] * segmentation["size"][1]) * 100)
 
         frame_nums, center_idx = build_track_frame_nums(frames_root, case, center_num, args.window, 0 if args.causal else None)

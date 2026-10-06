@@ -158,3 +158,15 @@ Fixed before any run of it. The PI direction parked the real-time goal on 2026-1
   by the rule of the causal preregistration (highest fold1 accuracy, then the cheapest within 0.001). If fold1 shows no gain, rung C is reported as negative and not run on test.
 - Scoring. mIoU, IoU and mcIoU as in the final run (unclipped headline), three seeds, beside the non-causal final (87.37 / 86.22 / 78.33) and TAPIS. Every rung is
   reported whatever the result. Segmenters are trained once, so the seed spread covers the classifier only. The oracle-box caveat applies to every row.
+
+## Addendum, 2026-10-06: YOLO26s as the causal tracker (rung B2), added after rung B
+
+Rung B used EdgeTAM only; the first addendum named no other tracker and YOLO was left out without a registered reason. The user asked for it, so it is run now,
+after the EdgeTAM scores were seen (disclosed: its settings are not chosen with that knowledge, they are the locked ones of the causal preregistration).
+
+- Rung B2: the rung A tiny + flip masks (all-case SAM2.1 tiny) and the arm N four-member ensemble of seeds 42, 43 and 44, as in rung B, with the YOLO26s-seg
+  tracker in place of EdgeTAM: official-split weights (experiments/yolo26_seg_official_20260930-131921/weights/last.pt), 15 past frames only, matching min-IoU 0.1,
+  coast 3, centre-frame fallback, conf 0.1, imgsz 640, the track started from the segmenter's mask. Gate: S1 >= 5.75e-4 (the YOLO tracker's fold1-chosen
+  threshold of the causal preregistration) and, separately, the 539 most uncertain. Nothing is tuned.
+- Reported beside rung B, whatever the result. Latency: YOLO per frame from docs/reports/causal_realtime/latency/yolo.json (10.5 ms median), matching on the CPU
+  measured in the run.
