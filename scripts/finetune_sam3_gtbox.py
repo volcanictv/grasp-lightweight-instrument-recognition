@@ -100,8 +100,9 @@ def main() -> None:
     ap.add_argument("--final-stride", type=int, default=1, help="final plain and flip check on every k-th dev frame (1 = all)")
     ap.add_argument("--limit", type=int, default=None, help="debug: cap train frames")
     ap.add_argument("--out-dir", type=Path, required=True)
+    ap.add_argument("--seed", type=int, default=0, help="training seed (0 reproduces every earlier run)")
     args = ap.parse_args()
-    random.seed(0), np.random.seed(0), torch.manual_seed(0)
+    random.seed(args.seed), np.random.seed(args.seed), torch.manual_seed(args.seed)
     if args.unfreeze_layers:
         print("WARNING: --unfreeze-layers has no effect on the weights. Sam3TrackerModel.get_image_embeddings is decorated with @torch.no_grad() "
               "(transformers 5.18), so no gradient reaches the neck or the ViT layers; only the mask decoder and prompt encoder are trained. "
