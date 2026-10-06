@@ -452,16 +452,6 @@ code { font-family: var(--mono); font-size: 12.5px; }
 </section>
 
 <section>
-  <h2>Other datasets</h2>
-  <div class="tablewrap"><table>
-    <tr><th>Zero-shot, no retraining</th><th class="n">accuracy</th><th class="n">macro-F1</th></tr>
-    <tr><td>EndoVis 2018 (6 of 7 classes shared)</td><td class="n">0.528</td><td class="n">0.414</td></tr>
-    <tr><td>EndoVis 2017 (4 of 7 classes shared)</td><td class="n">0.551</td><td class="n">0.570</td></tr>
-  </table></div>
-  <p class="note">The model does not transfer zero-shot. Retrained on the target dataset with tracking, EndoVis 2018 reaches 0.927 accuracy (evidential) and 0.928 (vote).</p>
-</section>
-
-<section>
   <h2>Release</h2>
   <div class="tablewrap"><table>
     <tr><th>Item</th><th>State</th></tr>
@@ -489,7 +479,7 @@ code { font-family: var(--mono); font-size: 12.5px; }
 </section>
 
 <footer>
-  Sources: <code>docs/reports/gtbox_sam/final_3seed.json</code>, <code>bootstrap_cis.json</code>, <code>latency/our_stages.json</code>, <code>latency/tapis.json</code>, the protocol in <code>docs/reports/gtbox_sam_protocol.md</code> (research repository, branch gtbox-sam-pipeline, merged), and the earlier status report of 2026-09-20 for the classifier history and EndoVis rows. TAPIS numbers are from the GraSP paper.
+  Sources: <code>docs/reports/gtbox_sam/final_3seed.json</code>, <code>bootstrap_cis.json</code>, <code>latency/our_stages.json</code>, <code>latency/tapis.json</code>, the protocol in <code>docs/reports/gtbox_sam_protocol.md</code> (research repository, branch gtbox-sam-pipeline, merged), and the earlier status report of 2026-09-20 for the classifier history. TAPIS numbers are from the GraSP paper.
 </footer>
 
 </main>
