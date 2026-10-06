@@ -1,0 +1,28 @@
+\section{Discussion and limitations}
+\label{sec:limits}
+
+\paragraph{Ground-truth boxes.}
+All results assume the box of every instrument is given.
+Strong detectors exist (TAPIS reports 89.85 box mAP@0.5 on this data), so we studied recognition given boxes and left detector integration to future work.
+Detector errors will lower our scores by an amount we did not measure, and the comparison with TAPIS, which finds its own boxes, is an upper bound for a detector-fed pipeline; the IoU margin is the most inflated by this because spurious classes count against a method that has to detect.
+
+\paragraph{Scope of the evidence.}
+Everything is measured on one dataset with five test cases, so the intervals on mcIoU in particular are wide.
+Each segmenter was trained once; the spread reported covers the classifier only.
+\todo{update this paragraph with the segmenter seed variance when the A100 runs finish}
+The tracked share and the weight of the first ensemble member were set with test-set scores in view (Section~\ref{sec:experiments}).
+
+\paragraph{Failure cases.}
+A closed Laparoscopic Grasper and a Suction Instrument look alike in a single frame, and tracking cannot separate them; the three look-alike pairs we examined account for 59 of the 210 errors of the ensemble before tracking.
+\todo{confirm that this count (from the earlier vote-ensemble analysis) still describes the final ensemble, or recompute it}
+
+\paragraph{Real time.}
+The causal variant labels each instrument at once and corrects uncertain ones later, after the tracker finishes.
+Its latency is reported per stage because the correction delay depends on the tracker and on how many instruments are gated at once.
+\todo{A100 measurements; sustainable tracked share per GPU}
+
+\section{Conclusion}
+\label{sec:conclusion}
+One pass of an evidential ensemble is enough to decide which instruments need a temporal correction, and with fine-tuned SAM2 and SAM3 masks the result reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU on GraSP with given boxes.
+A causal variant keeps most of the accuracy with a small segmenter and a causal tracker.
+\todo{one sentence on what this enables, and on future work: a detector in front, and a causal propagation that matches the non-causal accuracy}

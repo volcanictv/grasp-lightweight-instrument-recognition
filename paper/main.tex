@@ -1,0 +1,48 @@
+\documentclass{midl} % single-blind review: author names are included
+
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+% Visible marker for everything that still depends on a run or a decision. Search for "TODO" before submitting: there must be none left.
+\newcommand{\todo}[1]{{\color{red}\textbf{[TODO: #1]}}}
+
+\jmlrvolume{-- Under Review}
+\jmlryear{2027}
+\jmlrworkshop{Full Paper -- MIDL 2027 submission}
+\editors{Under Review for MIDL 2027}
+
+\title[Evidence-gated instrument recognition]{Evidence-Gated Temporal Correction for Box-Prompted Surgical Instrument Recognition}
+% Working title.
+
+% TODO: replace the placeholder name, email and affiliation (a \todo macro inside \Name breaks the class's name parsing)
+\midlauthor{\Name{Author Name} \Email{author@example.org}\\
+\addr Affiliation TODO}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\begin{keywords}
+surgical instrument segmentation, evidential deep learning, uncertainty, video object tracking, segment anything
+\end{keywords}
+
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/method}
+\input{sections/experiments}
+\input{sections/discussion}
+
+\clearpage % acknowledgements, references and appendices do not count toward the page limit
+\midlacknowledgments{\todo{acknowledgements: cluster access, funding}}
+
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

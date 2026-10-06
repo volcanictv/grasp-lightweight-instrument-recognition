@@ -1,0 +1,54 @@
+\section{Method}
+\label{sec:method}
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:pipeline}
+  {\caption{The pipeline. Each instrument's box and the frame go to the segmenter; the mask is cropped and classified in one pass; only instruments whose evidential score passes the gate are followed by SAM2 across neighbouring frames and re-classified.}}
+  {\includegraphics[width=0.62\linewidth]{figures/flow.png}}
+\end{figure}
+
+Given a frame $I$ and the boxes $\{b_k\}$ of its instruments, the pipeline returns for each instrument a mask $\hat{m}_k$, a class $\hat{y}_k \in \{1,\dots,C\}$ with $C=7$, and an uncertainty score $S_k$ (Figure~\ref{fig:pipeline}).
+
+\subsection{Box-prompted segmenter}
+SAM2.1-large and SAM3 are each fine-tuned on GraSP with the ground-truth box as prompt and a mask loss.
+For SAM2 we train the mask decoder, the prompt encoder, the neck and the last four encoder blocks (267\,MB of changed weights); for SAM3 only the mask decoder and prompt encoder change (15\,MB).
+At inference each model predicts mask logits for the image and its mirror image, the four logit maps are averaged, and the mask is the region where the average is positive.
+Checkpoints and the use of mirror averaging were chosen on a held-out fold; the final models are then trained on all training cases with the fixed schedule that selection produced.
+\todo{confirm the mask-loss terms from the fine-tuning scripts before stating them}
+
+\subsection{Evidential ensemble classifier}
+The mask multiplies the frame inside the box, and the crop is passed to four networks: ResNet-50 at 320\,px and at 224\,px, and two MobileNetV3-small networks (one with a stretched crop, one with a letterboxed crop).
+Each network output $z_j \in \mathbb{R}^C$ is read as Dirichlet evidence,
+\begin{equation}
+\alpha_j = \exp\!\big(\mathrm{clip}(z_j,-10,10)\big) + 1,
+\label{eq:alpha}
+\end{equation}
+without a softmax.
+The ensemble parameter is the weighted mean $\alpha = \sum_j w_j \alpha_j$ with $w = (0.40, 0.20, 0.20, 0.20)$; with $\alpha_0=\sum_c \alpha_c$ and $\mu = \alpha/\alpha_0$, the prediction is $\hat{y}=\arg\max_c \mu_c$ and the uncertainty is the epistemic score of \citet{duan2024evidential},
+\begin{equation}
+S = \frac{1 - \sum_c \mu_c^2}{\alpha_0 + 1}.
+\label{eq:score}
+\end{equation}
+Members are trained with the evidential loss $\sum_c y_c(\log\alpha_0 - \log\alpha_c) + \lambda\,\mathrm{KL}\big(\mathrm{Dir}(\tilde{\alpha})\,\|\,\mathrm{Dir}(\mathbf{1})\big)$ with $\tilde{\alpha}=y+(1-y)\alpha$, $\lambda=0.01$ annealed over ten epochs (chosen on the held-out fold by macro-F1 alone).
+\todo{state the optimiser, epochs, image augmentations and learning rate from the training configs}
+
+\paragraph{Tracker-style crops.}
+Crops produced by a tracker differ from crops made with a clean mask.
+During training, with probability 0.5 the crop of an instrument is replaced by a stored EdgeTAM crop of the same instrument one to five frames away.
+
+\subsection{Evidence gate and temporal correction}
+An instrument is sent to correction when $S\ge\tau$, or, to fix the cost, when it is among the $K$ highest scores.
+Its mask is propagated by SAM2-large over the ten frames on each side of the keyframe, the ensemble classifies the instrument on every propagated frame $f$ to give $\mu_f$, and the frames are fused with confidence weights,
+\begin{equation}
+\hat{y} = \arg\max_c \sum_f \big(\max_{c'} \mu_{f,c'}\big)\, \mu_{f,c}.
+\label{eq:fuse}
+\end{equation}
+Instruments below the gate keep their single-frame class.
+The threshold $\tau$ is chosen on a held-out fold: sweep it with tracking, take the highest accuracy, then the cheapest gate within 0.001 of it.
+
+\subsection{Causal real-time variant}
+\label{sec:causalmethod}
+The correction above uses frames on both sides of the keyframe.
+The causal variant uses only the past: SAM2-tiny with mirror averaging replaces the segmenter ensemble, and the propagation runs backward from the keyframe over the 20 preceding frames with a causal tracker (EdgeTAM; SAM2-large and a YOLO26s-seg tracker are compared in Section~\ref{sec:realtime}).
+Frames arrive at one per second, the single-frame label is available immediately, and the corrected label follows when the tracker finishes.

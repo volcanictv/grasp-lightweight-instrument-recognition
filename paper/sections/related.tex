@@ -1,0 +1,16 @@
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Instrument segmentation and recognition.}
+ISINet \citep{gonzalez2020isinet} and MATIS \citep{ayobi2023matis} cast instrument segmentation in surgical video as instance segmentation with temporal consistency.
+TAPIS \citep{ayobi2024pixel} pairs a Mask2Former detector \citep{cheng2022mask2former} with a video transformer and is the reference on GraSP.
+\todo{add the two or three most relevant recent surgical-tool segmentation papers and verify the LACOSTE and ESCAPE references from the earlier notes before citing}
+
+\paragraph{Promptable segmentation.}
+SAM2 \citep{ravi2024sam2} segments and propagates masks through video from a box or mask prompt, and SAM3 \citep{carion2025sam3} extends the family.
+We use both as box-prompted segmenters and use SAM2 for propagation; EdgeTAM \citep{zhou2025edgetam} is a lighter tracker that we use for the causal variant.
+
+\paragraph{Uncertainty.}
+MC dropout \citep{gal2016dropout} estimates uncertainty from stochastic forward passes, and softmax confidence is the usual baseline; both are known to be poorly calibrated under shift \citep{guo2017calibration,ovadia2019trust}.
+Evidential deep learning \citep{sensoy2018evidential} places a Dirichlet distribution over the class probabilities in one pass, and \citet{duan2024evidential} give variance-based scores that separate epistemic from aleatoric uncertainty; we use their epistemic score.
+\todo{one sentence on uncertainty-gated correction in medical video, if a close prior work exists}

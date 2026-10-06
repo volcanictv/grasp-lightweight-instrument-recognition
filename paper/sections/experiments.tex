@@ -1,0 +1,159 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Setup}
+We use the GraSP benchmark (robotic prostatectomy video, 7 instrument classes, frames at about one per second).
+The official test split has 1,125 frames from 5 cases with 2,861 instrument instances; two disjoint folds of the training cases serve as development folds, and the final segmenters and classifiers are trained on all eight training cases.
+Scores are the benchmark's mIoU, IoU and mcIoU, computed with code ported from the MATIS evaluation; they are paired with TAPIS's published numbers.
+Every instrument's box is the ground-truth box.
+We report the mean of three classifier seeds with the standard deviation, and the 95\% case-level bootstrap interval.
+Segmenters are trained once.
+\todo{segmenter seed variance on the A100 cluster: three seeds of the SAM2 and SAM3 fine-tunes, rerun masks, tracking and scoring}
+
+\paragraph{Test-set exposure.}
+The tracked share (833 of 2,861 instruments) and the weight 0.40 of the first ensemble member were set while looking at test-set scores in earlier iterations of this work.
+To bound the effect we also report the gate threshold chosen on a held-out fold (Table~\ref{tab:results}), which tracks 42 to 47\% of the instruments and scores the same or higher.
+\todo{flat member weights (0.25 each) on the final configuration, to show how much the 0.40 matters}
+
+\subsection{Main result}
+\label{sec:results}
+\begin{table}[htbp]
+\floatconts
+  {tab:results}
+  {\caption{Test-set scores (mean $\pm$ SD over three classifier seeds). Our rows use ground-truth boxes; TAPIS finds its own.}}
+  {\begin{tabular}{lccc}
+  \toprule
+  \bfseries Method & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU\\
+  \midrule
+  Ours, tracking the 833 most uncertain & $87.37\pm0.33$ & $86.22\pm0.46$ & $78.33\pm1.28$\\
+  Ours, gate threshold chosen on a held-out fold & $87.50\pm0.28$ & $86.43\pm0.38$ & $78.90\pm1.07$\\
+  TAPIS \citep{ayobi2024pixel} & 86.61 & 83.38 & 77.42\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:whisker}
+  {\caption{Final pipeline against TAPIS. Whiskers show the 95\% bootstrap interval over the five test cases.}}
+  {\includegraphics[width=0.85\linewidth]{figures/whisker.png}}
+\end{figure}
+
+IoU is clearly above TAPIS, mIoU is modestly above, and mcIoU is comparable (TAPIS lies inside our interval, Figure~\ref{fig:whisker}).
+Instrument-level accuracy is 0.957 and macro-F1 0.929.
+With perfect classes on our masks the three scores would be 91.2, 91.2 and 89.0, the ceiling set by segmentation.
+Because the boxes are given, the IoU margin is the one most inflated by the comparison (Section~\ref{sec:limits}).
+
+\subsection{What each step adds}
+\label{sec:ladder}
+\begin{table}[htbp]
+\floatconts
+  {tab:ladder}
+  {\caption{Ablation ladder, mean of three classifier seeds, 833 instruments tracked.}}
+  {\begin{tabular}{lccc}
+  \toprule
+  \bfseries Step & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU\\
+  \midrule
+  SAM2 fine-tuned segmenter & 86.34 & 85.31 & 77.59\\
+  + SAM3 in the segmenter & 86.78 & 85.72 & 77.90\\
+  + classifier trained on tracker-style crops & 87.11 & 85.97 & 78.19\\
+  + segmenters trained on all training cases & 87.37 & 86.22 & 78.33\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+Steps of 0.3 points or less are inside the seed spread.
+Adding SAM3 raises the mask IoU against the ground truth from 0.900 to 0.906.
+Tracker-style crops help most on the Prograsp Forceps and cost some accuracy on the Large Needle Driver (IoU 61 to 67 and 90 to 86).
+Figure~\ref{fig:classes} gives the per-class IoU of the final pipeline; the Laparoscopic Grasper is weakest because closed jaws look like a suction tube in a single frame.
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:classes}
+  {\caption{Per-class IoU of the final pipeline.}}
+  {\includegraphics[width=0.85\linewidth]{figures/classes.png}}
+\end{figure}
+
+\subsection{Evidential versus MC-dropout uncertainty}
+\label{sec:uncertainty}
+\begin{table}[htbp]
+\floatconts
+  {tab:uncertainty}
+  {\caption{Error detection with an MC-dropout vote ensemble (80 stochastic passes) and the evidential ensemble (one pass). Held-out fold: three seeds, mean $\pm$ SD.}}
+  {\begin{tabular}{lcc}
+  \toprule
+  & \bfseries MC dropout & \bfseries Evidential\\
+  \midrule
+  AUROC, held-out fold & $0.912\pm0.010$ & $0.927\pm0.004$\\
+  AUROC, test set & 0.896 & 0.922\\
+  Errors caught at 20\% review & 83.5\% & 89.3\%\\
+  Errors flagged when all members agree & 0\% & 74\%\\
+  Forward passes per instrument & 80 & 1\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:roc}
+  {\caption{ROC curves for flagging wrong predictions on the held-out fold (mean of three seeds).}}
+  {\includegraphics[width=0.5\linewidth]{figures/roc.png}}
+\end{figure}
+
+The evidential score ranks errors at least as well as an MC-dropout vote at one eightieth of the forward passes (Table~\ref{tab:uncertainty}, Figure~\ref{fig:roc}).
+It also flags errors on which every member predicts the same wrong class, which a vote cannot do because it shows no disagreement.
+\todo{one sentence on the earlier softmax-gated pipeline as a baseline, and on EndoVis retraining, if we keep them; otherwise leave them out}
+
+\paragraph{Gate threshold.}
+Figure~\ref{fig:gate} shows the held-out sweep.
+Accuracy is flat beyond about 15\% of instruments tracked, so the exact threshold matters little.
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:gate}
+  {\caption{Accuracy against the share of instruments sent to tracking, held-out fold. The circle is the chosen threshold.}}
+  {\includegraphics[width=0.85\linewidth]{figures/gate.png}}
+\end{figure}
+
+\subsection{Causal real-time variant}
+\label{sec:realtime}
+\begin{table}[htbp]
+\floatconts
+  {tab:realtime}
+  {\caption{Causal variants (past frames only, one frame per second), mean of three classifier seeds. Latency is the mean time to the final label per instrument on one Titan Xp, estimated from measured stage times; \todo{replace with measured A100 end-to-end latency}.}}
+  {\begin{tabular}{lcccc}
+  \toprule
+  \bfseries Pipeline & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU & \bfseries ms\\
+  \midrule
+  SAM2-tiny, causal EdgeTAM, 539 tracked & 84.22 & 82.30 & 71.89 & 853\\
+  SAM2-tiny, causal YOLO26s, 539 tracked & 83.23 & 81.32 & 70.28 & 370\\
+  SAM2-tiny, no tracking & 82.13 & 79.55 & 67.93 & 306\\
+  SAM2-tiny, causal SAM2-large & \todo{running} & \todo{} & \todo{} & \todo{}\\
+  Final pipeline (non-causal) & 87.37 & 86.22 & 78.33 & 13,006\\
+  TAPIS & 86.61 & 83.38 & 77.42 & 484\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{table}[htbp]
+\floatconts
+  {tab:latency}
+  {\caption{Latency of the causal EdgeTAM pipeline, milliseconds on one Titan Xp. \todo{rerun on the A100}}}
+  {\begin{tabular}{lr}
+  \toprule
+  \bfseries Stage & \bfseries ms\\
+  \midrule
+  Segmenter (SAM2-tiny with mirror pass), per frame & 207\\
+  Classifier, per frame & 98\\
+  Tracking and classification, per tracked instrument & 2,907\\
+  End to end, best case & 306\\
+  End to end, average & 853\\
+  End to end, worst case & 10,037\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+On the held-out fold, SAM2-tiny with mirror averaging (mask IoU 0.906, 207\,ms per frame) matches SAM2-large without it (0.906, 402\,ms) and stays within 0.003 of SAM2-large with it (0.909, 807\,ms).
+Causal EdgeTAM recovers about two points of mIoU over no tracking, less than non-causal SAM2-large (about three); YOLO26s is faster but recovers about one point.
+\todo{causal SAM2-large result, matched look-back of 20 frames, on both mask sets (runs in progress)}
+\todo{the 539-instrument gate exceeds what one GPU sustains with EdgeTAM; state the sustainable tracked share from the streaming replay or the A100 measurement}

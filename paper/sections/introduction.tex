@@ -1,0 +1,22 @@
+\section{Introduction}
+\label{sec:intro}
+
+Knowing which instrument is where in a surgical video supports workflow analysis, skill assessment and context-aware assistance.
+The GraSP benchmark \citep{ayobi2024pixel} asks for the mask and class of every instrument in robotic prostatectomy video and is scored with mIoU, IoU and mcIoU; the strongest published baseline, TAPIS, couples a Mask2Former detector with a video transformer.
+Three properties of the data make the task hard.
+Annotated frames are few.
+The classes are imbalanced: the rarest instrument has about 25 times fewer examples than the most common.
+Instruments are partly hidden or look alike from some angles, most clearly a closed Laparoscopic Grasper and a Suction Instrument.
+
+We take a different split of the problem.
+Detectors for surgical instruments are already strong (TAPIS reports 89.85 box mAP@0.5 on this data), so we assume the box of each instrument is given and study recognition: the mask, the class, and knowing when the class is unreliable.
+Our pipeline prompts fine-tuned SAM2 and SAM3 segmenters with the box, classifies the masked crop with a light evidential ensemble, and sends only the instruments whose evidence is weak to a SAM2 temporal correction.
+All results therefore use ground-truth boxes, which makes the comparison with TAPIS (which finds its own boxes) an upper bound for a pipeline fed by a detector; the IoU margin is the most affected by this (Section~\ref{sec:limits}).
+
+Our contributions are:
+\begin{itemize}
+\item an evidence-gated pipeline in which one forward pass of a four-member evidential ensemble decides which instruments receive an expensive temporal correction, reaching 87.4 mIoU, 86.2 IoU and 78.3 mcIoU on GraSP (Section~\ref{sec:results});
+\item a comparison of the evidential score with MC dropout as the gate signal: equal or better error detection at 1/80 of the cost, including errors on which every member agrees (Section~\ref{sec:uncertainty});
+\item tracker-style-crop training, which exposes the classifier to the kind of crop a tracker later produces (Section~\ref{sec:ladder});
+\item a causal, one-frame-per-second variant with a small segmenter and a causal tracker, with accuracy and latency reported together (Section~\ref{sec:realtime}).
+\end{itemize}
