@@ -1,14 +1,26 @@
 \section{Protocol and reproducibility}
 \label{app:protocol}
-Every configuration was fixed in a written protocol addendum before the run it governs; the addenda, the scripts and the per-seed result files are in the code repository.
-Development folds were used to choose checkpoints, the mirror averaging and the gate threshold; the official test cases were used for the final scores.
+Every configuration was fixed in a written protocol addendum before the run it governs; the addenda, scripts and per-seed result files are in the code repository.
+Development folds chose checkpoints, mirror averaging and the gate threshold; the official test cases were used for the final scores.
 Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and the weights, with checksums, at \url{https://huggingface.co/AryanB005/grasp-instrument-pipeline}.
 \todo{research repository link for the training and analysis code, if we release it}
+
+\section{Additional results}
+\label{app:extra}
+\begin{figure}[h]
+\floatconts
+  {fig:appendix}
+  {\caption{Left: non-causal pipeline against TAPIS, whiskers show the 95\% bootstrap interval over the five test cases. Centre: IoU per class. Right: held-out accuracy against the share of instruments tracked; the circle is the chosen threshold.}}
+  {\includegraphics[width=0.32\linewidth]{figures/whisker.pdf}\hfill\includegraphics[width=0.32\linewidth]{figures/classes.pdf}\hfill\includegraphics[width=0.32\linewidth]{figures/gate.pdf}}
+\end{figure}
+\begin{figure}[h]
+\floatconts
+  {fig:roc}
+  {\caption{ROC curves for flagging wrong predictions on the held-out fold (mean of three seeds).}}
+  {\includegraphics[width=0.4\linewidth]{figures/roc.pdf}}
+\end{figure}
+\todo{per-case scores, leave-one-case-out ranges, the box-clipping variant (reported separately because it only helps with ground-truth boxes)}
 
 \section{Implementation details}
 \label{app:impl}
 \todo{optimiser, learning rates, epochs, batch sizes and augmentations for the segmenters and the four classifier members; GPU and software versions; latency measurement protocol}
-
-\section{Additional results}
-\label{app:extra}
-\todo{per-case scores, leave-one-case-out ranges, the held-out gate sweep table, box-clipping variant (reported separately because it only helps with ground-truth boxes)}

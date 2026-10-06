@@ -32,7 +32,8 @@ from surgical_ai.models import build_model
 
 CLASSES = ["Bipolar Forceps", "Prograsp Forceps", "Large Needle Driver", "Monopolar Curved Scissors", "Suction Instrument", "Clip Applier", "Laparoscopic Grasper"]
 WEIGHTS = {"resnet50_320": 0.40, "resnet50_224": 0.20, "baseline": 0.20, "letterbox_crop": 0.20}
-RUN = REPO_ROOT / "experiments" / "gtbox_sam" / "final"
+RUN = REPO_ROOT / "experiments" / "gtbox_sam" / os.environ.get("FIG_RUN", "final")
+TRACKS = os.environ.get("FIG_TRACKS", "tracked")
 DATA_ROOT = Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP"))
 
 
@@ -54,7 +55,7 @@ def belief(member_logits: dict[str, np.ndarray]) -> tuple[np.ndarray, float]:
 
 def load_tracks() -> dict:
     masks = {}
-    for p in sorted((RUN / "tracked").glob("masks_shard*.pkl")):
+    for p in sorted((RUN / TRACKS).glob("masks_shard*.pkl")):
         masks.update(pickle.loads(p.read_bytes())["masks"])
     return masks
 

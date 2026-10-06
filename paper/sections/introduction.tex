@@ -1,41 +1,34 @@
 \section{Introduction}
 \label{sec:intro}
 
-Robot-assisted surgery produces hours of endoscopic video, and the automatic analysis of that video underpins workflow analysis, skill assessment, context-aware assistance and, further out, partial automation of surgical steps \citep{ayobi2024pixel}.
-All of these need the same visual foundation: which instruments are in the field of view, where they are, and which kind each one is.
-Instrument recognition, the segmentation of every instrument together with its type, is therefore a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis}.
+Robot-assisted surgery produces hours of endoscopic video, and analysing it as it is recorded would support context-aware assistance, skill assessment and, further out, partial automation of surgical steps \citep{ayobi2024pixel}.
+These uses share a visual foundation: which instruments are in view, where they are, and which kind each one is.
+Instrument recognition, the segmentation of every instrument together with its type, is therefore a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis}, and for live assistance it must work online: it can only use frames that have already arrived, and it must keep up with the video.
 
-Naming the type of an instrument is harder than segmenting ``a tool''.
-Instruments of different types share shafts, wrists and jaws, and the parts that tell them apart are often out of frame, occluded, or turned away from the camera.
-Figure~\ref{fig:teaser} shows a typical case from the GraSP benchmark.
-A Laparoscopic Grasper enters the keyframe at the edge of the view, and a classifier that sees only this frame believes it is a Prograsp Forceps (belief 0.57) and is visibly unsure.
-A few seconds earlier or later the same instrument is seen from a clearer angle and is classified correctly, and combining the frames recovers the right class.
-Temporal context is thus the natural remedy for ambiguous views, but it is not free: it requires following each instrument through the video and classifying it again on every frame, and most instruments do not need it.
-The practical question is not whether to use temporal context but where.
+Naming the type of an instrument from a single frame is hard.
+Instruments of different types share shafts, wrists and jaws, and the parts that tell them apart are often out of frame, occluded or turned away from the camera.
+Figure~\ref{fig:teaser} shows a typical case: a Large Needle Driver whose keyframe view is classified as a Bipolar Forceps (belief 0.47), while earlier frames show the instrument clearly and are classified correctly.
+Looking back resolves such cases, but it is expensive.
+It requires following the instrument through the video and classifying it again on every frame, and most instruments do not need it.
+For an online system the question is therefore not whether to track but which instruments to track.
 
 \begin{figure}[t]
 \floatconts
   {fig:teaser}
-  {\caption{A single frame can be ambiguous, neighbouring frames are not. (a)~The keyframe with the box that is given and the mask a segmenter predicts for it. (b)~The class belief of the evidential ensemble from the keyframe alone (grey) and fused over the frames in (c) (teal); the true class is in green. (c)~Neighbouring frames with the propagated mask; the label under each is the prediction from that frame alone. The keyframe prediction is wrong and uncertain, so the instrument is sent to temporal correction, which fixes it. Most instruments are not uncertain and never need it.}}
+  {\caption{Evidence-gated look-back. The keyframe (a) is ambiguous: its class belief (b, grey) is wrong and uncertain, so the gate sends the instrument to tracking. Past frames (c) classify it correctly, and their fusion (b, teal) fixes the label. No future frame is used.}}
   {\includegraphics[width=\linewidth]{figures/fig1_example.pdf}}
 \end{figure}
 
-The strongest published system on this benchmark, TAPIS \citep{ayobi2024pixel}, detects and classifies instruments with a Mask2Former detector \citep{cheng2022mask2former} and adds a video transformer that reads a clip of frames around every keyframe.
-It spends the same temporal budget on every instrument and does not use an uncertainty estimate to decide where that budget is needed.
-Annotated surgical frames are also few and the classes are imbalanced, the rarest instrument having about 25 times fewer examples than the most common, which favours models that start from strong pretrained representations.
-Promptable segmentation models now provide those representations for masks: given a box, SAM2 and SAM3 return a mask \citep{ravi2024sam2,carion2025sam3}, but neither says what the object is.
+The strongest published system on the GraSP benchmark, TAPIS \citep{ayobi2024pixel}, detects and classifies instruments with a Mask2Former detector \citep{cheng2022mask2former} and a video transformer that reads a time window centred on the keyframe.
+It therefore needs future frames, which a live system does not have, and it spends the same temporal budget on every instrument without an uncertainty estimate to say where the budget is needed.
+Annotated frames are few and the classes imbalanced, the rarest instrument having about 25 times fewer examples than the most common, so models should start from strong pretrained representations.
+Promptable segmenters supply them for masks: given a box, SAM2 and SAM3 return a mask \citep{ravi2024sam2,carion2025sam3}, but not the instrument's type.
 
-We therefore separate \emph{where} from \emph{what}, and spend temporal context only where it is needed.
-A given box prompts fine-tuned SAM2 and SAM3 segmenters; a light four-member evidential ensemble classifies the masked crop in a single pass and returns, besides the class, an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}; only instruments whose uncertainty passes a gate are followed by SAM2 through neighbouring frames, and the per-frame predictions are fused by confidence (Section~\ref{sec:method}).
-We assume the boxes are given.
-Surgical instrument detectors are already strong (TAPIS reports 89.85 box mAP at an IoU of 0.5 on this data), so we study recognition given boxes and leave the integration of a detector to future work (Section~\ref{sec:limits}).
+We make tracking evidence-based.
+A given box prompts fine-tuned SAM2 and SAM3 segmenters, and a light four-member evidential ensemble classifies the masked crop in one pass, returning the class and an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}.
+Only instruments whose evidence is weak are followed backward through past frames, and the per-frame predictions are fused by confidence (Section~\ref{sec:method}).
+We assume the boxes are given: instrument detectors are already strong (TAPIS reports 89.85 box mAP at an IoU of 0.5 on this data), so we study recognition given boxes and leave the integration of a detector to future work (Section~\ref{sec:limits}).
 
-On GraSP this reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU against 86.6, 83.4 and 77.4 for TAPIS, which finds its own boxes (Section~\ref{sec:results}).
-The evidential score detects errors as well as MC dropout with one forward pass instead of eighty and, unlike a vote, flags errors on which all members agree (Section~\ref{sec:uncertainty}).
-A causal variant for streaming video, with a small segmenter and a causal tracker, keeps most of the accuracy (Section~\ref{sec:realtime}).
-Our contributions are:
-\begin{itemize}
-\item an evidence-gated pipeline that decides in one forward pass which instruments receive temporal correction, with a tracker-style-crop training scheme that prepares the classifier for the crops a tracker produces;
-\item a comparison of evidential and MC-dropout uncertainty as the gate signal, at equal or better error detection and one eightieth of the cost;
-\item a causal, one-frame-per-second variant with accuracy and latency reported together.
-\end{itemize}
+On GraSP, tracking the 19\% of instruments with the weakest evidence recovers 87\% of the accuracy gain of tracking the weakest 31\%, and the resulting causal pipeline reaches 84.2 mIoU, 82.3 IoU and 71.9 mcIoU (Section~\ref{sec:gate}).
+Its non-causal counterpart, an upper bound that also reads future frames, reaches 87.4, 86.2 and 78.3 against 86.6, 83.4 and 77.4 for TAPIS, clearly above it on IoU (Section~\ref{sec:results}).
+The evidential score detects errors as well as MC dropout with one forward pass instead of 80 and, unlike a vote, flags errors on which all members agree (Section~\ref{sec:uncertainty}).

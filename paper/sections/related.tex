@@ -5,7 +5,7 @@
 ISINet \citep{gonzalez2020isinet} treats instrument segmentation as instance segmentation with a temporal consistency module, and MATIS \citep{ayobi2023matis} replaces the convolutional backbone with masked-attention transformers and adds a video transformer for the class.
 The GraSP benchmark and its TAPIS model \citep{ayobi2024pixel} extend this line to a holistic, multi-task setting: a Mask2Former detector \citep{cheng2022mask2former} proposes instrument regions and a video transformer classifies them from a clip around the keyframe.
 Text-promptable segmentation \citep{zhou2023tpsis} conditions the mask decoder on instrument names so that new instrument types can be handled without relabelling.
-These methods detect, segment and classify jointly and apply the same temporal context to every instrument; to our knowledge none of them uses an uncertainty estimate to decide where temporal context is needed.
+These methods detect, segment and classify jointly, read a window of frames around the keyframe, and apply the same temporal context to every instrument; to our knowledge none of them uses an uncertainty estimate to decide where temporal context is needed, and none is restricted to past frames.
 
 \paragraph{Promptable and foundation segmentation.}
 SAM \citep{kirillov2023sam} introduced segmentation from points and boxes, MedSAM \citep{ma2024medsam} adapted it to medical images, and SAM2 \citep{ravi2024sam2} added propagation of a mask through video.

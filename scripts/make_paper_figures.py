@@ -23,8 +23,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Rectangle
 
-plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"], "mathtext.fontset": "cm",
-                     "font.size": 8, "axes.linewidth": 0.6, "pdf.fonttype": 42})
+STYLE = {"font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"], "mathtext.fontset": "cm",
+         "font.size": 8, "axes.linewidth": 0.6, "pdf.fonttype": 42, "text.color": "#1c2430","axes.edgecolor": "#8a94a3",
+         "axes.labelcolor": "#1c2430", "xtick.color": "#5d6877", "ytick.color": "#1c2430"}
+plt.rcParams.update(STYLE)
 INK, MUTED, ACCENT, GREY, RED, GREEN = "#1c2430", "#5d6877", "#0b6e8a", "#8a94a3", "#b3382f", "#1d7a46"
 CLASSES = ["Bipolar Forceps", "Prograsp Forceps", "Large Needle Driver", "Monopolar Curved Scissors", "Suction Instrument", "Clip Applier", "Laparoscopic Grasper"]
 SHORT = ["Bipolar", "Prograsp", "Needle driver", "Scissors", "Suction", "Clip applier", "Grasper"]
@@ -40,7 +42,7 @@ def fig1(index: int, out: Path) -> None:
     ds = GraspRegionDataset(fe.DATA_ROOT, "test", letterbox=True)
     ex = fe.example(index, members, ds, fe.load_tracks())
     frames = ex["frames"]
-    want = [-10, -7, -3, 0, 3, 7, 10]
+    want = [-20, -17, -13, -10, -7, -3, 0] if min(f["offset"] for f in frames) < -10 and max(f["offset"] for f in frames) <= 0 else [-10, -7, -3, 0, 3, 7, 10]
     by_off = {f["offset"]: f for f in frames}
     show = [by_off[o] for o in want if o in by_off]
     true = ex["true_index"]
@@ -56,7 +58,7 @@ def fig1(index: int, out: Path) -> None:
     axa.add_patch(Rectangle((x, y), w, h, fill=False, ec="#ffd54a", lw=1.6))
     axa.contour(key["mask"].astype(float), levels=[0.5], colors="#00e5ff", linewidths=1.1)
     axa.axis("off")
-    axa.set_title("(a) Keyframe with the given box and the segmenter's mask", fontsize=8, loc="left")
+    axa.set_title("(a) Keyframe: given box, predicted mask", fontsize=8, loc="left")
     # (b) beliefs before and after fusion
     axb = fig.add_subplot(top[0, 2])
     pos = np.arange(7)[::-1]
@@ -93,7 +95,7 @@ def fig1(index: int, out: Path) -> None:
         tag = "keyframe" if f["offset"] == 0 else f"$t$ = {f['offset']:+d} s".replace("-", "−")
         ax.set_xlabel(f"{tag}\n{SHORT[k]} {f['mu'][k]:.2f}", fontsize=7, color=col, labelpad=2)
         if j == 0:
-            ax.set_title("(c) Neighbouring frames with the propagated mask, each classified on its own", fontsize=8, loc="left")
+            ax.set_title("(c) Past frames with the propagated mask, each classified alone", fontsize=8, loc="left")
     out.mkdir(parents=True, exist_ok=True)
     fig.savefig(out / "fig1_example.pdf")
     fig.savefig(out / "fig1_example.png", dpi=200)
@@ -189,7 +191,66 @@ def plots(out: Path) -> None:
     fig.tight_layout(pad=0.4)
     fig.savefig(out / "gate.pdf")
     plt.close(fig)
+    fig2(out)
     print("wrote plots to", out)
+
+
+def fig2(out: Path) -> None:
+    """(a) accuracy against the share of instruments tracked, evidence-ordered; (b) mIoU against end-to-end latency (estimated from stage times)."""
+    R = REPO_ROOT / "docs" / "reports"
+    curves = json.loads((R / "realtime" / "gate_budget_curve.json").read_text())
+    import build_pi_report_docx as lat  # latency numbers computed from the measurement files
+    plt.rcParams.update(STYLE)  # the import above sets its own plot style
+
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.6, 2.5), gridspec_kw={"width_ratios": [1.0, 1.05], "wspace": 0.32})
+    spec = {"causal EdgeTAM (SAM2-tiny masks)": (ACCENT, "causal (past frames)"), "offline SAM2-large (SAM2 + SAM3 masks)": ("#6b5b95", "non-causal")}
+    for name, (col, lab) in spec.items():
+        c = curves[name]
+        x = np.array(c["k"]) / c["n"] * 100
+        a.plot(x, c["accuracy_mean"], color=col, lw=1.6, label=lab)
+        a.plot(x, c["oracle_mean"], color=col, lw=0.9, ls=(0, (3, 2)), alpha=0.6)
+        if name.startswith("causal"):
+            i = c["k"].index(540)
+            gain_540 = c["accuracy_mean"][i] - c["base_accuracy"]
+            gain_all = c["accuracy_mean"][-1] - c["base_accuracy"]
+            a.plot(x[i], c["accuracy_mean"][i], "o", color=col, ms=4.5)
+            a.annotate(f"19% tracked:\n{100 * gain_540 / gain_all:.0f}% of the gain", (x[i], c["accuracy_mean"][i]), xytext=(x[i] + 3, c["accuracy_mean"][i] + 0.010),
+                       fontsize=6.8, color=col, arrowprops=dict(arrowstyle="-", color=col, lw=0.6))
+    a.plot([], [], color=GREY, lw=0.9, ls=(0, (3, 2)), label="best possible gate")
+    a.set_xlabel("instruments sent to tracking (%), highest evidential score first", fontsize=7.2)
+    a.set_ylabel("instrument accuracy")
+    a.set_xlim(0, 43)
+    a.grid(color="#e1e5ea", lw=0.5)
+    a.set_axisbelow(True)
+    for s in ("top", "right"):
+        a.spines[s].set_visible(False)
+    a.legend(frameon=False, fontsize=6.5, loc="lower right")
+    a.set_title("(a) Evidence concentrates the gain", fontsize=8, loc="left")
+
+    pts = [("ours, causal, EdgeTAM", lat.RT_AVG, 84.22, "o", ACCENT, True), ("ours, causal, YOLO26s", lat.YOLO_AVG, 83.23, "o", ACCENT, True),
+           ("ours, causal, no tracking", lat.RT_BEST, 82.13, "o", ACCENT, True), ("ours, non-causal", lat.OFF_AVG, 87.37, "s", ACCENT, False),
+           ("TAPIS", lat.tapis_ms, 86.61, "s", GREY, False)]
+    for lab, xv, yv, mk, col, filled in pts:
+        b.plot(xv, yv, mk, color=col, mfc=col if filled else "white", mew=1.4, ms=6)
+    off = {"ours, causal, EdgeTAM": (6, 4, "left"), "ours, causal, YOLO26s": (-6, 2, "right"), "ours, causal, no tracking": (7, -3, "left"),
+           "ours, non-causal": (-7, 5, "right"), "TAPIS": (-7, -10, "right")}
+    for lab, xv, yv, *_ in pts:
+        dx, dy, ha = off[lab]
+        b.annotate(lab, (xv, yv), xytext=(dx, dy), textcoords="offset points", fontsize=6.6, ha=ha, color=INK)
+    b.axvline(1000, color=RED, lw=0.8, ls=":")
+    b.text(1080, 81.35, "1 frame/s", fontsize=6.5, color=RED)
+    b.set_xscale("log")
+    b.set_xlim(200, 30000)
+    b.set_ylim(81, 88.3)
+    b.set_xlabel("end-to-end latency per instrument (ms, estimated)", fontsize=7.2)
+    b.set_ylabel("mIoU")
+    b.grid(color="#e1e5ea", lw=0.5, which="both")
+    b.set_axisbelow(True)
+    for s in ("top", "right"):
+        b.spines[s].set_visible(False)
+    b.set_title("(b) Accuracy against latency", fontsize=8, loc="left")
+    fig.savefig(out / "fig2_tradeoff.pdf", bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":

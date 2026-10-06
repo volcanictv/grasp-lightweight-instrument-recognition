@@ -32,6 +32,7 @@ def main() -> None:
     ap.add_argument("--run", type=Path, default=REPO_ROOT / "experiments" / "gtbox_sam" / "final")
     ap.add_argument("--seed", type=int, default=44)
     ap.add_argument("--budget", type=int, default=833)
+    ap.add_argument("--tracks", default="tracked", help="name of the tracking directory inside the run (tracked, or tracked_b for the causal run)")
     ap.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
@@ -45,10 +46,10 @@ def main() -> None:
     s1 = variance_scores(alpha)["epistemic"]
     gated = np.zeros(len(y), bool)
     gated[np.argsort(-s1, kind="stable")[: args.budget]] = True
-    tdir = args.run / ("tracked" if args.seed == 42 else f"tracked_s{args.seed}")
+    tdir = args.run / (args.tracks if args.seed == 42 else f"{args.tracks}_s{args.seed}")
     tracked = load_tracked(tdir)
     masks = {}
-    for p in sorted((args.run / "tracked").glob("masks_shard*.pkl")):
+    for p in sorted((args.run / args.tracks).glob("masks_shard*.pkl")):
         masks.update(pickle.loads(p.read_bytes())["masks"])
 
     rows = []

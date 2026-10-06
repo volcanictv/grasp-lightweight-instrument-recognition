@@ -1,7 +1,8 @@
-Recognising which surgical instrument is where in robotic surgery video requires accurate masks and class labels that hold up under occlusion and between look-alike instruments.
-We study the setting in which each instrument's box is given and ask how far a box-prompted segmenter and a light classifier can go, and when they should ask for temporal help.
-We fine-tune SAM2 and SAM3 as box-prompted segmenters, classify each mask with a four-member evidential ensemble trained on tracker-style crops, and use the ensemble's epistemic uncertainty to choose which instruments are followed by SAM2 across neighbouring frames, whose per-frame predictions are fused by confidence.
-On the GraSP test set the pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU (mean of three classifier seeds), against 86.6, 83.4 and 77.4 for TAPIS, which finds its own boxes.
-The evidential score detects errors as well as MC dropout (AUROC 0.927 against 0.912 on a held-out fold) with one forward pass instead of 80, and it flags errors on which all ensemble members agree.
-A causal variant that uses SAM2-tiny for segmentation and a causal tracker for correction reaches 84.2 mIoU, 82.3 IoU and 71.9 mcIoU at \todo{measured A100 latency} ms per frame.
+Live surgical assistance needs instrument recognition that works on video as it arrives, using only past frames and a fixed compute budget per frame.
+A single frame is often ambiguous, and looking back through earlier frames resolves it, but tracking every instrument is too expensive for a live system.
+We make the tracking evidence-based.
+Given each instrument's box, fine-tuned SAM2 and SAM3 segmenters return a mask, and a four-member evidential ensemble classifies it in one pass and returns an epistemic uncertainty; only instruments whose evidence is weak are followed backward through past frames, and the frame predictions are fused by confidence.
+On GraSP, tracking the 19\% of instruments with the weakest evidence recovers 87\% of the accuracy gain of tracking the weakest 31\%.
+The resulting causal pipeline reaches 84.2 mIoU, 82.3 IoU and 71.9 mcIoU with an estimated end-to-end latency of \todo{measured A100 latency} ms per instrument.
+Its non-causal counterpart, an upper bound that also reads future frames, reaches 87.4, 86.2 and 78.3 against 86.6, 83.4 and 77.4 for TAPIS, which finds its own boxes.
 Code and weights are public.
