@@ -1,7 +1,9 @@
-A single frame often leaves the type of a surgical instrument ambiguous, and neighbouring frames can resolve it, but following every instrument through the video is expensive and most instruments do not need it.
-We let uncertainty decide where to spend that effort.
-Given an instrument's box, fine-tuned SAM2 and SAM3 segmenters return a mask, and a four-member evidential ensemble classifies it in one forward pass and returns an epistemic uncertainty.
-On a held-out fold this score finds classification errors better than MC dropout with one pass instead of 80 (AUROC 0.928 against 0.912) and catches more of them than softmax confidence when 20\% of the instruments are reviewed (90\% against 86\%).
-Only the instruments with the weakest evidence are followed through neighbouring frames and their per-frame predictions fused: refining 19\% of the instruments recovers 81\% of the accuracy gain of refining the weakest 31\%, and refining 29\% takes 59\% less time per instrument than refining all of them.
-On the GraSP benchmark, with given boxes, the pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU, in line with or above the best published results (86.6, 83.4 and 77.4).
+Surgical instrument recognition models reach high average accuracy but fail on rare and visually similar instruments, and neither heavy computation on every instrument nor human review of every prediction is practical.
+We let uncertainty decide where that effort goes.
+Given an instrument's location, fine-tuned SAM2 and SAM3 segmenters return a mask, and a four-member evidential ensemble classifies it in one forward pass and returns an epistemic uncertainty.
+Reviewing the 20\% of instruments with the highest uncertainty finds 90\% of the errors on a held-out fold and 85\% on the test cases, at least as many as a 12-network deep ensemble finds and more than 80-pass MC dropout.
+Following the same kind of instruments through neighbouring frames and fusing the predictions recovers 97\% of the best gain we measured by refining 29\% of them, and the gain concentrates on the weakest classes (Clip Applier IoU 61.7 to 76.8, mcIoU +8.4).
+Among the scores we compared, energy and mutual information rank errors worse than plain softmax confidence, while the single-pass evidential score finds the most errors at a fixed budget with near-best calibration.
+The score degrades under zero-shot transfer to EndoVis (AUROC 0.66 to 0.73), which we report as a limitation.
+The setting is offline: review of archives, annotation assistance and quality control.
 Code and weights are public.

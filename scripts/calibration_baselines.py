@@ -194,7 +194,26 @@ def main() -> None:
         v = pooled[m]
         curves[label] = risk_coverage(v["scores"][sig], v["p"].argmax(axis=1) == y, grid)
 
-    out = {"split": "fold1", "instruments": int(len(y)), "errors_softmax_mean": float(np.mean([(per_seed["Softmax ensemble"][s]["p"].argmax(1) != y).sum() for s in SEEDS])),
+    # review curves: the share of all errors found when the highest-scoring fraction of instruments is reviewed (mean over seeds)
+    fracs = np.round(np.arange(0.0, 1.0001, 0.01), 2)
+
+    def review_curve(score: np.ndarray, err: np.ndarray) -> list[float]:
+        order = np.argsort(-score, kind="stable")
+        cum = np.concatenate([[0.0], np.cumsum(err[order].astype(float))]) / max(1, err.sum())
+        return [float(cum[int(round(f * len(score)))]) for f in fracs]
+
+    review = {}
+    for label, (m, sig) in {"Evidential S1 (ours)": ("Evidential (flagship, 1 pass)", "epistemic S1"), "Softmax confidence": ("Softmax ensemble", "max-softmax"),
+                            "MC dropout, vote": ("MC dropout (80 passes)", "vote disagreement"), "MC dropout, mean softmax": ("MC dropout (80 passes)", "max-softmax")}.items():
+        arr = []
+        for s, v in per_seed[m].items():
+            pred = v.get("pred_override", {}).get(sig, v["p"].argmax(axis=1))
+            arr.append(review_curve(v["scores"][sig], pred != y))
+        review[label] = np.mean(arr, axis=0).tolist()
+    v = pooled["Deep ensemble (3 seeds, 12 nets)"]
+    review["Deep ensemble, entropy (3 seeds)"] = review_curve(v["scores"]["entropy"], v["p"].argmax(axis=1) != y)
+
+    out = {"split": "fold1", "instruments": int(len(y)), "review_curves": {"fractions": fracs.tolist(), "curves": review}, "errors_softmax_mean": float(np.mean([(per_seed["Softmax ensemble"][s]["p"].argmax(1) != y).sum() for s in SEEDS])),
            "methods": methods, "risk_coverage": {"coverage": grid.tolist(), "curves": curves}}
 
     # ---------- official test cases: the evidential ensemble only ----------
@@ -208,7 +227,8 @@ def main() -> None:
             mu = alpha / alpha.sum(axis=1, keepdims=True)
             cal = calib(mu, yt)
             res[s] = {**{k: cal[k] for k in ("accuracy", "nll", "brier", "ece")}, **detect(variance_scores(alpha)["epistemic"], mu.argmax(1) != yt), "bins": cal["bins"]}
-        out["test_evidential"] = {"instruments": int(len(yt)), "per_seed": {str(s): v for s, v in res.items()},
+        test_curve = np.mean([review_curve(variance_scores(a)["epistemic"], (a / a.sum(axis=1, keepdims=True)).argmax(1) != yt) for a in alphas], axis=0).tolist()
+        out["test_evidential"] = {"instruments": int(len(yt)), "review_curve": test_curve, "per_seed": {str(s): v for s, v in res.items()},
                                   "mean": {k: float(np.mean([v[k] for v in res.values()])) for k in ("accuracy", "nll", "brier", "ece", "auroc", "caught20")}}
     except FileNotFoundError as err:
         print("no test extract:", err)

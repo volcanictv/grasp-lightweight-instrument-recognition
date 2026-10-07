@@ -1,36 +1,28 @@
 \section{Introduction}
 \label{sec:intro}
 
-Robot-assisted surgery produces hours of endoscopic video, and analysing it would support context-aware assistance, skill assessment and, further out, partial automation of surgical steps \citep{ayobi2024pixel}.
-These uses share a visual foundation: which instruments are in view, where they are, and which kind each one is.
-Instrument recognition, the segmentation of every instrument together with its type, is therefore a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis}.
-
-Naming the type of an instrument from a single frame is hard.
-Instruments of different types share shafts, wrists and jaws, and the parts that tell them apart are often out of frame, occluded or turned away from the camera.
-Figure~\ref{fig:teaser} shows a typical case: a Large Needle Driver whose keyframe view is classified as a Bipolar Forceps (belief 0.47), while neighbouring frames show the instrument clearly and are classified correctly.
-Looking at other frames resolves such cases, but it is expensive.
-It requires following the instrument through the video and classifying it again on every frame, and most instruments do not need it.
-The question is therefore not whether to use more frames but for which instruments, and a model that knows when it is uncertain can answer it.
-The same answer tells a clinician or an annotator which predictions deserve a second look.
+Recognising which instrument is in view, and where, is a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis,ayobi2024pixel}, and it supports offline uses such as reviewing video archives, assisting annotation, quality control and skill assessment.
+Models for it reach high average accuracy, but the average hides where they fail: on the rarest instruments, and on instruments that look like another type.
+Figure~\ref{fig:teaser} shows a typical case, a Large Needle Driver whose keyframe view is classified as a Bipolar Forceps (belief 0.47) while neighbouring frames show the instrument clearly.
+Two remedies exist and both are costly when applied uniformly.
+A second look at neighbouring frames needs the instrument to be followed through the video and classified again on every frame, and a human review needs a person to check every prediction.
+Most predictions do not need either; the problem is knowing which ones do.
 
 \begin{figure}[tbp]
 \floatconts
   {fig:teaser}
-  {\caption{Evidence-gated refinement. The keyframe (a) is ambiguous: its class belief (b, grey) is wrong and uncertain, so the gate sends the instrument to refinement. Neighbouring frames (c; here earlier ones) classify it correctly, and their fusion (b, teal) fixes the label.}}
+  {\caption{Where effort goes. The keyframe (a) is ambiguous: its class belief (b, grey) is wrong and uncertain, so the instrument is sent for a second look. Neighbouring frames (c) classify it correctly, and their fusion (b, teal) fixes the label.}}
   {\includegraphics[width=\linewidth]{figures/fig1_example.pdf}}
 \end{figure}
 
-The GraSP benchmark \citep{ayobi2024pixel} comes with a reference model, TAPIS, that detects and classifies instruments with a Mask2Former detector \citep{cheng2022mask2former} and a video transformer reading a time window centred on the keyframe; it gives the published results we measure against.
-Like other methods of this kind it spends the same temporal budget on every instrument and has no uncertainty estimate to say where the budget is needed.
-Annotated frames are few and the classes imbalanced (the rarest instrument has about 25 times fewer examples than the most common), so models should start from strong pretrained representations; given a box, SAM2 and SAM3 return a mask \citep{ravi2024sam2,carion2025sam3}, but not the instrument's type.
-
-We let uncertainty decide.
-A given box prompts fine-tuned SAM2 and SAM3 segmenters, and a light four-member evidential ensemble classifies the masked crop in one pass, returning the class and an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}.
-Only instruments whose evidence is weak are followed through neighbouring frames, and the per-frame predictions are fused by confidence (Section~\ref{sec:method}).
-We assume the boxes are given: instrument detectors are already strong (the benchmark's reference model reports 89.85 box mAP at an IoU of 0.5 on this data), so we study recognition given boxes and leave the integration of a detector to future work (Section~\ref{sec:limits}).
+We use uncertainty to route that effort.
+A box prompts fine-tuned SAM2 and SAM3 segmenters, and a light four-member evidential ensemble classifies the masked crop in one forward pass, returning a class and an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}.
+Ranking the instruments by this uncertainty serves both remedies: the highest-ranked are reviewed by a person, and the highest-ranked are followed through neighbouring frames and their predictions fused (Section~\ref{sec:method}).
+On the GraSP benchmark \citep{ayobi2024pixel}, checking one instrument in five finds 90\% of the errors on a held-out fold and 85\% on the test cases.
+We study recognition given the instruments' locations; detection is an upstream stage that we do not evaluate.
 Our contributions are:
 \begin{itemize}
-\item a single-pass evidential score that detects classification errors as well as an 80-pass MC-dropout vote and better than softmax confidence at a fixed review budget, including errors on which all ensemble members agree (Section~\ref{sec:uncertainty});
-\item evidence-gated multi-frame refinement: sending the 19\% of instruments with the weakest evidence to neighbouring frames recovers 81\% of the gain of sending the weakest 31\%, at 59\% less time per instrument than refining all of them (Section~\ref{sec:gate}), and the resulting pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU, in line with or above the published benchmark results of 86.6, 83.4 and 77.4 (Section~\ref{sec:results});
-\item a control that shows how much of the gain needs a tracker and how much comes from viewing the same region at other moments (Section~\ref{sec:control}).
+\item an effort curve for review and for refinement: reviewing 20\% of the instruments finds most of the errors (Section~\ref{sec:effort}), and refining 29\% of them recovers 97\% of the best gain we measured, concentrated on the weakest classes (Sections~\ref{sec:effort} and~\ref{sec:classes});
+\item an empirical comparison of uncertainty scores for this task, with calibration: a four-network single-pass evidential ensemble finds as many errors at a fixed budget as a 12-network deep ensemble and more than 80-pass MC dropout, while popular scores such as energy and mutual information rank errors worse than softmax confidence (Section~\ref{sec:uncertainty});
+\item controls and limits: the gain needs a tracker and not a static view of the same region (Section~\ref{sec:control}), and the uncertainty degrades under zero-shot transfer to another dataset (Section~\ref{sec:shift}).
 \end{itemize}
