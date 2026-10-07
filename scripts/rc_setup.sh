@@ -59,7 +59,7 @@ say "environment edgetam"
 [ -x "$WORK/envs/edgetam/bin/python" ] || $UV venv --python 3.11 "$WORK/envs/edgetam"
 PYE=$WORK/envs/edgetam/bin/python
 $UV pip install --python $PYE $TORCH_ARGS
-$UV pip install --python $PYE setuptools wheel $COMMON
+$UV pip install --python $PYE setuptools wheel $COMMON timm==1.0.30   # timm: EdgeTAM's RepViT image encoder
 [ -d "$WORK/EdgeTAM/.git" ] || git clone https://github.com/facebookresearch/EdgeTAM "$WORK/EdgeTAM"
 git -C "$WORK/EdgeTAM" checkout 7711e01
 sed -i 's/\.expand(B, -1, -1)\.view(-1, 1, C)/.expand(B, -1, -1).reshape(-1, 1, C)/' "$WORK/EdgeTAM/sam2/modeling/perceiver.py"
@@ -79,7 +79,9 @@ snapshot_download("AryanB005/grasp-instrument-pipeline", allow_patterns=["weight
 EOF
 
 say "SAM3 (gated)"
-if [ -s "$WORK/.hf_token" ]; then
+if [ -e "$WORK/hf_cache/hub/models--facebook--sam3/snapshots" ] && [ -n "$(ls -A "$WORK/hf_cache/hub/models--facebook--sam3/snapshots" 2>/dev/null)" ]; then
+  say "SAM3 already in the cache, nothing to download"
+elif [ -s "$WORK/.hf_token" ]; then
   HF_TOKEN=$(cat "$WORK/.hf_token") $PY - <<EOF
 import os
 from huggingface_hub import snapshot_download
@@ -98,6 +100,19 @@ say "import smoke tests"
 cd "$TMPDIR"  # a neutral directory: a folder named sam2 in the working directory would shadow the installed packages
 $PY -c "import torch, sam2, ultralytics, transformers, pycocotools; from transformers import Sam3TrackerModel; print(torch.__version__, torch.version.cuda, transformers.__version__, ultralytics.__version__)"
 $PYE -c "import torch, sam2; from sam2.build_sam import build_sam2_video_predictor; print(torch.__version__, sam2.__file__)"
+say "model build tests (CPU): every model the latency run loads must construct here, so a missing package fails now and not inside the GPU job"
+$PYE -c "
+from sam2.build_sam import build_sam2_video_predictor
+build_sam2_video_predictor('configs/edgetam.yaml', '$WORK/EdgeTAM/checkpoints/edgetam.pt', device='cpu'); print('EdgeTAM builds')"
+HF_HOME=$WORK/hf_cache HF_HUB_OFFLINE=1 $PY -c "
+import torch
+from sam2.build_sam import build_sam2, build_sam2_video_predictor
+for v, c in (('tiny', 't'), ('large', 'l')):
+    build_sam2(f'configs/sam2.1/sam2.1_hiera_{c}.yaml', '$WORK/checkpoints/sam2/sam2.1_hiera_' + v + '.pt', device='cpu')
+build_sam2_video_predictor('configs/sam2.1/sam2.1_hiera_l.yaml', '$WORK/checkpoints/sam2/sam2.1_hiera_large.pt', device='cpu'); print('SAM2 tiny, large and the video predictor build')
+from transformers import Sam3TrackerModel, Sam3TrackerProcessor
+Sam3TrackerModel.from_pretrained('facebook/sam3'); Sam3TrackerProcessor.from_pretrained('facebook/sam3'); print('SAM3 loads offline from the cache')
+from ultralytics import YOLO; print('ultralytics imports')"
 case "$TMPDIR" in /tmp/${USER}_setup_*) rm -rf "$TMPDIR";; esac  # this job's private temp directory
 say "setup done"
 du -sh "$WORK" 2>/dev/null | tail -1

@@ -37,6 +37,9 @@ def main() -> None:
     for spec in args.runs:
         name, rest = spec.split("=", 1)
         path, kind = rest.rsplit("@", 1)
+        if not Path(path).exists():  # a step the time budget skipped, or one that failed
+            print(f"{name}: {path} not found, left out")
+            continue
         r = json.loads(Path(path).read_text())
         by_kf: dict[str, list[dict]] = {}
         for rec in r["instruments"].values():

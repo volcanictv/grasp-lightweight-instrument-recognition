@@ -56,10 +56,14 @@ $PY_ET -c "import torch,sys;print(sys.version.split()[0],torch.__version__,torch
 git -C "$CODE" rev-parse HEAD > "$RES/code_commit.txt" 2>&1
 say "idle check: $(nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader)"
 
-step() { # name, command...  : runs the command with its output in $RES/<name>.log
+BUDGET_S=${BUDGET_S:-3000}   # the onboard partition allows one hour: no step starts with less than 90 s left, none runs past the budget, and the summary always runs on whatever finished
+step() { # name, command...  : runs the command with its output in $RES/<name>.log and its wall time and peak memory in $RES/<name>.time
   local n=$1; shift
+  local left=$((BUDGET_S - SECONDS))
+  if [ "$left" -lt 90 ]; then say "SKIPPED $n (time budget used up)"; return; fi
   say "$n"
-  "$@" > "$RES/$n.log" 2>&1 || say "FAILED $n"
+  if [ -x /usr/bin/time ]; then timeout "$left" /usr/bin/time -f "%e s wall, %M KB peak memory" -o "$RES/$n.time" "$@" > "$RES/$n.log" 2>&1 || say "FAILED $n"
+  else timeout "$left" "$@" > "$RES/$n.log" 2>&1 || say "FAILED $n"; fi
 }
 prop() { # name, python, config, checkpoint, extra args : propagation of one instrument
   local n=$1 py=$2 cfg=$3 ck=$4; shift 4
@@ -83,9 +87,9 @@ e2e p1_rt_none $PY_MAIN --mode full --seg tiny --tracker none $GATE_TINY --sam2-
 e2e p2_rt_yolo $PY_YOLO --mode full --seg tiny --tracker yolo $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --yolo-weights "$YOLOW" --causal --window 20
 e2e p3_rt_edgetam $PY_ET --mode track --tracker sam2 --gate-in "$RES/p1_rt_none.json" --sam2-config configs/edgetam.yaml --sam2-checkpoint "$EDGETAM/checkpoints/edgetam.pt" --causal --window 20
 e2e p4_causal_sam2 $PY_MAIN --mode full --seg tiny --tracker sam2 $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
-e2e p5_noncausal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --window 10
 e2e p6_causal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
-step summary $PY_MAIN scripts/summarize_pipeline_latency.py rt_none="$RES/p1_rt_none.json@rt" rt_yolo="$RES/p2_rt_yolo.json@rt" rt_edgetam="$RES/p3_rt_edgetam.json@rt" \
+e2e p5_noncausal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --window 10
+BUDGET_S=999999 step summary $PY_MAIN scripts/summarize_pipeline_latency.py rt_none="$RES/p1_rt_none.json@rt" rt_yolo="$RES/p2_rt_yolo.json@rt" rt_edgetam="$RES/p3_rt_edgetam.json@rt" \
   causal_sam2="$RES/p4_causal_sam2.json@rt" noncausal_final="$RES/p5_noncausal_final.json@final" causal_final="$RES/p6_causal_final.json@final" --tau-file "$BUNDLE/gate_tau.json" --out "$RES/pipeline_latency.json"
 
 case "$TMPD" in /tmp/${USER}_latency_*) rm -rf "$TMPD";; esac  # the only deletion: this job's private temp directory
