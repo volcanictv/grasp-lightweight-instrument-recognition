@@ -1,8 +1,9 @@
 \section{Protocol and reproducibility}
 \label{app:protocol}
+{\raggedright
 Every configuration was fixed in a written protocol addendum before the run it governs; the addenda, scripts and per-seed result files are in the code repository.
 Development folds chose checkpoints, mirror averaging and the gate threshold; the official test cases were used for the final scores.
-Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and the weights, with checksums, at \url{https://huggingface.co/AryanB005/grasp-instrument-pipeline}.
+Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and the weights, with checksums, at \url{https://huggingface.co/AryanB005/grasp-instrument-pipeline}.\par}
 \todo{research repository link for the training and analysis code, if we release it}
 
 \section{Additional results}
@@ -10,7 +11,7 @@ Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and t
 \begin{figure}[h]
 \floatconts
   {fig:appendix}
-  {\caption{Left: non-causal pipeline against TAPIS, whiskers show the 95\% bootstrap interval over the five test cases. Centre: IoU per class. Right: held-out accuracy against the share of instruments tracked; the circle is the chosen threshold.}}
+  {\caption{Left: final pipeline against the published results, whiskers show the 95\% bootstrap interval over the five test cases. Centre: IoU per class. Right: held-out accuracy against the share of instruments refined; the circle is the chosen threshold.}}
   {\includegraphics[width=0.32\linewidth]{figures/whisker.pdf}\hfill\includegraphics[width=0.32\linewidth]{figures/classes.pdf}\hfill\includegraphics[width=0.32\linewidth]{figures/gate.pdf}}
 \end{figure}
 \begin{figure}[h]
@@ -19,8 +20,53 @@ Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and t
   {\caption{ROC curves for flagging wrong predictions on the held-out fold (mean of three seeds).}}
   {\includegraphics[width=0.4\linewidth]{figures/roc.pdf}}
 \end{figure}
-\todo{per-case scores, leave-one-case-out ranges, the box-clipping variant (reported separately because it only helps with ground-truth boxes)}
+
+\begin{table}[h]
+\floatconts
+  {tab:ladder}
+  {\caption{Steps of the pipeline (mean of three classifier seeds, 833 instruments refined).}}
+  {\small\begin{tabular}{lrrr}
+  \toprule
+  \bfseries Step & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU\\
+  \midrule
+  SAM2 fine-tuned segmenter & 86.34 & 85.31 & 77.59\\
+  + SAM3 in the segmenter & 86.78 & 85.72 & 77.90\\
+  + classifier trained on tracker-style crops & 87.11 & 85.97 & 78.19\\
+  + segmenters trained on all training cases & 87.37 & 86.22 & 78.33\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\paragraph{Calibration and further uncertainty baselines.}
+Table~\ref{tab:calibration} scores more signals on the same held-out instruments (mean of three seeds, one run for the 12-network rows).
+Temperature scaling was fitted on two of the four cases of the fold and applied to the other two, then swapped.
+The evidential ensemble is about as well calibrated as a softmax ensemble and better than MC dropout; temperature scaling did not improve its calibration here; energy and MC-dropout mutual information rank errors worse than max-softmax; and a deep ensemble of the three seeds has better probabilities (NLL 0.203) but finds fewer errors at the review budget than the single evidential ensemble.
+On the test cases the evidential ensemble has ECE 0.037 and AUROC 0.922.
+\begin{table}[h]
+\floatconts
+  {tab:calibration}
+  {\caption{Calibration (ECE, 15 bins; NLL) and error detection (AUROC; share of errors found when 20\% of the instruments are reviewed) on the held-out fold. Nets: networks run per instrument.}}
+  {\small\begin{tabular}{lrrrrr}
+  \toprule
+  \bfseries Method and score & \bfseries Nets & \bfseries ECE & \bfseries NLL & \bfseries AUROC & \bfseries Found (\%)\\
+  \midrule
+  Softmax ensemble, max-softmax & 4 & 0.027 & 0.221 & 0.926 & 86.4\\
+  Softmax ensemble, energy & 4 & 0.027 & 0.221 & 0.907 & 80.7\\
+  Softmax, temperature scaled & 4 & 0.036 & 0.218 & 0.930 & 87.8\\
+  MC dropout, vote & 80 & 0.044 & 0.225 & 0.912 & 83.9\\
+  MC dropout, mutual information & 80 & 0.044 & 0.225 & 0.888 & 77.6\\
+  Evidential, epistemic $S$ (ours) & 4 & 0.029 & 0.230 & 0.928 & 90.2\\
+  Deep ensemble, entropy (3 seeds) & 12 & 0.040 & 0.203 & 0.930 & 88.9\\
+  Evidential, epistemic $S$ (3 seeds) & 12 & 0.024 & 0.204 & 0.937 & 90.6\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\paragraph{Clipping to the given box.}
+The given boxes are the tight extent of the ground-truth masks, so clipping a predicted mask to its box uses the true mask extent and helps only when boxes are given; with a detector's boxes the gain would be smaller or negative.
+As an oracle-box variant it moves the final pipeline from 87.37, 86.22 and 78.33 to 87.61, 86.46 and 78.59 (mIoU, IoU, mcIoU); no comparison in the paper uses it.
+\todo{per-case scores and leave-one-case-out ranges}
 
 \section{Implementation details}
 \label{app:impl}
-\todo{optimiser, learning rates, epochs, batch sizes and augmentations for the segmenters and the four classifier members; GPU and software versions; latency measurement protocol}
+\todo{optimiser, learning rates, epochs, batch sizes and augmentations for the segmenters and the four classifier members; GPU and software versions; latency measurement protocol (one NVIDIA A100-PCIE-40GB, 4 CPU cores, PyTorch 2.8.0 with CUDA 12.6, frame copying into the video predictor excluded, 20 timed keyframes)}

@@ -3,25 +3,26 @@
 
 \paragraph{Given boxes.}
 All results assume the box of every instrument is given.
-Strong detectors exist (TAPIS reports 89.85 box mAP@0.5 on this data), so we studied recognition given boxes and left the integration of a detector to future work.
-Detector errors will lower our scores by an amount we did not measure, and the comparison with TAPIS, which finds its own boxes, is an upper bound for a detector-fed pipeline; the IoU margin is the most inflated by this.
+Strong detectors exist (the benchmark's reference model reports 89.85 box mAP@0.5 on this data), so we studied recognition given boxes and left the integration of a detector to future work.
+The published results find their own boxes; detector errors will lower our scores by an amount we did not measure, and the IoU in particular is more favourable with given boxes.
+The given boxes are also the tight extent of the ground-truth masks, so clipping our masks to them would add about 0.2 to each score (Appendix~\ref{app:extra}); we do not use that in any comparison.
 
-\paragraph{What the look-back does.}
-At one frame per second an instrument moves a lot between frames, and the propagated mask sometimes leaves it; the fused prediction still improves accuracy, but part of the gain may come from combining several views of the scene and not only from following one instrument.
-\todo{control: fuse over randomly chosen frames of the same case instead of the propagated masks, and report the share of tracked frames on which the mask overlaps the instrument}
+\paragraph{What the multi-frame step does.}
+At one frame per second the propagated mask sometimes leaves the instrument, yet the control of Section~\ref{sec:control} shows that the gain needs the tracker; it does not separate following one instrument from combining views of the scene.
 
 \paragraph{Scope of the evidence.}
 Everything is measured on one dataset with five test cases, so the intervals on mcIoU in particular are wide, and each segmenter was trained once.
 \todo{update with the segmenter seed variance when the A100 runs finish}
-A closed Laparoscopic Grasper and a Suction Instrument look alike in a single frame and tracking does not separate them; the Grasper is the weakest class (IoU 60.7).
+A closed Laparoscopic Grasper and a Suction Instrument look alike in a single frame and refinement does not separate them; the Grasper is the weakest class (IoU 60.7).
 \todo{confirm that the count of the look-alike pairs (59 of the 210 errors of the earlier vote ensemble) still describes the final ensemble, or recompute it}
+The gate's tracked share and the first member's weight were chosen while looking at test scores; the held-out-fold threshold gives the same or higher scores (Section~\ref{sec:experiments}).
 
-\paragraph{Real time.}
-The causal pipeline labels each instrument at once and corrects uncertain ones when the tracker finishes, about three seconds later; its latency is reported per stage because the correction delay depends on the tracker and on how many instruments are gated at once.
-\todo{A100 measurements; sustainable tracked share per GPU}
+\paragraph{Cost.}
+The refined share sets the load: at 29\% the average is 3.0\,s per instrument on one A100, against an estimated 7.3\,s if every instrument were refined (Section~\ref{sec:gate}).
+\todo{explore causal mode: a variant that reads only past frames, so that it can run on live video}
 
 \section{Conclusion}
 \label{sec:conclusion}
-For a live system, whether to track is the wrong question; the right one is which instruments.
-One pass of an evidential ensemble answers it: tracking the instruments with the weakest evidence recovers most of the gain of tracking many more, and with fine-tuned SAM2 and SAM3 masks the non-causal version of the pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU on GraSP with given boxes.
-\todo{one sentence on what this enables, and on future work: a detector in front, and a causal tracker that matches the non-causal accuracy}
+Uncertainty can decide where to spend effort.
+One pass of an evidential ensemble finds classification errors as well as an 80-pass MC-dropout vote and catches more of them than softmax confidence at a fixed review budget; sending only the instruments with the weakest evidence to neighbouring frames recovers most of the gain of sending many more, and with fine-tuned SAM2 and SAM3 masks the pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU on GraSP with given boxes, in line with or above the published benchmark results.
+\todo{one sentence on what this enables, and on future work: a detector in front}

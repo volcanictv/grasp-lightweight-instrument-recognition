@@ -1,0 +1,66 @@
+{
+ "Real time, no tracking": {
+  "frame_stage_ms": 200.84284000331536,
+  "frame_stage_per_instrument_ms": 213.36533689625665,
+  "instruments_per_keyframe": 2.4,
+  "share": 0.0,
+  "cost_per_tracked_ms": 0.0,
+  "average_ms": 213.36533689625665,
+  "queue_ms": 200.84284000331536
+ },
+ "Real time, YOLO26s tracking": {
+  "frame_stage_ms": 229.15825749514624,
+  "frame_stage_per_instrument_ms": 242.6909463117934,
+  "instruments_per_keyframe": 2.4,
+  "share": 0.188395665851101,
+  "cost_per_tracked_ms": 794.69922890421,
+  "tracked_in_sample": 10,
+  "average_ms": 392.40883669255857,
+  "queue_ms": 588.4811944089827,
+  "p95_tracked_ms": 896.4259545435198
+ },
+ "Real time, EdgeTAM tracking": {
+  "frame_stage_ms": 200.84284000331536,
+  "frame_stage_per_instrument_ms": 213.36533689625665,
+  "instruments_per_keyframe": 2.4,
+  "share": 0.188395665851101,
+  "cost_per_tracked_ms": 2397.811774420552,
+  "tracked_in_sample": 10,
+  "average_ms": 665.1026827238265,
+  "queue_ms": 1285.0124699894832,
+  "p95_tracked_ms": 2837.181012018118
+ },
+ "Causal SAM2-large tracking, tiny masks": {
+  "frame_stage_ms": 214.41051963483915,
+  "frame_stage_per_instrument_ms": 229.3030953912351,
+  "instruments_per_keyframe": 2.6,
+  "share": 0.188395665851101,
+  "cost_per_tracked_ms": 5957.156114313485,
+  "tracked_in_sample": 7,
+  "average_ms": 1351.6054881262817,
+  "queue_ms": 3132.3967407459604,
+  "p95_tracked_ms": 6310.721535643097
+ },
+ "Causal, SAM2 + SAM3 masks, SAM2-large tracking": {
+  "frame_stage_ms": 1042.5234752940014,
+  "frame_stage_per_instrument_ms": 1055.4886277644143,
+  "instruments_per_keyframe": 2.6,
+  "share": 0.2911569381335197,
+  "cost_per_tracked_ms": 5788.747685101743,
+  "tracked_in_sample": 13,
+  "average_ms": 2740.922679386138,
+  "queue_ms": 5424.652009510483,
+  "p95_tracked_ms": 7114.650596329011
+ },
+ "Non-causal, SAM2 + SAM3 masks, SAM2-large tracking": {
+  "frame_stage_ms": 1199.779925897019,
+  "frame_stage_per_instrument_ms": 1223.0876209191943,
+  "instruments_per_keyframe": 2.6,
+  "share": 0.2911569381335197,
+  "cost_per_tracked_ms": 6086.836964859126,
+  "tracked_in_sample": 13,
+  "average_ms": 2995.3124345255037,
+  "queue_ms": 5807.564441273424,
+  "p95_tracked_ms": 7976.689398899907
+ }
+}

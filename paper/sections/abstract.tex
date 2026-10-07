@@ -1,8 +1,7 @@
-Live surgical assistance needs instrument recognition that works on video as it arrives, using only past frames and a fixed compute budget per frame.
-A single frame is often ambiguous, and looking back through earlier frames resolves it, but tracking every instrument is too expensive for a live system.
-We make the tracking evidence-based.
-Given each instrument's box, fine-tuned SAM2 and SAM3 segmenters return a mask, and a four-member evidential ensemble classifies it in one pass and returns an epistemic uncertainty; only instruments whose evidence is weak are followed backward through past frames, and the frame predictions are fused by confidence.
-On GraSP, tracking the 19\% of instruments with the weakest evidence recovers 87\% of the accuracy gain of tracking the weakest 31\%.
-The resulting causal pipeline reaches 84.2 mIoU, 82.3 IoU and 71.9 mcIoU with an estimated end-to-end latency of \todo{measured A100 latency} ms per instrument.
-Its non-causal counterpart, an upper bound that also reads future frames, reaches 87.4, 86.2 and 78.3 against 86.6, 83.4 and 77.4 for TAPIS, which finds its own boxes.
+A single frame often leaves the type of a surgical instrument ambiguous, and neighbouring frames can resolve it, but following every instrument through the video is expensive and most instruments do not need it.
+We let uncertainty decide where to spend that effort.
+Given an instrument's box, fine-tuned SAM2 and SAM3 segmenters return a mask, and a four-member evidential ensemble classifies it in one forward pass and returns an epistemic uncertainty.
+On a held-out fold this score finds classification errors better than MC dropout with one pass instead of 80 (AUROC 0.928 against 0.912) and catches more of them than softmax confidence when 20\% of the instruments are reviewed (90\% against 86\%).
+Only the instruments with the weakest evidence are followed through neighbouring frames and their per-frame predictions fused: refining 19\% of the instruments recovers 81\% of the accuracy gain of refining the weakest 31\%, and refining 29\% takes 59\% less time per instrument than refining all of them.
+On the GraSP benchmark, with given boxes, the pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU, in line with or above the best published results (86.6, 83.4 and 77.4).
 Code and weights are public.

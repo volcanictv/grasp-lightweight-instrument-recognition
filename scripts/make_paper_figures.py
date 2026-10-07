@@ -196,61 +196,53 @@ def plots(out: Path) -> None:
 
 
 def fig2(out: Path) -> None:
-    """(a) accuracy against the share of instruments tracked, evidence-ordered; (b) mIoU against end-to-end latency (estimated from stage times)."""
+    """(a) instrument accuracy against the share of instruments sent to refinement, evidence-ordered, final pipeline; (b) the same accuracy against the average time per instrument on
+    one A100: frame stage + share * measured cost per refined instrument (docs/reports/latency_a100/paper_table.json, made by scripts/a100_latency_table.py)."""
     R = REPO_ROOT / "docs" / "reports"
-    curves = json.loads((R / "realtime" / "gate_budget_curve.json").read_text())
-    import build_pi_report_docx as lat  # latency numbers computed from the measurement files
-    plt.rcParams.update(STYLE)  # the import above sets its own plot style
+    c = json.loads((R / "realtime" / "gate_budget_curve.json").read_text())["offline SAM2-large (SAM2 + SAM3 masks)"]
+    row = json.loads((R / "latency_a100" / "paper_table.json").read_text())["Non-causal, SAM2 + SAM3 masks, SAM2-large tracking"]
+    frame_s, cost_s = row["frame_stage_per_instrument_ms"] / 1000, row["cost_per_tracked_ms"] / 1000
+    plt.rcParams.update(STYLE)
 
-    fig, (a, b) = plt.subplots(1, 2, figsize=(6.6, 2.5), gridspec_kw={"width_ratios": [1.0, 1.05], "wspace": 0.32})
-    spec = {"causal EdgeTAM (SAM2-tiny masks)": (ACCENT, "causal (past frames)"), "offline SAM2-large (SAM2 + SAM3 masks)": ("#6b5b95", "non-causal")}
-    for name, (col, lab) in spec.items():
-        c = curves[name]
-        x = np.array(c["k"]) / c["n"] * 100
-        a.plot(x, c["accuracy_mean"], color=col, lw=1.6, label=lab)
-        a.plot(x, c["oracle_mean"], color=col, lw=0.9, ls=(0, (3, 2)), alpha=0.6)
-        if name.startswith("causal"):
-            i = c["k"].index(540)
-            gain_540 = c["accuracy_mean"][i] - c["base_accuracy"]
-            gain_all = c["accuracy_mean"][-1] - c["base_accuracy"]
-            a.plot(x[i], c["accuracy_mean"][i], "o", color=col, ms=4.5)
-            a.annotate(f"19% tracked:\n{100 * gain_540 / gain_all:.0f}% of the gain", (x[i], c["accuracy_mean"][i]), xytext=(x[i] + 3, c["accuracy_mean"][i] + 0.010),
-                       fontsize=6.8, color=col, arrowprops=dict(arrowstyle="-", color=col, lw=0.6))
-    a.plot([], [], color=GREY, lw=0.9, ls=(0, (3, 2)), label="best possible gate")
-    a.set_xlabel("instruments sent to tracking (%), highest evidential score first", fontsize=7.2)
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.6, 2.5), gridspec_kw={"width_ratios": [1.0, 1.0], "wspace": 0.30})
+    col = ACCENT
+    k, n, acc, base = np.array(c["k"]), c["n"], np.array(c["accuracy_mean"]), c["base_accuracy"]
+    share = k / n
+    i540, i31 = c["k"].index(540), min(range(len(c["k"])), key=lambda j: abs(c["k"][j] - 0.31 * n))
+    i833 = min(range(len(c["k"])), key=lambda j: abs(c["k"][j] - 833))
+    a.plot(100 * share, acc, color=col, lw=1.6, label="evidential gate")
+    a.plot(100 * share, c["oracle_mean"], color=GREY, lw=0.9, ls=(0, (3, 2)), label="best possible gate")
+    a.plot(100 * share[i540], acc[i540], "o", color=col, ms=4.5)
+    gain540, gain31 = acc[i540] - base, acc[i31] - base
+    a.annotate(f"19%: {100 * gain540 / gain31:.0f}% of the\ngain at 31%", (100 * share[i540], acc[i540]), xytext=(100 * share[i540] + 5, acc[i540] - 0.026), fontsize=6.8, color=col,
+               arrowprops=dict(arrowstyle="-", color=col, lw=0.6))
+    a.set_xlabel("instruments sent to refinement (%), highest evidential score first", fontsize=7.2)
     a.set_ylabel("instrument accuracy")
     a.set_xlim(0, 43)
     a.grid(color="#e1e5ea", lw=0.5)
     a.set_axisbelow(True)
-    for s in ("top", "right"):
-        a.spines[s].set_visible(False)
+    for sp in ("top", "right"):
+        a.spines[sp].set_visible(False)
     a.legend(frameon=False, fontsize=6.5, loc="lower right")
     a.set_title("(a) Evidence concentrates the gain", fontsize=8, loc="left")
 
-    pts = [("ours, causal, EdgeTAM", lat.RT_AVG, 84.22, "o", ACCENT, True), ("ours, causal, YOLO26s", lat.YOLO_AVG, 83.23, "o", ACCENT, True),
-           ("ours, causal, no tracking", lat.RT_BEST, 82.13, "o", ACCENT, True), ("ours, non-causal", lat.OFF_AVG_PI, 87.37, "s", ACCENT, False),
-           ("ours, causal, SAM2-large", lat.RT_L_AVG, 85.00, "o", ACCENT, True), ("ours, causal,\nSAM2 + SAM3 masks", lat.OFF_AVG_PI, 86.50, "o", ACCENT, True),
-           ("TAPIS", lat.tapis_ms, 86.61, "s", GREY, False)]
-    for lab, xv, yv, mk, col, filled in pts:
-        b.plot(xv, yv, mk, color=col, mfc=col if filled else "white", mew=1.4, ms=6)
-    off = {"ours, causal, EdgeTAM": (6, 4, "left"), "ours, causal, YOLO26s": (-6, 2, "right"), "ours, causal, no tracking": (7, -3, "left"),
-           "ours, non-causal": (-7, 3, "right"), "TAPIS": (-7, -10, "right"), "ours, causal, SAM2-large": (6, -3, "left"),
-           "ours, causal,\nSAM2 + SAM3 masks": (8, -14, "left")}
-    for lab, xv, yv, *_ in pts:
-        dx, dy, ha = off[lab]
-        b.annotate(lab, (xv, yv), xytext=(dx, dy), textcoords="offset points", fontsize=6.6, ha=ha, color=INK)
-    b.axvline(1000, color=RED, lw=0.8, ls=":")
-    b.text(1080, 81.35, "1 frame/s", fontsize=6.5, color=RED)
-    b.set_xscale("log")
-    b.set_xlim(200, 60000)
-    b.set_ylim(81, 88.3)
-    b.set_xlabel("end-to-end latency per instrument (ms, estimated)", fontsize=7.2)
-    b.set_ylabel("mIoU")
-    b.grid(color="#e1e5ea", lw=0.5, which="both")
+    t = frame_s + share * cost_s
+    b.plot(t, acc, color=col, lw=1.6)
+    b.plot(t[i833], acc[i833], "o", color=col, ms=4.8)
+    best_gain = acc.max() - base
+    b.annotate(f"29% refined: {t[i833]:.1f} s,\n{100 * (acc[i833] - base) / best_gain:.0f}% of the gain", (t[i833], acc[i833]), xytext=(t[i833] + 0.7, acc[i833] - 0.030), fontsize=6.8, color=col,
+               arrowprops=dict(arrowstyle="-", color=col, lw=0.6))
+    all_t = frame_s + cost_s
+    b.axvline(all_t, color=RED, lw=0.9, ls=":")
+    b.text(all_t - 0.15, base + 0.004, f"every instrument\nrefined: {all_t:.1f} s\n(estimated)", fontsize=6.6, color=RED, ha="right", va="bottom")
+    b.set_xlim(frame_s - 0.1, all_t + 0.4)
+    b.set_xlabel("average time per instrument on one A100 (s)", fontsize=7.2)
+    b.set_ylabel("instrument accuracy")
+    b.grid(color="#e1e5ea", lw=0.5)
     b.set_axisbelow(True)
-    for s in ("top", "right"):
-        b.spines[s].set_visible(False)
-    b.set_title("(b) Accuracy against latency", fontsize=8, loc="left")
+    for sp in ("top", "right"):
+        b.spines[sp].set_visible(False)
+    b.set_title("(b) Accuracy against time", fontsize=8, loc="left")
     fig.savefig(out / "fig2_tradeoff.pdf", bbox_inches="tight")
     plt.close(fig)
 

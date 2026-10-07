@@ -2,15 +2,15 @@
 \label{sec:method}
 
 Given the current frame and the boxes $\{b_k\}$ of its instruments, we return for each instrument a mask $\hat{m}_k$, a class $\hat{y}_k \in \{1,\dots,C\}$ with $C=7$, and an uncertainty score $S_k$.
-A segmenter turns the box into a mask, an evidential ensemble classifies the masked crop in one pass, and $S_k$ decides whether the instrument is followed back through past frames (Figure~\ref{fig:teaser}).
-The single-pass label is available at once; for instruments that pass the gate, a corrected label follows when the tracker finishes.
+A segmenter turns the box into a mask, an evidential ensemble classifies the masked crop in one pass, and $S_k$ decides whether the instrument is followed through neighbouring frames and its label refined (Figure~\ref{fig:teaser}).
+The single-frame label is available at once; for instruments that pass the gate, a refined label follows when the tracker finishes.
 
 \subsection{Box-prompted segmenter}
 SAM2.1 and SAM3 are fine-tuned on GraSP with the ground-truth box as the prompt.
 For SAM2 we train the mask decoder, the prompt encoder, the neck and the last four encoder blocks (267\,MB of changed weights); for SAM3 only the mask decoder and the prompt encoder change (15\,MB).
 At inference each model predicts mask logits for the image and its mirror image, and the mask is the region where the average of the logit maps is positive.
 Checkpoints and the use of mirror averaging were chosen on a held-out fold; the final models are trained on all training cases with the schedule that selection produced.
-The real-time variant uses SAM2.1-tiny alone; the full variant averages SAM2.1-large and SAM3.
+The mask is the average of the SAM2.1-large and SAM3 logits.
 \todo{confirm the mask-loss terms from the fine-tuning scripts before stating them}
 
 \subsection{Evidential ensemble classifier}
@@ -34,18 +34,15 @@ Members are trained with the evidential loss $\sum_c y_c(\log\alpha_0 - \log\alp
 A crop made with a tracker's mask is looser than one made with a clean mask, and the instrument may be partly out of view.
 During training, with probability 0.5, an instrument's crop is replaced by a stored EdgeTAM crop of the same instrument one to five frames away.
 
-\subsection{Evidence gate and look-back tracking}
-An instrument is sent to tracking when $S\ge\tau$, or, to fix the cost, when it is among the $K$ highest scores.
-Its mask is propagated backward from the keyframe over the 20 preceding frames by a causal tracker, the ensemble classifies the instrument on each propagated frame $f$ to give $\mu_f$, and the frames are fused with confidence weights,
+\subsection{Evidence gate and multi-frame refinement}
+\label{sec:refine}
+An instrument is sent to refinement when $S\ge\tau$, or, to fix the cost, when it is among the $K$ highest scores.
+Its mask is propagated by SAM2-large through the ten frames on each side of the keyframe, the ensemble classifies the instrument on each propagated frame $f$ to give $\mu_f$, and the frames are fused with confidence weights,
 \begin{equation}
 \hat{y} = \arg\max_c \sum_f \big(\max_{c'} \mu_{f,c'}\big)\, \mu_{f,c}.
 \label{eq:fuse}
 \end{equation}
 Instruments below the gate keep their single-frame class.
-The threshold $\tau$ is chosen on a held-out fold: sweep it with tracking, take the highest accuracy, then the cheapest gate within 0.001 of it.
-We compare three trackers: EdgeTAM \citep{zhou2025edgetam}, a YOLO26s-seg detector that is matched to the propagated mask by overlap, and SAM2-large.
-
-\subsection{Non-causal upper bound}
-\label{sec:noncausal}
-To measure what the causal restriction costs, the same pipeline can also read future frames: SAM2-large propagates the mask over the ten frames on each side of the keyframe, and the segmenter is the SAM2-large and SAM3 ensemble.
-This is not usable online and serves as the upper bound of the design; it is also the setting in which TAPIS, whose video model reads a window centred on the keyframe, operates.
+The threshold $\tau$ is chosen on a held-out fold: sweep it with refinement, take the highest accuracy, then the cheapest gate within 0.001 of it.
+We call the propagation tracking.
+At one frame per second an instrument moves a lot between frames and the propagated mask sometimes leaves it, so the fusion may owe part of its gain to combining views of the scene and not to following one instrument; Section~\ref{sec:control} measures this.

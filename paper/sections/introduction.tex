@@ -1,34 +1,36 @@
 \section{Introduction}
 \label{sec:intro}
 
-Robot-assisted surgery produces hours of endoscopic video, and analysing it as it is recorded would support context-aware assistance, skill assessment and, further out, partial automation of surgical steps \citep{ayobi2024pixel}.
+Robot-assisted surgery produces hours of endoscopic video, and analysing it would support context-aware assistance, skill assessment and, further out, partial automation of surgical steps \citep{ayobi2024pixel}.
 These uses share a visual foundation: which instruments are in view, where they are, and which kind each one is.
-Instrument recognition, the segmentation of every instrument together with its type, is therefore a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis}, and for live assistance it must work online: it can only use frames that have already arrived, and it must keep up with the video.
+Instrument recognition, the segmentation of every instrument together with its type, is therefore a basic building block of surgical scene understanding \citep{gonzalez2020isinet,ayobi2023matis}.
 
 Naming the type of an instrument from a single frame is hard.
 Instruments of different types share shafts, wrists and jaws, and the parts that tell them apart are often out of frame, occluded or turned away from the camera.
-Figure~\ref{fig:teaser} shows a typical case: a Large Needle Driver whose keyframe view is classified as a Bipolar Forceps (belief 0.47), while earlier frames show the instrument clearly and are classified correctly.
-Looking back resolves such cases, but it is expensive.
+Figure~\ref{fig:teaser} shows a typical case: a Large Needle Driver whose keyframe view is classified as a Bipolar Forceps (belief 0.47), while neighbouring frames show the instrument clearly and are classified correctly.
+Looking at other frames resolves such cases, but it is expensive.
 It requires following the instrument through the video and classifying it again on every frame, and most instruments do not need it.
-For an online system the question is therefore not whether to track but which instruments to track.
+The question is therefore not whether to use more frames but for which instruments, and a model that knows when it is uncertain can answer it.
+The same answer tells a clinician or an annotator which predictions deserve a second look.
 
 \begin{figure}[tbp]
 \floatconts
   {fig:teaser}
-  {\caption{Evidence-gated look-back. The keyframe (a) is ambiguous: its class belief (b, grey) is wrong and uncertain, so the gate sends the instrument to tracking. Past frames (c) classify it correctly, and their fusion (b, teal) fixes the label. No future frame is used.}}
+  {\caption{Evidence-gated refinement. The keyframe (a) is ambiguous: its class belief (b, grey) is wrong and uncertain, so the gate sends the instrument to refinement. Neighbouring frames (c; here earlier ones) classify it correctly, and their fusion (b, teal) fixes the label.}}
   {\includegraphics[width=\linewidth]{figures/fig1_example.pdf}}
 \end{figure}
 
-The strongest published system on the GraSP benchmark, TAPIS \citep{ayobi2024pixel}, detects and classifies instruments with a Mask2Former detector \citep{cheng2022mask2former} and a video transformer that reads a time window centred on the keyframe.
-It therefore needs future frames, which a live system does not have, and it spends the same temporal budget on every instrument without an uncertainty estimate to say where the budget is needed.
-Annotated frames are few and the classes imbalanced, the rarest instrument having about 25 times fewer examples than the most common, so models should start from strong pretrained representations.
-Promptable segmenters supply them for masks: given a box, SAM2 and SAM3 return a mask \citep{ravi2024sam2,carion2025sam3}, but not the instrument's type.
+The GraSP benchmark \citep{ayobi2024pixel} comes with a reference model, TAPIS, that detects and classifies instruments with a Mask2Former detector \citep{cheng2022mask2former} and a video transformer reading a time window centred on the keyframe; it gives the published results we measure against.
+Like other methods of this kind it spends the same temporal budget on every instrument and has no uncertainty estimate to say where the budget is needed.
+Annotated frames are few and the classes imbalanced (the rarest instrument has about 25 times fewer examples than the most common), so models should start from strong pretrained representations; given a box, SAM2 and SAM3 return a mask \citep{ravi2024sam2,carion2025sam3}, but not the instrument's type.
 
-We make tracking evidence-based.
+We let uncertainty decide.
 A given box prompts fine-tuned SAM2 and SAM3 segmenters, and a light four-member evidential ensemble classifies the masked crop in one pass, returning the class and an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}.
-Only instruments whose evidence is weak are followed backward through past frames, and the per-frame predictions are fused by confidence (Section~\ref{sec:method}).
-We assume the boxes are given: instrument detectors are already strong (TAPIS reports 89.85 box mAP at an IoU of 0.5 on this data), so we study recognition given boxes and leave the integration of a detector to future work (Section~\ref{sec:limits}).
-
-On GraSP, tracking the 19\% of instruments with the weakest evidence recovers 87\% of the accuracy gain of tracking the weakest 31\%, and the resulting causal pipeline reaches 84.2 mIoU, 82.3 IoU and 71.9 mcIoU (Section~\ref{sec:gate}).
-Its non-causal counterpart, an upper bound that also reads future frames, reaches 87.4, 86.2 and 78.3 against 86.6, 83.4 and 77.4 for TAPIS, clearly above it on IoU (Section~\ref{sec:results}).
-The evidential score detects errors as well as MC dropout with one forward pass instead of 80 and, unlike a vote, flags errors on which all members agree (Section~\ref{sec:uncertainty}).
+Only instruments whose evidence is weak are followed through neighbouring frames, and the per-frame predictions are fused by confidence (Section~\ref{sec:method}).
+We assume the boxes are given: instrument detectors are already strong (the benchmark's reference model reports 89.85 box mAP at an IoU of 0.5 on this data), so we study recognition given boxes and leave the integration of a detector to future work (Section~\ref{sec:limits}).
+Our contributions are:
+\begin{itemize}
+\item a single-pass evidential score that detects classification errors as well as an 80-pass MC-dropout vote and better than softmax confidence at a fixed review budget, including errors on which all ensemble members agree (Section~\ref{sec:uncertainty});
+\item evidence-gated multi-frame refinement: sending the 19\% of instruments with the weakest evidence to neighbouring frames recovers 81\% of the gain of sending the weakest 31\%, at 59\% less time per instrument than refining all of them (Section~\ref{sec:gate}), and the resulting pipeline reaches 87.4 mIoU, 86.2 IoU and 78.3 mcIoU, in line with or above the published benchmark results of 86.6, 83.4 and 77.4 (Section~\ref{sec:results});
+\item a control that shows how much of the gain needs a tracker and how much comes from viewing the same region at other moments (Section~\ref{sec:control}).
+\end{itemize}
