@@ -36,7 +36,7 @@ GATE_TINY=""; GATE_FINAL=""
 SAM3_FLAG=""; [ "${DRY:-0}" = 1 ] && [ "${SAM3_RANDOM:-0}" = 1 ] && SAM3_FLAG="--sam3-random-init"
 RES=${RES:-$WORK/results/run_${SLURM_JOB_ID:-manual}}
 RUNS=200; FRAMES=60; LIMIT=0; NINST=20
-if [ "${DRY:-0}" = 1 ]; then RUNS=10; LIMIT=${LIMIT_DRY:-6}; NINST=4; fi  # FRAMES must stay 60: the bundle holds exactly the 63 frames that rule selects (60 timed plus 3 warm-up)
+if [ "${DRY:-0}" = 1 ]; then RUNS=10; LIMIT=${LIMIT_DRY:-6}; NINST=4; HEAVY_N=4; fi  # FRAMES must stay 60: the bundle holds exactly the 63 frames that rule selects (60 timed plus 3 warm-up)
 TMPD=/tmp/${USER}_latency_${SLURM_JOB_ID:-manual}
 ENS=configs/rc_ens4_N_s44.yaml
 SAM2L=configs/sam2.1/sam2.1_hiera_l.yaml
@@ -70,9 +70,13 @@ prop() { # name, python, config, checkpoint, extra args : propagation of one ins
   step "$n" $py scripts/benchmark_tracker_latency.py --stage propagate --sam2-config "$cfg" --sam2-checkpoint "$ck" --error-cases-json "$BUNDLE/idx_tracker.json" --split test \
     --n-instances $NINST --out "$RES/$n.json" "$@"
 }
-e2e() { # name, python, extra args
+e2e() { # name, python, extra args : all 32 bundle keyframes (30 timed)
   local n=$1 py=$2; shift 2
   step "$n" $py scripts/benchmark_pipeline_e2e.py --ensemble-config $ENS --keyframes "$BUNDLE/e2e_keyframes.json" --limit $LIMIT --all-instruments --tau 2.85e-4 --out "$RES/$n.json" "$@"
+}
+e2e_heavy() { # the three SAM2-large tracking pipelines: HEAVY_N keyframes (22 = 20 timed) evenly spread over the same list, to keep the job well inside its hour
+  local n=$1 py=$2; shift 2
+  step "$n" $py scripts/benchmark_pipeline_e2e.py --ensemble-config $ENS --keyframes "$BUNDLE/e2e_keyframes.json" --limit $LIMIT --limit-even ${HEAVY_N:-22} --all-instruments --tau 2.85e-4 --out "$RES/$n.json" "$@"
 }
 
 step segmenter_latency $PY_MAIN scripts/benchmark_rt_segmenters.py --frames $FRAMES --masks "$BUNDLE/masks_subset.pkl" --ensemble-config $ENS --out "$RES/segmenter_latency.json"
@@ -86,9 +90,9 @@ prop edgetam_causal $PY_ET configs/edgetam.yaml "$EDGETAM/checkpoints/edgetam.pt
 e2e p1_rt_none $PY_MAIN --mode full --seg tiny --tracker none $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --causal --window 20
 e2e p2_rt_yolo $PY_YOLO --mode full --seg tiny --tracker yolo $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --yolo-weights "$YOLOW" --causal --window 20
 e2e p3_rt_edgetam $PY_ET --mode track --tracker sam2 --gate-in "$RES/p1_rt_none.json" --sam2-config configs/edgetam.yaml --sam2-checkpoint "$EDGETAM/checkpoints/edgetam.pt" --causal --window 20
-e2e p4_causal_sam2 $PY_MAIN --mode full --seg tiny --tracker sam2 $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
-e2e p6_causal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
-e2e p5_noncausal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --window 10
+e2e_heavy p4_causal_sam2 $PY_MAIN --mode full --seg tiny --tracker sam2 $GATE_TINY --sam2-weights "$WT/tiny_all8.pt" --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
+e2e_heavy p6_causal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --causal --window 20
+e2e_heavy p5_noncausal_final $PY_SAM3 --mode full --seg sam23 $GATE_FINAL --sam2-weights "$WT/large_all8.pt" --sam3-weights "$WT/sam3_all8.pt" $SAM3_FLAG --tracker sam2 --sam2-config $SAM2L --sam2-checkpoint "$CK/sam2.1_hiera_large.pt" --window 10
 BUDGET_S=999999 step summary $PY_MAIN scripts/summarize_pipeline_latency.py rt_none="$RES/p1_rt_none.json@rt" rt_yolo="$RES/p2_rt_yolo.json@rt" rt_edgetam="$RES/p3_rt_edgetam.json@rt" \
   causal_sam2="$RES/p4_causal_sam2.json@rt" noncausal_final="$RES/p5_noncausal_final.json@final" causal_final="$RES/p6_causal_final.json@final" --tau-file "$BUNDLE/gate_tau.json" --out "$RES/pipeline_latency.json"
 

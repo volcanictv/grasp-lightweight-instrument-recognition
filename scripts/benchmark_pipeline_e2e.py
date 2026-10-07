@@ -115,6 +115,7 @@ def main() -> None:
     ap.add_argument("--all-instruments", action="store_true")
     ap.add_argument("--sam3-random-init", action="store_true", help="dry runs only: SAM3 with random weights built from its config")
     ap.add_argument("--limit", type=int, default=0, help="first N keyframes only (dry runs)")
+    ap.add_argument("--limit-even", type=int, default=0, help="N keyframes evenly spread over the list (the first --warmup of them are not reported)")
     ap.add_argument("--yolo-conf", type=float, default=0.1)
     ap.add_argument("--yolo-min-iou", type=float, default=0.1)
     ap.add_argument("--yolo-coast", type=int, default=2)
@@ -133,6 +134,8 @@ def main() -> None:
     keyframes = json.loads(args.keyframes.read_text())["keyframes"]
     if args.limit:
         keyframes = keyframes[: args.limit]
+    if args.limit_even:  # N keyframes spread evenly over the list (first and last kept), so a shorter run still covers the whole test set
+        keyframes = list(dict.fromkeys(keyframes[i] for i in np.linspace(0, len(keyframes) - 1, args.limit_even).round().astype(int)))
     cls = Classifier(args.ensemble_config, dev, len(ds.class_names_ordered()))
     tmp = Path(os.environ.get("BENCH_TMP", "/tmp/bench_e2e_frames"))
 
