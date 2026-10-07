@@ -9,7 +9,7 @@ The instruments' boxes are the ground-truth boxes: the pipeline recognises given
 Numbers are the mean of three classifier seeds; each segmenter was trained once.
 \todo{segmenter seed variance: three seeds of the SAM2 and SAM3 fine-tunes, rerun masks, tracking and scoring}
 The gate threshold is chosen on a held-out fold.
-The weight 0.40 of the first ensemble member and the 29\% operating point used to read the effort curve were set while looking at test scores in earlier iterations, so the main results use the held-out threshold and the configuration with the test-selected share is in Appendix~\ref{app:extra}.
+The weight 0.40 of the first ensemble member and the 29\% operating point used to read the effort curve were set while looking at test scores in earlier iterations, so the main results use the held-out threshold and the configuration with the test-selected share is in Appendix~\ref{app:extra}; equal weights of 0.25 change the scores at 29\% refined by at most 0.5 (87.23, 86.01 and 77.85 against 87.37, 86.22 and 78.33).
 
 \subsection{The effort curve}
 \label{sec:effort}
@@ -128,4 +128,6 @@ At one frame per second the propagated mask often leaves the instrument: among t
 We therefore ask whether the gain needs a tracker at all, by classifying the keyframe's own mask region in each neighbouring frame, with no propagation (29\% of the instruments refined, mean of three seeds; Appendix Table~\ref{tab:control}).
 A static box lowers the scores to 75.84 mIoU, 72.81 IoU and 63.55 mcIoU, below the single pass (83.47, 81.07, 69.94) and far below tracking (87.37, 86.22, 78.33), which is expected when the instrument moves between frames and the region mostly shows other content, so a static view of the same region does not reproduce the gain.
 We keep the word tracking for the propagation, but the control does not show that the mask follows the instrument in every frame, or separate following one instrument from combining views of the scene.
-\todo{how many neighbouring frames the gain needs (fusing only the frames within 1, 2, 3 or 5 of the keyframe): the check is running}
+We also ask how many neighbouring frames the gain needs, by fusing only the frames within $k$ of the keyframe for the same refined instruments (29\% refined).
+The mIoU is 83.47 with the keyframe alone, 85.56 for $k{=}1$, 86.22 for $k{=}2$, 86.59 for $k{=}3$, 86.88 for $k{=}5$ and 87.37 for $k{=}10$ (the main setting); the mcIoU follows the same order (69.94, 74.49, 75.86, 76.51, 77.45, 78.33).
+Of the 3.90 mIoU gained at $k{=}10$, $k{=}1$ gives 54\% and $k{=}3$ gives 80\%, so most of the benefit comes from nearby frames and the wider window adds a smaller, steady gain.
