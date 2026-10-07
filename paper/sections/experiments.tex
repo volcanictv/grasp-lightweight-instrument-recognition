@@ -16,7 +16,7 @@ The weight 0.40 of the first ensemble member and the 29\% operating point used t
 \begin{figure}[tbp]
 \floatconts
   {fig:effort}
-  {\caption{(a) Share of all errors found as the instruments with the highest uncertainty are reviewed (held-out fold, mean of three seeds; dotted teal, the evidential score on the test cases). (b) Instrument accuracy gained as the same instruments are refined over neighbouring frames (test cases, 3-seed mean); dashed, the best possible gate over the same instruments.}}
+  {\caption{(a) Share of all errors found as the instruments with the highest uncertainty are reviewed (held-out fold, mean of three seeds; dotted teal, the evidential score on the test cases). (b) Instrument accuracy gained as the same instruments are refined over neighbouring frames (test cases, 3-seed mean); dashed, the best possible gate over the same instruments; the top axis gives the average cost per instrument in TFLOPs.}}
   {\includegraphics[width=\linewidth]{figures/fig2_effort.pdf}}
 \end{figure}
 
@@ -28,7 +28,7 @@ The curves lie close together, as the AUROCs of Table~\ref{tab:uncertainty} show
 Figure~\ref{fig:effort}b shows the same ranking used for refinement.
 Refining the 19\% with the weakest evidence raises instrument accuracy from 0.909 to 0.948, which is 81\% of the gain reached at 31\% (0.957); refining 29\% recovers 97\% of the best gain we measured, which is reached at 42\% (0.958).
 A gate that knew which instruments refinement would fix would reach 0.970 on the same instruments, so the evidence captures most of what a gate can capture but not all of it.
-On one A100 a frame with SAM2 and SAM3 masks and the four-member classification takes 1.2\,s and each refined instrument a further 6.1\,s, so refining 29\% gives 3.0\,s per instrument on average and the held-out threshold (about 45\% refined) 3.9\,s, against an estimated 7.3\,s if every instrument were refined.
+Counted in multiply-adds (GFLOPs), the single pass costs 2.95\,TFLOPs per instrument (SAM2-large and SAM3 with mirror averaging on a frame, shared by its instruments, plus the four-member classifier) and refining an instrument a further 25.6\,TFLOPs (SAM2-large over 21 frames and 21 classifications), so refining 29\% costs 10.4\,TFLOPs per instrument on average and the held-out threshold (about 45\% refined) 14.5, against an estimated 28.5 if every instrument were refined: 64\% and 49\% less (Appendix Table~\ref{tab:cost}).
 \todo{refine every instrument, which needs tracks for the instruments beyond 42\%, so that ``of refining all'' and the 59\% saving are measured; with those tracks, add the softmax, MC-dropout and random gates to panel (b)}
 
 \subsection{Where the gain goes}

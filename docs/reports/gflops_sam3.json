@@ -1,0 +1,9 @@
+{
+ "convention": "GFLOPs, one multiply-add counted as one FLOP (fvcore convention); matmul, convolution and attention only",
+ "sam3": {
+  "one_pass_one_box": 2810.056035328,
+  "one_pass_three_boxes": 2814.668203008,
+  "per_extra_box": 2.3060838400001558,
+  "params_m": 458.260369
+ }
+}

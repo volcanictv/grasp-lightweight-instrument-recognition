@@ -31,6 +31,27 @@ Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and t
 
 \begin{table}[h]
 \floatconts
+  {tab:cost}
+  {\caption{Cost of each stage in GFLOPs (multiply-adds, matmul, convolution and attention, counted with PyTorch's FLOP counter on one forward pass) with parameters, and the time measured on one A100. The frame stage is shared by the instruments of a frame (2.54 on average).}}
+  {\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{lrrr}
+  \toprule
+  \bfseries Stage & \bfseries GFLOPs & \bfseries Params (M) & \bfseries A100 (s)\\
+  \midrule
+  SAM2.1-large, one pass & 913 & 224 & \\
+  SAM2.1-tiny, one pass & 148 & 39 & \\
+  SAM3, one pass & 2,810 & 458 & \\
+  Classifier, four members, one crop & 12.5 & 50 & \\
+  SAM2-large tracking, 21 frames & 25,321 & 224 & \\
+  \midrule
+  Single pass, per instrument & 2,953 & & 1.2 (per frame)\\
+  Refining one instrument & 25,584 & & 6.1\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+The single pass uses SAM2-large and SAM3 on a frame and its mirror image; with SAM2-tiny alone it costs 0.13\,TFLOPs per instrument and gives 82.13 mIoU against 83.47.
+
+\begin{table}[h]
+\floatconts
   {tab:control}
   {\caption{Control: the keyframe's own mask applied unchanged to the $\pm10$ neighbouring frames (static box) against SAM2-large tracking, 29\% of the instruments refined, mean of three seeds.}}
   {\small\begin{tabular}{lrrr}

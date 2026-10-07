@@ -51,7 +51,7 @@ def effort(out: Path) -> None:
     a.grid(color="#e1e5ea", lw=0.5)
     a.set_axisbelow(True)
     a.legend(frameon=False, fontsize=5.9, loc="lower right", handlelength=2.2, labelspacing=0.3)
-    a.set_title("(a) Review: errors found", fontsize=8.2, loc="left")
+    a.set_title("(a) Review: errors found", fontsize=8.2, loc="left", pad=22)
 
     k, n = np.array(gate["k"]), gate["n"]
     acc, base = np.array(gate["accuracy_mean"]), gate["base_accuracy"]
@@ -74,7 +74,13 @@ def effort(out: Path) -> None:
     b.grid(color="#e1e5ea", lw=0.5)
     b.set_axisbelow(True)
     b.legend(frameon=False, fontsize=6.3, loc="center right")
-    b.set_title("(b) Refinement: accuracy gained", fontsize=8.2, loc="left")
+    cost = json.loads((R / "paper_gflops.json").read_text())
+    single_t, refine_t = cost["single_pass_per_instrument"] / 1000, cost["stages_gflops"]["refinement of one instrument"] / 1000
+    sec = b.secondary_xaxis("top", functions=(lambda s: single_t + s / 100 * refine_t, lambda t: 100 * (t - single_t) / refine_t))
+    sec.set_xlabel("average cost per instrument (TFLOPs)", fontsize=7.0)
+    sec.set_xticks([4, 8, 12, 16])
+    sec.tick_params(labelsize=6.8)
+    b.set_title("(b) Refinement: accuracy gained", fontsize=8.2, loc="left", pad=22)
     for ax in (a, b):
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
