@@ -4,7 +4,7 @@
 \subsection{Setup}
 We use the GraSP benchmark (robotic prostatectomy, 7 instrument classes, frames at one per second).
 The official test split has 1,125 frames from 5 cases with 2,861 instruments; two disjoint folds of the training cases are the development folds, and the final models are trained on all eight training cases.
-We report the benchmark's mIoU, IoU and mcIoU, computed with code ported from the MATIS evaluation, and bootstrap intervals over the five test cases for the headline scores.
+We report the benchmark's mIoU, IoU and mcIoU, computed with code ported from the MATIS evaluation, and bootstrap intervals over the five test cases for the headline scores (with five cases these intervals are coarse).
 The instruments' boxes are the ground-truth boxes: the pipeline recognises given instruments and assumes that localisation is provided.
 Numbers are the mean of three classifier seeds; each segmenter was trained once.
 \todo{segmenter seed variance: three seeds of the SAM2 and SAM3 fine-tunes, rerun masks, tracking and scoring}
@@ -28,7 +28,7 @@ The curves lie close together, as the AUROCs of Table~\ref{tab:uncertainty} show
 Figure~\ref{fig:effort}b shows the same ranking used for refinement.
 Refining the 19\% with the weakest evidence raises instrument accuracy from 0.909 to 0.948, which is 81\% of the gain reached at 31\% (0.957); refining 29\% recovers 97\% of the best gain we measured, which is reached at 42\% (0.958).
 A gate that knew which instruments refinement would fix would reach 0.970 on the same instruments, so the evidence captures most of what a gate can capture but not all of it.
-On one A100 a frame with SAM2 and SAM3 masks and the four-member classification takes 1.2\,s and each refined instrument a further 6.1\,s, so refining 29\% gives 3.0\,s per instrument on average against an estimated 7.3\,s if every instrument were refined.
+On one A100 a frame with SAM2 and SAM3 masks and the four-member classification takes 1.2\,s and each refined instrument a further 6.1\,s, so refining 29\% gives 3.0\,s per instrument on average and the held-out threshold (about 45\% refined) 3.9\,s, against an estimated 7.3\,s if every instrument were refined.
 \todo{refine every instrument, which needs tracks for the instruments beyond 42\%, so that ``of refining all'' and the 59\% saving are measured; with those tracks, add the softmax, MC-dropout and random gates to panel (b)}
 
 \subsection{Where the gain goes}
@@ -36,14 +36,14 @@ On one A100 a frame with SAM2 and SAM3 masks and the four-member classification 
 \begin{figure}[tbp]
 \floatconts
   {fig:perclass}
-  {\caption{Class IoU on the test cases before and after refinement (29\% of the instruments refined, 3-seed mean); the numbers are the gains in points.}}
+  {\caption{Class IoU on the test cases before and after refinement (threshold chosen on the held-out fold, 42 to 47\% of the instruments refined, 3-seed mean); the numbers are the gains in points.}}
   {\includegraphics[width=\linewidth]{figures/fig4_perclass.pdf}}
 \end{figure}
 
 Averages hide the classes.
-Refinement helps the weakest classes most (Figure~\ref{fig:perclass}): Clip Applier gains 15.2 IoU points (61.7 to 76.8), Grasper 10.3, Needle Driver 9.8 and Prograsp 9.0, against 2.6 for the Scissors, which the single pass already segments and labels well.
-This is why mcIoU rises by 8.4 points while mIoU rises by 3.9.
-The Grasper (60.7) and the Prograsp Forceps (67.5) remain the weakest classes after refinement.
+Refinement helps the weakest classes most (Figure~\ref{fig:perclass}): Clip Applier gains 16.3 IoU points (61.7 to 78.0), Grasper 11.5, Needle Driver 10.6 and Prograsp 9.4, against 2.6 for the Scissors, which the single pass already segments and labels well.
+This is why mcIoU rises by 9.0 points while mIoU rises by 4.0.
+The Grasper (61.9) and the Prograsp Forceps (67.9) remain the weakest classes after refinement.
 \todo{class sizes in the training data, to show that the gain follows the rarity of the class}
 
 \subsection{Comparing uncertainty scores}
@@ -51,16 +51,17 @@ The Grasper (60.7) and the Prograsp Forceps (67.5) remain the weakest classes af
 \begin{table}[tbp]
 \floatconts
   {tab:uncertainty}
-  {\caption{Calibration (ECE with 15 bins; NLL) and error detection (AUROC; share of errors found when 20\% of the instruments are reviewed) on the held-out fold, mean of three seeds (one run for the 12-network rows). Nets: networks run per instrument.}}
+  {\caption{Calibration (ECE with 15 bins; NLL) and error detection (AUROC; share of errors found when 20\% of the instruments are reviewed) on the held-out fold, mean of three seeds (one run for the 12-network rows). Nets: networks run per instrument. Each method's best score by errors found is shown, with the other scores discussed in the text.}}
   {\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{lrrrrr}
   \toprule
   \bfseries Method and score & \bfseries Nets & \bfseries ECE & \bfseries NLL & \bfseries AUROC & \bfseries Found (\%)\\
   \midrule
+  Softmax ensemble, entropy & 4 & 0.027 & 0.221 & 0.923 & 87.4\\
   Softmax ensemble, max-softmax & 4 & 0.027 & 0.221 & 0.926 & 86.4\\
   Softmax ensemble, energy & 4 & 0.027 & 0.221 & 0.907 & 80.7\\
-  Softmax, temperature scaled & 4 & 0.036 & 0.218 & 0.930 & 87.8\\
-  MC dropout, vote & 80 & 0.044 & 0.225 & 0.912 & 83.9\\
+  Softmax, temperature scaled, entropy & 4 & 0.036 & 0.218 & 0.925 & 88.8\\
   MC dropout, mean softmax & 80 & 0.044 & 0.225 & 0.925 & 87.0\\
+  MC dropout, vote & 80 & 0.044 & 0.225 & 0.912 & 83.9\\
   MC dropout, mutual information & 80 & 0.044 & 0.225 & 0.888 & 77.6\\
   Evidential, epistemic $S$ (ours) & 4 & 0.029 & 0.230 & 0.928 & 90.2\\
   Deep ensemble, entropy (3 seeds) & 12 & 0.040 & 0.203 & 0.930 & 88.9\\
@@ -73,12 +74,12 @@ Table~\ref{tab:uncertainty} compares the score that drives the routing with the 
 Calibration is not where the evidential ensemble stands out: its ECE (0.029) is close to that of the softmax ensemble (0.027), temperature scaling fitted on one half of the fold and tested on the other did not improve it, and MC dropout is the least calibrated.
 For error detection most one-pass scores rank errors alike (AUROC 0.923 to 0.930), and popular alternatives are worse: energy reaches 0.907 and the mutual information of MC dropout 0.888, both below plain softmax confidence.
 At a fixed review budget the epistemic score finds the most errors among the single-ensemble scores (90.2\%); the best score of MC dropout, the mean softmax over 80 passes, reaches 0.925 and 87.0\%, and a deep ensemble of three seeds, which has better probabilities (NLL 0.203), finds fewer errors at the budget (88.9\%) than the one four-network evidential ensemble, while pooling the evidential seeds matches it.
-The evidential score also flags 74\% of the errors on which every member predicts the same wrong class, which a vote cannot.
-Reliability diagrams are in Appendix~\ref{app:extra}.
+Among the 36 to 39 errors per seed on which every member predicts the same wrong class, the evidential score puts 74\% in the top 20\%, against 30\% for softmax confidence, 36\% for softmax entropy and none for an MC-dropout vote.
+The similar ECEs hide opposite errors: the evidential ensemble is overconfident at stated confidences of 0.65 to 0.9 (0.75 stated, 0.59 observed) where softmax is underconfident (0.65 stated, 0.82 observed; Appendix~\ref{app:extra}).
 
 \subsection{Zero-shot transfer}
 \label{sec:shift}
-\begin{table}[tbp]
+\begin{table}[ht!]
 \floatconts
   {tab:shift}
   {\caption{Zero-shot transfer of the GraSP classifier to EndoVis crops (single seed, an earlier classifier of the same design): accuracy, AUROC for flagging errors, and the share of errors found when 20\% of the instruments are reviewed. \todo{rerun with the final models}}}
@@ -100,7 +101,7 @@ We therefore claim the routing only for data like the training data.
 
 \subsection{Context: published results}
 \label{sec:context}
-\begin{table}[tbp]
+\begin{table}[ht!]
 \floatconts
   {tab:results}
   {\caption{Instrument segmentation on the GraSP test set. $^\dagger$ Published results of \citet{ayobi2024pixel}, obtained with the instruments' own detected boxes; ours use the given boxes. Ours: mean of three classifier seeds; refined at the threshold chosen on the held-out fold, which refines 42 to 47\% of the instruments. \todo{bootstrap intervals for this row}}}
@@ -123,22 +124,8 @@ Refinement adds 4.0 mIoU, 5.4 IoU and 9.0 mcIoU to the single pass of the same s
 
 \subsection{Does the gain need a tracker?}
 \label{sec:control}
-\begin{table}[tbp]
-\floatconts
-  {tab:control}
-  {\caption{Control: the keyframe's own mask applied unchanged to the $\pm10$ neighbouring frames (static box) against SAM2-large tracking, 29\% of the instruments refined, mean of three seeds.}}
-  {\small\begin{tabular}{lrrr}
-  \toprule
-  \bfseries Frames & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU\\
-  \midrule
-  single pass & 83.47 & 81.07 & 69.94\\
-  static box & 75.84 & 72.81 & 63.55\\
-  SAM2-large tracking & 87.37 & 86.22 & 78.33\\
-  \bottomrule
-  \end{tabular}}
-\end{table}
-
 At one frame per second the propagated mask often leaves the instrument: among the instruments fixed by tracking, the median keeps its mask on the instrument for 1 to 1.5 frames.
-Table~\ref{tab:control} therefore asks whether the gain needs a tracker at all, by classifying the keyframe's own mask region in each neighbouring frame, with no propagation.
-A static box lowers the scores below the single pass, which is expected when the instrument moves between frames and the region mostly shows other content, so viewing the same region at other moments is not what helps; the propagated mask does the work and we keep the word tracking.
-The control is deliberately plain: a static box restricted to the frames in which the instrument has not moved would be a fairer but different test, which we did not run.
+We therefore ask whether the gain needs a tracker at all, by classifying the keyframe's own mask region in each neighbouring frame, with no propagation (29\% of the instruments refined, mean of three seeds; Appendix Table~\ref{tab:control}).
+A static box lowers the scores to 75.84 mIoU, 72.81 IoU and 63.55 mcIoU, below the single pass (83.47, 81.07, 69.94) and far below tracking (87.37, 86.22, 78.33), which is expected when the instrument moves between frames and the region mostly shows other content, so a static view of the same region does not reproduce the gain.
+We keep the word tracking for the propagation, but the control does not show that the mask follows the instrument in every frame, or separate following one instrument from combining views of the scene.
+\todo{how many neighbouring frames the gain needs (fusing only the frames within 1, 2, 3 or 5 of the keyframe): the check is running}

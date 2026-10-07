@@ -31,6 +31,21 @@ Code is at \url{https://github.com/volcanictv/grasp-instrument-classifier} and t
 
 \begin{table}[h]
 \floatconts
+  {tab:control}
+  {\caption{Control: the keyframe's own mask applied unchanged to the $\pm10$ neighbouring frames (static box) against SAM2-large tracking, 29\% of the instruments refined, mean of three seeds.}}
+  {\small\begin{tabular}{lrrr}
+  \toprule
+  \bfseries Frames & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU\\
+  \midrule
+  single pass & 83.47 & 81.07 & 69.94\\
+  static box & 75.84 & 72.81 & 63.55\\
+  SAM2-large tracking & 87.37 & 86.22 & 78.33\\
+  \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{table}[h]
+\floatconts
   {tab:ladder}
   {\caption{Steps of the pipeline (mean of three classifier seeds, 29\% of the instruments refined).}}
   {\small\begin{tabular}{lrrr}

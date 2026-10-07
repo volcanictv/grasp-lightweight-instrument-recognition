@@ -66,7 +66,9 @@ def effort(out: Path) -> None:
     b.annotate(f"29% refined: {100 * (acc[i29] - base) / (acc.max() - base):.0f}% of the\nbest gain measured (up to 42%)", (x[i29], 100 * (acc[i29] - base)), xytext=(11, 1.1), fontsize=6.7, color=ACCENT,
                arrowprops=dict(arrowstyle="-", color=ACCENT, lw=0.6))
     b.text(0.97, 0.05, "softmax, MC-dropout and random gates,\nand refining everything: to be added", transform=b.transAxes, ha="right", va="bottom", fontsize=6.2, color=GREY, style="italic")
-    b.set_xlim(0, 43)
+    b.axvspan(42, 47.2, color="#d9e8ec", alpha=0.8, lw=0)
+    b.text(44.6, 1.1, "held-out\nthreshold\n(42 to 47%)", fontsize=6.0, color=ACCENT, ha="center", va="bottom")
+    b.set_xlim(0, 49)
     b.set_xlabel("instruments refined (%), highest uncertainty first", fontsize=7.4)
     b.set_ylabel("instrument accuracy gain (points)")
     b.grid(color="#e1e5ea", lw=0.5)
@@ -83,7 +85,7 @@ def effort(out: Path) -> None:
 def per_class(out: Path) -> None:
     d = json.loads((REPO_ROOT / "docs" / "reports" / "gtbox_sam" / "final_3seed.json").read_text())["configs"]
     s = [100 * d["single pass"]["per_class_iou"][str(i)] for i in range(1, 8)]
-    r = [100 * d["gated (top 833)"]["per_class_iou"][str(i)] for i in range(1, 8)]
+    r = [100 * d["gated (tau 1.7e-05)"]["per_class_iou"][str(i)] for i in range(1, 8)]  # the threshold chosen on the held-out fold (42 to 47% of the instruments refined)
     fig, ax = plt.subplots(figsize=(6.8, 2.3))
     x = np.arange(7)
     ax.bar(x - 0.19, s, 0.38, color="#b9c4cf", label="single pass")

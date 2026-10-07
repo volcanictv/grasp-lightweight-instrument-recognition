@@ -3,7 +3,7 @@
 
 \paragraph{Setting and claims.}
 The pipeline is an offline recognition stage: it assumes that the location of every instrument is given, and it is meant for reviewing archives, assisting annotation and quality control.
-We make no claim of real-time or intraoperative use (at the 29\% operating point an instrument takes 3.0\,s on average on one A100), of state-of-the-art results, of label efficiency, or of robustness beyond the transfer test of Section~\ref{sec:shift}.
+We make no claim of real-time or intraoperative use (an instrument takes 3 to 4\,s on average on one A100), of state-of-the-art results, of label efficiency, or of robustness beyond the transfer test of Section~\ref{sec:shift}.
 Published results are given for context only; they find their own boxes and ours are given, so the two are not the same task.
 
 \paragraph{Evidence.}
@@ -22,6 +22,6 @@ The score degrades under zero-shot transfer to EndoVis, so a review budget set o
 
 \section{Conclusion}
 \label{sec:conclusion}
-Checking one instrument in five finds most of the errors of an instrument recogniser, and following the same kind of instruments through neighbouring frames recovers nearly all of the gain we measured at a fraction of the cost.
+Checking one instrument in five finds most of the errors of an instrument recogniser, and following those instruments through neighbouring frames recovers nearly all of the gain we measured at a fraction of the cost.
 One pass of a four-network evidential ensemble is enough to rank them, comparable to a 12-network deep ensemble and better than 80-pass MC dropout at a fixed budget, though the routing degrades under transfer.
 \todo{one sentence on what this enables, and on future work: a detector in front}

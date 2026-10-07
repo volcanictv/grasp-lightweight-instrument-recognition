@@ -95,7 +95,7 @@ def fig1(index: int, out: Path) -> None:
         tag = "keyframe" if f["offset"] == 0 else f"$t$ = {f['offset']:+d} s".replace("-", "−")
         ax.set_xlabel(f"{tag}\n{SHORT[k]} {f['mu'][k]:.2f}", fontsize=7, color=col, labelpad=2)
         if j == 0:
-            ax.set_title("(c) Past frames with the propagated mask, each classified alone", fontsize=8, loc="left")
+            ax.set_title("(c) Neighbouring frames with the propagated mask, each classified alone", fontsize=8, loc="left")
     out.mkdir(parents=True, exist_ok=True)
     fig.savefig(out / "fig1_example.pdf")
     fig.savefig(out / "fig1_example.png", dpi=200)

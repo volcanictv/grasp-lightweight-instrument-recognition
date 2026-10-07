@@ -15,6 +15,7 @@ We instead give the model a box, fine-tune its decoder (and, for SAM2, its last 
 EdgeTAM \citep{zhou2025edgetam} is a lighter tracker in the same family, whose crops we use to train the classifier.
 
 \paragraph{Uncertainty.}
-MC dropout \citep{gal2016dropout} estimates uncertainty from many stochastic forward passes and softmax confidence is the usual cheap baseline; both are poorly calibrated under dataset shift \citep{guo2017calibration,ovadia2019trust}.
-Evidential deep learning \citep{sensoy2018evidential} places a Dirichlet distribution over the class probabilities and obtains a belief and its uncertainty in one pass; \citet{duan2024evidential} derive variance-based scores that separate epistemic from aleatoric uncertainty, and we use their epistemic score as the gate.
-Unlike a vote or a softmax, such a score can stay high when all ensemble members agree on the wrong class, because it also reflects how much evidence the members gathered.
+MC dropout \citep{gal2016dropout} estimates uncertainty from many stochastic forward passes and softmax confidence is the usual cheap baseline; softmax confidence is often miscalibrated \citep{guo2017calibration}, and the calibration of such scores degrades under dataset shift \citep{ovadia2019trust}.
+Evidential deep learning \citep{sensoy2018evidential} places a Dirichlet distribution over the class probabilities and obtains a belief and its uncertainty in one pass; \citet{duan2024evidential} derive variance-based scores that separate epistemic from aleatoric uncertainty, and we use their epistemic score to rank instruments.
+Such a score can stay high when all ensemble members agree on the wrong class, because it also reflects how much evidence the members gathered, which a vote cannot do and softmax confidence does less often (Section~\ref{sec:uncertainty}).
+Whether evidential scores quantify epistemic uncertainty in a strict sense has been questioned \citep{shen2024mirage}; we use the score as an error-ranking signal, compare it empirically with the alternatives, and make no claim beyond that.
