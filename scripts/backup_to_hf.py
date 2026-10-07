@@ -35,7 +35,7 @@ Work products behind the paper that live only on the working machines. Private: 
 | experiments_edl/extract/ | extracted single-pass logits used by the analysis scripts |
 | archives/ | tar archives of the stored tracker crops (experiments/temporal_neighbors, temporal_neighbors_yolo) used by the arm N training |
 | logs/ | experiment logs |
-| docs_local/ | the local-only docs of the research repository (DECISIONS.md, findings.md, error analysis, ...) |
+| docs_local/ | the local-only notes of the research repository, except DECISIONS.md, which is deliberately kept off every remote |
 
 Public artefacts are elsewhere: code at github.com/volcanictv/grasp-instrument-classifier and the released weights at AryanB005/grasp-instrument-pipeline.
 """
@@ -88,7 +88,7 @@ def titanxp(api: HfApi, repo: str) -> None:
 
 
 def docs(api: HfApi, repo: str, docs_dir: Path) -> None:
-    api.upload_folder(folder_path=str(docs_dir), repo_id=repo, path_in_repo="docs_local", ignore_patterns=["samples/**", "figures/**", "__pycache__/**"],
+    api.upload_folder(folder_path=str(docs_dir), repo_id=repo, path_in_repo="docs_local", ignore_patterns=["samples/**", "figures/**", "__pycache__/**", "DECISIONS*", "**/DECISIONS*", "CLAUDE.md", "PROJECT_SPEC.md"],  # DECISIONS.md must never leave the laptop
                       commit_message="local-only docs (DECISIONS.md, findings.md, ...)")
     print("docs uploaded", flush=True)
 
