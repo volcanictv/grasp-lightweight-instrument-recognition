@@ -8,7 +8,7 @@
 #SBATCH --partition=onboard
 #SBATCH --gres=gpu:a100:1
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=48g
 #SBATCH --time=0-00:55:00
 #SBATCH --mail-user=slack:@ab1340
