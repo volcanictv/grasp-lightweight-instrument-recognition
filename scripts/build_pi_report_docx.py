@@ -52,7 +52,8 @@ OFF_CLS = ours["classifier_4_members"]["mean_ms"]
 OFF_TRACK = sam2_track_ms + 21 * crop_ms
 OFF_SHARE = 833 / N_INST
 OFF_BEST = OFF_SEG + OFF_CLS
-OFF_AVG = OFF_BEST + PER_FRAME * OFF_SHARE * OFF_TRACK
+OFF_AVG = OFF_BEST + PER_FRAME * OFF_SHARE * OFF_TRACK  # per FRAME: the compute to process a whole frame (used only in the per-frame latency table)
+OFF_AVG_PI = OFF_BEST + OFF_SHARE * OFF_TRACK  # per INSTRUMENT: average time until an instrument's final label; the definition used for every row of the comparison tables
 OFF_WORST = OFF_BEST + MAX_PER_FRAME * OFF_TRACK
 
 RT_SEG = rt["tiny_fp32_flip"]["mean_ms"]
@@ -65,6 +66,7 @@ RT_AVG = RT_BEST + RT_SHARE * RT_TRACK
 RT_WORST = RT_BEST + RT_WORST_REFINE
 YOLO_TRACK = 16 * crop_ms + match_ms  # 15 past frames plus the current one, one classifier pass per crop
 YOLO_AVG = RT_BEST + yolo_ms + RT_SHARE * YOLO_TRACK
+RT_L_AVG = RT_BEST + RT_SHARE * OFF_TRACK  # SAM2-tiny segmenter with SAM2-large tracking (21 frames per tracked instrument, the same cost as the non-causal run)
 
 
 def ms(v: float) -> str:
@@ -457,15 +459,17 @@ def build(out: Path, figdir: Path) -> None:
 
     heading(doc, "Real-time version")
     para(doc, "Uses past frames only, at one frame per second, with a smaller segmenter (SAM2.1-tiny) and a causal tracker.", space_after=6)
-    table(doc, ["Pipeline", "mIoU", "IoU", "mcIoU", "End to end, avg (ms)"],
+    table(doc, ["Pipeline", "mIoU", "IoU", "mcIoU", "Time to label, avg (ms)"],
           [["Real-time: SAM2-tiny segmenter + causal EdgeTAM tracking (recommended)", "84.22", "82.30", "71.89", ms(RT_AVG)],
            ["Real-time: SAM2-tiny segmenter + causal YOLO26s tracking", "83.23", "81.32", "70.28", ms(YOLO_AVG)],
            ["Real-time: SAM2-tiny segmenter, no tracking", "82.13", "79.55", "67.93", ms(RT_BEST)],
-           ["Final pipeline (offline above)", "87.37", "86.22", "78.33", ms(OFF_AVG)],
+           ["Causal: SAM2-tiny segmenter + causal SAM2-large tracking", "85.00", "83.31", "73.55", ms(RT_L_AVG)],
+           ["Causal: SAM2 + SAM3 segmenter + causal SAM2-large tracking (833 tracked)", "86.50", "85.08", "75.65", ms(OFF_AVG_PI)],
+           ["Final pipeline (non-causal, 833 tracked)", "87.37", "86.22", "78.33", ms(OFF_AVG_PI)],
            ["TAPIS", "86.61", "83.38", "77.42", ms(tapis_ms)]],
-          [3.2, 0.7, 0.7, 0.75, 1.2], right_cols=(1, 2, 3, 4), highlight=(0,), muted=(3, 4))
-    note(doc, "Real-time rows track the 539 most uncertain instruments (about 19%). Latencies are estimated from measured stage times on one Titan Xp; "
-              "the EdgeTAM tracking delay comes from a streaming replay.")
+          [3.0, 0.65, 0.65, 0.7, 1.4], right_cols=(1, 2, 3, 4), highlight=(0,), muted=(5, 6))
+    note(doc, "Rows track the 539 most uncertain instruments (about 19%) unless stated. Time to label is the average time until an instrument's final label, per instrument, "
+              "estimated from measured stage times on one Titan Xp (TAPIS: per keyframe, measured); the EdgeTAM tracking delay comes from a streaming replay.")
     para(doc, "Latency of the recommended real-time pipeline (SAM2-tiny + causal EdgeTAM)", size=10.5, bold=True, space_after=4, keep_next=True)
     table(doc, ["Stage", "ms"],
           [["Segmenter (SAM2-tiny, with mirror pass), per frame", ms(RT_SEG)],

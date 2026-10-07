@@ -228,19 +228,21 @@ def fig2(out: Path) -> None:
     a.set_title("(a) Evidence concentrates the gain", fontsize=8, loc="left")
 
     pts = [("ours, causal, EdgeTAM", lat.RT_AVG, 84.22, "o", ACCENT, True), ("ours, causal, YOLO26s", lat.YOLO_AVG, 83.23, "o", ACCENT, True),
-           ("ours, causal, no tracking", lat.RT_BEST, 82.13, "o", ACCENT, True), ("ours, non-causal", lat.OFF_AVG, 87.37, "s", ACCENT, False),
+           ("ours, causal, no tracking", lat.RT_BEST, 82.13, "o", ACCENT, True), ("ours, non-causal", lat.OFF_AVG_PI, 87.37, "s", ACCENT, False),
+           ("ours, causal, SAM2-large", lat.RT_L_AVG, 85.00, "o", ACCENT, True), ("ours, causal,\nSAM2 + SAM3 masks", lat.OFF_AVG_PI, 86.50, "o", ACCENT, True),
            ("TAPIS", lat.tapis_ms, 86.61, "s", GREY, False)]
     for lab, xv, yv, mk, col, filled in pts:
         b.plot(xv, yv, mk, color=col, mfc=col if filled else "white", mew=1.4, ms=6)
     off = {"ours, causal, EdgeTAM": (6, 4, "left"), "ours, causal, YOLO26s": (-6, 2, "right"), "ours, causal, no tracking": (7, -3, "left"),
-           "ours, non-causal": (-7, 5, "right"), "TAPIS": (-7, -10, "right")}
+           "ours, non-causal": (-7, 3, "right"), "TAPIS": (-7, -10, "right"), "ours, causal, SAM2-large": (6, -3, "left"),
+           "ours, causal,\nSAM2 + SAM3 masks": (8, -14, "left")}
     for lab, xv, yv, *_ in pts:
         dx, dy, ha = off[lab]
         b.annotate(lab, (xv, yv), xytext=(dx, dy), textcoords="offset points", fontsize=6.6, ha=ha, color=INK)
     b.axvline(1000, color=RED, lw=0.8, ls=":")
     b.text(1080, 81.35, "1 frame/s", fontsize=6.5, color=RED)
     b.set_xscale("log")
-    b.set_xlim(200, 30000)
+    b.set_xlim(200, 60000)
     b.set_ylim(81, 88.3)
     b.set_xlabel("end-to-end latency per instrument (ms, estimated)", fontsize=7.2)
     b.set_ylabel("mIoU")

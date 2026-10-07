@@ -21,7 +21,7 @@ To bound the effect, the non-causal run is also scored with the gate threshold c
 \begin{table}[tbp]
 \floatconts
   {tab:results}
-  {\caption{Instrument segmentation on the GraSP test set. $\dagger$ published by \citet{ayobi2024pixel}; they find their own boxes, ours use the given boxes. Latency: end to end per instrument on one Titan Xp, estimated from stage times (TAPIS: per keyframe, measured). Causal: uses past frames only.}}
+  {\caption{Instrument segmentation on the GraSP test set. $\dagger$ published by \citet{ayobi2024pixel}; they find their own boxes, ours use the given boxes. Latency: average time until an instrument's final label on one Titan Xp, estimated from stage times (TAPIS: per keyframe, measured). Causal: uses past frames only.}}
   {\small\begin{tabular}{lcrrrr}
   \toprule
   \bfseries Method & \bfseries Causal & \bfseries mIoU & \bfseries IoU & \bfseries mcIoU & \bfseries ms\\
@@ -33,7 +33,9 @@ To bound the effect, the non-causal run is also scored with the gate threshold c
   Ours, no tracking & yes & 82.13 & 79.55 & 67.93 & 306\\
   Ours, YOLO26s tracking & yes & 83.23 & 81.32 & 70.28 & 370\\
   Ours, EdgeTAM tracking & yes & \bfseries 84.22 & \bfseries 82.30 & \bfseries 71.89 & 853\\
-  Ours, SAM2-large tracking & no & \bfseries 87.37 & \bfseries 86.22 & \bfseries 78.33 & 13,006\\
+  Ours, SAM2-large tracking, tiny segmenter & yes & 85.00 & 83.31 & 73.55 & 2,719\\
+  Ours, SAM2-large tracking, SAM2 + SAM3 segmenter & yes & 86.50 & 85.08 & 75.65 & 7,249\\
+  Ours, SAM2-large tracking, SAM2 + SAM3 segmenter & no & \bfseries 87.37 & \bfseries 86.22 & \bfseries 78.33 & 7,249\\
   \bottomrule
   \end{tabular}}
 \end{table}
@@ -41,9 +43,9 @@ To bound the effect, the non-causal run is also scored with the gate threshold c
 Table~\ref{tab:results} follows the format of the GraSP benchmark.
 The non-causal pipeline is above TAPIS on all three scores, clearly so on IoU (its 95\% bootstrap interval over the five test cases is 85.6 to 87.1, TAPIS is 83.4) and by 0.8 on mIoU (TAPIS lies just below the interval 86.9 to 88.2); on mcIoU the difference of 0.9 is within the interval (76.3 to 79.8).
 The IoU margin is the one most inflated by the given boxes, because spurious classes count against a method that has to detect.
-The causal pipeline is 2.4 mIoU and 1.1 IoU below TAPIS, but TAPIS needs future frames, and the causal rows are the ones a live system can run.
-Figure~\ref{fig:qualitative} shows test frames: the causal pipeline labels every instrument correctly in 83\% of the test frames and the non-causal one in 90\%.
-\todo{causal SAM2-large tracking on both mask sets (runs in progress)}
+The causal restriction itself is cheap: with the same SAM2-large tracker and segmenter, reading only the past costs 0.9 mIoU, 1.1 IoU and 2.7 mcIoU (87.37 to 86.50, 86.22 to 85.08, 78.33 to 75.65), and that causal pipeline matches TAPIS on mIoU (86.50 against 86.61) and is 1.7 IoU above it.
+Most of the gap to the real-time rows therefore comes from their lighter tracker and segmenter: EdgeTAM and SAM2-tiny give 84.22 mIoU at 853\,ms, SAM2-large tracking on tiny masks gives 85.00 at 2.7\,s, and the full causal pipeline needs 7.2\,s per instrument on this GPU.
+Figure~\ref{fig:qualitative} shows test frames: the real-time pipeline labels every instrument correctly in 83\% of the test frames and the non-causal one in 90\%.
 
 \begin{figure}[tbp]
 \floatconts
