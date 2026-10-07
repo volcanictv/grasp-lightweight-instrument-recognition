@@ -26,7 +26,7 @@ FREE_GB=$(df -BG --output=avail "$HOME" | tail -1 | tr -dc 0-9)
 [ "$FREE_GB" -ge 40 ] || fail "less than 40 GB free in $HOME"
 
 say "code"
-if [ -d "$WORK/code/.git" ]; then git -C "$WORK/code" fetch --depth 1 origin "$BRANCH" && git -C "$WORK/code" checkout "$BRANCH" && git -C "$WORK/code" merge --ff-only FETCH_HEAD
+if [ -d "$WORK/code/.git" ]; then git -C "$WORK/code" fetch --depth 1 origin "$BRANCH" && git -C "$WORK/code" checkout -q -B "$BRANCH" FETCH_HEAD   # a shallow clone cannot merge: move the branch to the fetched commit (untracked files are untouched)
 elif [ -d "$WORK/code/scripts" ]; then say "using the code directory that is already there"
 else git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$WORK/code"; fi
 CODE=$WORK/code
