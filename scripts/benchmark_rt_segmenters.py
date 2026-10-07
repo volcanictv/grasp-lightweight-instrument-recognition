@@ -33,7 +33,7 @@ from surgical_ai.data.region_dataset import GraspRegionDataset
 from surgical_ai.data.transforms import build_transforms
 from surgical_ai.models import build_model
 
-CKPT = Path.home() / "sam2" / "checkpoints"
+CKPT = Path(os.environ.get("SAM2_CKPT_DIR", Path.home() / "sam2" / "checkpoints"))
 VARIANTS = {
     "large": (CKPT / "sam2.1_hiera_large.pt", "configs/sam2.1/sam2.1_hiera_l.yaml"),
     "small": (CKPT / "sam2.1_hiera_small.pt", "configs/sam2.1/sam2.1_hiera_s.yaml"),

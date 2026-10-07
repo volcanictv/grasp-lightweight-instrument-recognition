@@ -1,0 +1,24 @@
+# The arm N four-member evidential ensemble of seed 44 (the headline seed), with the checkpoints named as in the public weights repository
+# (AryanB005/grasp-instrument-pipeline, weights/evidential_armN_seed44/); used by the cluster latency run, where the research repository's experiments/ folder does not exist.
+weight_resnet50_320: 0.4
+members:
+- checkpoint: weights/evidential_armN_seed44/resnet50_320.pt
+  model: resnet50
+  image_size: 320
+  letterbox: true
+  label: resnet50_320
+- checkpoint: weights/evidential_armN_seed44/resnet50_224.pt
+  model: resnet50
+  image_size: 224
+  letterbox: true
+  label: resnet50_224
+- checkpoint: weights/evidential_armN_seed44/mobilenet_baseline.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: false
+  label: baseline
+- checkpoint: weights/evidential_armN_seed44/mobilenet_letterbox.pt
+  model: mobilenet_v3_small
+  image_size: 224
+  letterbox: true
+  label: letterbox_crop
