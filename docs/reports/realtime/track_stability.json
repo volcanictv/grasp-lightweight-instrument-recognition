@@ -1,0 +1,16 @@
+{
+ "causal EdgeTAM (SAM2-tiny masks)": {
+  "fixed_instruments": 122,
+  "share_kept_ge_8_frames": 0.13934426229508196,
+  "share_kept_ge_3_frames": 0.32786885245901637,
+  "median_frames_kept": 1.0,
+  "max_possible_frames": 20
+ },
+ "non-causal SAM2-large (SAM2 + SAM3 masks)": {
+  "fixed_instruments": 172,
+  "share_kept_ge_8_frames": 0.22093023255813954,
+  "share_kept_ge_3_frames": 0.42441860465116277,
+  "median_frames_kept": 1.5,
+  "max_possible_frames": 20
+ }
+}

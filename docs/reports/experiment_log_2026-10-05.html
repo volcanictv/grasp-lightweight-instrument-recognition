@@ -1,0 +1,284 @@
+<title>GraSP Experiment Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one chronological ledger. Date rows divide it, each experiment is a row of area, name, numbers, verdict chip, note.
+   Tokens: cool paper neutrals, one teal accent, and a separate semantic set for the verdict chips. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --surface-2: #eef1f4; --fg: #1b2530; --muted: #5d6b79; --line: #d9dfe5;
+  --accent: #0f6f7a; --accent-fg: #ffffff;
+  --used: #1d7a4a; --used-bg: #dff3e7;
+  --replaced: #2a5ea8; --replaced-bg: #e0eafa;
+  --nogain: #7b6a2a; --nogain-bg: #f3ecd2;
+  --harmful: #b0362e; --harmful-bg: #f8dfdc;
+  --info: #56636f; --info-bg: #e6eaee;
+  --pending: #6a4aa6; --pending-bg: #ebe4f7;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12181e; --surface: #1a222a; --surface-2: #222c36; --fg: #e4eaf0; --muted: #98a6b4; --line: #2f3b47;
+    --accent: #4fc0cc; --accent-fg: #0b1418;
+    --used: #6fd29b; --used-bg: #173b29;
+    --replaced: #8db4ef; --replaced-bg: #1b2f4f;
+    --nogain: #d6c276; --nogain-bg: #3a3317;
+    --harmful: #f08a82; --harmful-bg: #4a1f1c;
+    --info: #a9b6c2; --info-bg: #26313b;
+    --pending: #b9a1ea; --pending-bg: #30244f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12181e; --surface: #1a222a; --surface-2: #222c36; --fg: #e4eaf0; --muted: #98a6b4; --line: #2f3b47;
+  --accent: #4fc0cc; --accent-fg: #0b1418;
+  --used: #6fd29b; --used-bg: #173b29;
+  --replaced: #8db4ef; --replaced-bg: #1b2f4f;
+  --nogain: #d6c276; --nogain-bg: #3a3317;
+  --harmful: #f08a82; --harmful-bg: #4a1f1c;
+  --info: #a9b6c2; --info-bg: #26313b;
+  --pending: #b9a1ea; --pending-bg: #30244f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+.now { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; margin-bottom: 20px; }
+.now h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+.now ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.now li { max-width: 110ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); padding-block: 10px; z-index: 5; border-bottom: 1px solid var(--line); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 11px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.chip .n { font-family: var(--mono); font-size: 11.5px; opacity: 0.85; }
+.chip:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tools { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+input[type="search"], select { font: inherit; font-size: 13px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-width: 0; }
+input[type="search"] { width: 220px; max-width: 100%; }
+.count { color: var(--muted); font-size: 12.5px; margin-bottom: 8px; }
+.ledger { display: grid; gap: 0; }
+.date { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); padding: 18px 0 6px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+.row { display: grid; grid-template-columns: 112px minmax(190px, 1.1fr) minmax(240px, 1.6fr) 150px minmax(180px, 1.2fr); gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.row > * { min-width: 0; }
+.area { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+.name { font-weight: 500; }
+.num { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.note { color: var(--muted); font-size: 13px; }
+.v { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 4px; line-height: 1.5; }
+.v.used { color: var(--used); background: var(--used-bg); }
+.v.replaced { color: var(--replaced); background: var(--replaced-bg); }
+.v.nogain { color: var(--nogain); background: var(--nogain-bg); }
+.v.harmful { color: var(--harmful); background: var(--harmful-bg); }
+.v.info { color: var(--info); background: var(--info-bg); }
+.v.pending { color: var(--pending); background: var(--pending-bg); }
+.empty { padding: 40px 0; color: var(--muted); }
+.foot { margin-top: 28px; color: var(--muted); font-size: 12.5px; max-width: 90ch; }
+@media (max-width: 900px) {
+  .row { grid-template-columns: 1fr; gap: 3px; padding: 12px 0; }
+  .area { padding-top: 0; }
+  .tools { margin-left: 0; width: 100%; }
+  input[type="search"] { flex: 1 1 160px; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<div class="wrap">
+  <h1>GraSP Experiment Log</h1>
+  <p class="sub">Every experiment attempted, oldest first, with the numbers and what happened to it. For reference only, kept apart from the reports. Numbers come from the decision log, the result files and the runs themselves; accuracy and macro-F1 are on the official test set unless a row says fold1 or fold2.</p>
+
+  <section class="now">
+    <h2>Where the pipeline is today</h2>
+    <ul>
+      <li><b>Classifier:</b> four-member evidential ensemble (ResNet-50 at 320, ResNet-50 at 224, two MobileNetV3), weights 0.40 / 0.20 / 0.20 / 0.20, three seeds. The tracker-style-crop (arm N) versions are queued to replace the baseline members.</li>
+      <li><b>Gate and tracker:</b> top 833 instruments by epistemic score, SAM2-large tracking of those, evidence-weighted vote over the track.</li>
+      <li><b>Segmentor for the PI comparison:</b> ground-truth boxes into SAM2 plus SAM3, fine-tuned on GraSP, equal-weight logit ensemble. Scored with mIoU, IoU and mcIoU against TAPIS. Oracle-box setting, always stated.</li>
+    </ul>
+  </section>
+
+  <div class="controls">
+    <div class="chips" id="chips" role="group" aria-label="Filter by verdict"></div>
+    <div class="tools">
+      <select id="area" aria-label="Filter by area"></select>
+      <input id="q" type="search" placeholder="Search name, numbers, notes" aria-label="Search">
+    </div>
+  </div>
+  <div class="count" id="count"></div>
+  <div class="ledger" id="ledger"></div>
+  <p class="foot">Verdicts: <b>Used</b> is in the current pipeline or its ensemble; <b>Used, then replaced</b> was shipped for a while; <b>No gain</b> and <b>Harmful</b> were tried and dropped (harmful means clearly worse than the baseline it was compared with); <b>Finding</b> is a measurement or decision that shaped later work; <b>Queued or running</b> has no result yet. Early detection and segmentation numbers (August 31 to September 2) were validated on the official test set before held-out folds were introduced on September 3, so treat them as optimistic.</p>
+</div>
+<script>
+var ROWS = [
+["2026-08-31","Setup","Resized frame cache, short side 256 px","Loader 317 img/s against 5,258 img/s the GPU can consume","used","Built for the frame-level task only. Region crops use native coordinates and cannot use it."],
+["2026-08-31","Detection","Faster R-CNN MobileNetV3-L FPN baseline, Adam","mAP@50 0.829, mAP@50:95 0.616","used","Baseline detector. Its weighted-loss variant became the warm start for Mask R-CNN."],
+["2026-08-31","Detection","Strong augmentation: zoom-out, IoU crop, flip, jitter","mAP@50 0.816, mAP@50:95 0.580; 78 min against 43","harmful","Worse than the baseline on both metrics. Reverted to a lighter default."],
+["2026-08-31","Detection","Soft-NMS","Null result","nogain","Tried after a literature check on surgical tool detection."],
+["2026-09-01","Detection","Class-weighted box loss","mAP@50 0.831, mAP@50:95 0.596; Grasper AP50 0.682 to 0.737","used","Flat overall, a real win on the weakest class. Checkpoint reused as the Mask R-CNN warm start."],
+["2026-09-01","Detection","ResNet-50 heavy backbone (41.1M params)","mAP@50 0.808, mAP@50:95 0.576","nogain","A heavier backbone overfits on 8 training cases."],
+["2026-09-01","Detection","Copy-paste augmentation","mAP@50 0.826, mAP@50:95 0.590","nogain","Matches the baseline. Does not help occluded instruments."],
+["2026-09-01","Detection","ResNet-50 plus weighted loss","mAP@50 0.800, mAP@50:95 0.587","nogain","Closes out the capacity-scaling branch."],
+["2026-09-01","Segmentation","Centroid and offset segmenter, five runs (baseline, long patience, cosine LR, copy-paste, deep backbone)","mIoU 0.308 to 0.321; deep backbone 0.637 and 0.654; AP50_segm 0.380 against TAPIS 89.85","replaced","Plateaued far from the benchmark. Replaced by Mask R-CNN."],
+["2026-09-01","Tracking","Tracking-by-detection with an IoU tracker, boundary exit and occlusion corridor","First looked positive, then hurt mAP@50; root-caused and fixed","nogain","Net negative in the end."],
+["2026-09-01","Decision","Every run so far was validated on the official test set","Found by asking directly","info","Led to the fold1 and fold2 cross-validation protocol."],
+["2026-09-01","Segmentation","Mask R-CNN MobileNetV3, warm-started","AP50_segm fold1 0.8458, fold2 0.8433, official 0.8101","used","The official run is the real number; 0.8446 was inflated. Ensemble member."],
+["2026-09-01","Segmentation","Mask R-CNN trained from scratch","Official AP50_segm 0.8061","nogain","Warm start did not matter. Kept as a third ensemble member."],
+["2026-09-01","Segmentation","Copy-paste on Mask R-CNN","fold1 gain reversed on the official split","nogain","Not confirmed."],
+["2026-09-01","Segmentation","Fusion of the fold1 and fold2 models on official test","Does not beat 0.8101","nogain","Legitimate and free of leakage, but no better than the single model."],
+["2026-09-01","Segmentation","Zero-shot SAM2 with box prompts","AP50_segm 0.7690, heavy-occlusion recall 0.624","replaced","Below our own mask head. Fine-tuned the next day."],
+["2026-09-02","Segmentation","COCO-pretrained ResNet-50 Mask R-CNN","AP50_segm 0.8132","used","First model to beat 0.8101. Ensemble member."],
+["2026-09-02","Segmentation","Two-way ensemble, MobileNet plus COCO ResNet-50","AP50_segm 0.8481","used","Weighted box and mask fusion."],
+["2026-09-02","Segmentation","Three-way ensemble, adding the scratch model","AP50_segm 0.8553","used","An out-of-memory bug was caught along the way."],
+["2026-09-02","Segmentation","SAM2 decoder fine-tune","AP50_segm 0.7690 to 0.7966","used","Fourth ensemble member."],
+["2026-09-02","Segmentation","Four-way ensemble with the fine-tuned SAM2","AP50_segm 0.8594","replaced","Best segmentation number of the project. Scope then moved to the classifier."],
+["2026-09-02","Decision","Error root-cause analysis","Three causes: aspect-ratio distortion, tissue occlusion, genuine class similarity","info","Drove the classifier experiments that followed."],
+["2026-09-02","Classifier","Letterbox crop, padding to square","Accuracy 0.857 to 0.882, macro-F1 0.825 to 0.827","used","Becomes the letterbox_crop member. Costs the rarest classes."],
+["2026-09-02","Classifier","Focal loss, frame-level task","Macro-F1 0.708 to 0.677","harmful","Suction recall rose but precision collapsed."],
+["2026-09-02","Classifier","Selective letterbox with sharper class weights","Macro-F1 0.827 to 0.801, accuracy 0.882 to 0.853","harmful","Both target classes got worse."],
+["2026-09-02","Classifier","Two-checkpoint ensemble, baseline plus letterbox, no retraining","Macro-F1 0.848, accuracy 0.8885","used","First sign that diversity beats a single model."],
+["2026-09-02","Classifier","Tip crop around the working tip","Macro-F1 0.825 to 0.744, accuracy 0.857 to 0.831; Grasper F1 0.437","harmful","Worst result recorded for the hardest class."],
+["2026-09-02","Classifier","Per-class decision thresholds, frame-level task","Applied to all classes macro-F1 0.701 to 0.690 (oracle 0.731); Bipolar F1 0.889 to 0.919, Clip Applier 0.706 to 0.596","nogain","Only the Bipolar threshold helped. Dropped when scope moved to the classifier."],
+["2026-09-02","Pipeline","First end-to-end detect, classify, segment pipeline","Accuracy 0.8493 against 0.889 with oracle boxes","info","About four points lost to imperfect detection."],
+["2026-09-02","Decision","Scope correction: the job is the classifier, not the pipeline","","info","Everything after this targets the region classifier."],
+["2026-09-02","Classifier","Classifier swapped into the segmentation pipeline","AP50_segm 0.8101 to 0.6748","harmful","Explains why naive recombination fails."],
+["2026-09-02","Classifier","Targeted occlusion fallback using nearby frames","Accuracy 0.8885 to 0.8892; occluded cases 0.8182 to 0.8442","replaced","Small win. The idea grew into SAM2 track aggregation."],
+["2026-09-02","Classifier","Aspect-ratio-weighted ensemble combination","Macro-F1 0.8481 to 0.8423","nogain","Grasper got worse everywhere."],
+["2026-09-02","Classifier","ResNet-50 backbone","Macro-F1 0.870, accuracy 0.914","used","Biggest single-model win, no trade-off."],
+["2026-09-02","Classifier","MobileNet resolution 224 to 320 px","Macro-F1 0.827 to 0.817, accuracy 0.882 to 0.859","harmful","Resolution alone does not help a small backbone."],
+["2026-09-02","Classifier","ResNet-50 combined with MobileNet checkpoints","Accuracy and macro-F1: R50 alone 0.9137 and 0.8705; plus baseline 0.9084 and 0.8767; plus letterbox 0.9189 and 0.8753","used","Free improvement from ensembling."],
+["2026-09-03","Classifier","ResNet-50 at 320 px","Macro-F1 0.870 to 0.876, accuracy 0.914 to 0.920","used","The resnet50_320 member, the strongest single model."],
+["2026-09-03","Classifier","Four-member ensemble, flat weights","Accuracy 0.9266, macro-F1 0.8929; GPU 17 ms","used","The ensemble that every later result builds on."],
+["2026-09-03","Classifier","Weight 0.40 on resnet50_320","Accuracy 0.9343, macro-F1 0.9031 (selected on test)","used","The gain did not survive the fold1 and fold2 check. The user kept 0.40 on 2026-09-28."],
+["2026-09-03","Decision","Overfitting risk named: 15 to 20 choices selected on the same test set","","info","Held-out folds became the rule for later work."],
+["2026-09-03","Classifier","Grasper versus Suction confusion, root cause","Closed jaws, smooth featureless shaft; best true-class probability anywhere in the window 0.348","info","A wide temporal search was ruled out as a fix."],
+["2026-09-03","Classifier","GraSP atomic-action labels as a jaw-state proxy","Negative","nogain","Checked cheaply, no correlation."],
+["2026-09-03","Latency","CPU latency checks on workstation and dev laptop","ResNet-50 at 224 ONNX 247.66 ms under load; four-member ensemble about 72 ms on an idle laptop","info","The discrepancy was system load on 4 cores, not a benchmark bug."],
+["2026-09-03","Generalization","EndoVis 2018, zero-shot","Single model 0.5237 and 0.3721; ensemble 0.5364 and 0.3821 (accuracy and macro-F1)","info","Disclosed negative. Zero-shot was dropped as a goal on 2026-09-29."],
+["2026-09-03","Generalization","EndoVis 2017, zero-shot","Accuracy 0.5672, macro-F1 0.5959 on 4 present classes","info","Stronger on Monopolar Scissors (F1 0.725)."],
+["2026-09-03","Classifier","Contrastive fine-tune for Grasper versus Suction","Epoch 10 macro-F1 0.8923 against 0.8758; Grasper F1 0.7799 against 0.7089","nogain","Later epochs were noisier. Not in the shipped ensemble."],
+["2026-09-03","Classifier","Ensemble composition ablation","Drop resnet50_224: 0.9210 and 0.8833; drop MobileNet baseline: 0.9304 and 0.8900","used","All four members kept."],
+["2026-09-03","Efficiency","INT8 dynamic quantization","resnet50_320 accuracy 0.9203 to 0.9133, F1 0.8758 to 0.8581; resnet50_224 accuracy 0.9137 to 0.8885","harmful","Efficiency work closed: no latency win without an accuracy cost."],
+["2026-09-03","Data","Auto-annotation pipeline with SAM2 and a vision verifier","Design validated, best verifier version 55% (6 of 11)","nogain","Parked before a full build."],
+["2026-09-04","Gate","Abstain below 2% mask area","Small instances 0.8019; larger ones 0.9576; overall 0.9343 and 0.9031","harmful","Concentrated the coverage loss on Suction and Prograsp. Reversed by the user."],
+["2026-09-04","Gate","Class-conditional area threshold sweep","Accuracy 0.725 under 0.5% of the frame, rising with area","nogain","Reversed by the user together with the confidence gate."],
+["2026-09-04","Gate","Confidence-based abstention","Threshold 0.35: coverage 99.62%, accuracy 0.9365, macro-F1 0.9075","nogain","The user set a hard 99% coverage floor and removed all abstention gates."],
+["2026-09-04","Classifier","Error taxonomy of the 188 remaining errors","","info","Showed what is left after the gates."],
+["2026-09-04","Classifier","Grad-CAM on Prograsp predicted as Bipolar","36 of 330 (10.9%) misclassified","info","Compression and genuine similarity both contribute."],
+["2026-09-04","Classifier","384 px resolution","fold1 macro-F1 +0.021, accuracy +0.008; fold2 -0.005 and -0.010","nogain","Did not replicate on the second fold."],
+["2026-09-04","Classifier","Strong augmentation, ResNet-50 at 320","fold1 +0.008 and +0.0003; fold2 -0.001 and -0.003","nogain","Did not replicate."],
+["2026-09-04","Classifier","ResNet-101","fold1 macro-F1 +0.021, accuracy -0.005; fold2 +0.008 and +0.006","nogain","Replicated on both folds but is not part of the shipped ensemble."],
+["2026-09-04","Classifier","Five-seed reproducibility","Seed 42 gave 0.9343 and 0.9031, the best of five; others 0.9196 and 0.8851, 0.9269 and 0.8923; mean 0.9262 +/- 0.0053","info","The reported number was the best seed. About half a point is the noise level."],
+["2026-09-05","Classifier","Context-expansion crop","fold1 F1 0.834, accuracy 0.870; fold2 0.843 and 0.883 (baseline 0.860 and 0.921; 0.883 and 0.920)","harmful","Worse on both folds."],
+["2026-09-05","Classifier","Area-based oversampling of small instances","Workstation rerun: fold1 0.841 and 0.895; fold2 0.851 and 0.890 (same baselines)","harmful","The first run looked positive because it was done on the laptop, not the workstation."],
+["2026-09-15","Classifier","Class-conditional area oversampling","Small-area subset accuracy -0.022 and -0.007 on the two folds","harmful","Closes the area-oversampling lever."],
+["2026-09-15","Tracking","SAM2 track aggregation, pilot","Hard cases accuracy 0.625 to 0.875","used","The idea behind the whole pipeline."],
+["2026-09-15","Tracking","SAM2 track aggregation, full hard-case population","fold1 0.8434 to 0.8866 (+0.0432); fold2 0.8104 to 0.8925 (+0.0821)","used","Average-softmax aggregation. Smaller than the pilot suggested, still replicated."],
+["2026-09-15","Tracking","Learnable per-frame aggregator","fold2 -0.0023, fold1 +0.0086 against average-softmax","nogain","Average-softmax stands."],
+["2026-09-15","Tracking","Retargeted to the ensemble's actual errors","Recovers 61% of real mistakes","used","Moved the work from hard cases to real errors."],
+["2026-09-16","Gate","Confidence below 0.80 triage","Accuracy 0.9343 to 0.9567 (+2.24 points), macro-F1 0.9031 to 0.9336","replaced","First gate. Replaced by the MC vote, then the evidential score. The first +2.48 came from a crop bug."],
+["2026-09-16","Uncertainty","Uncertainty signal comparison","AUROC: max softmax 0.909, entropy 0.906, ensemble variance 0.863, MC dropout 0.792","replaced","Softmax was best at the time."],
+["2026-09-16","Uncertainty","Calibration and temperature scaling","ECE 0.0222 uncalibrated, 0.0479 after scaling","harmful","Already well calibrated. Scaling made it worse."],
+["2026-09-17","Uncertainty","MC dropout retrained at full coverage","AUROC 0.873 for top-class disagreement against softmax 0.919","replaced","Better than before, still below softmax."],
+["2026-09-18","Uncertainty","Logit-space MC dropout signals","AUROC 0.168 to 0.180","harmful","Raw logit variance ranks errors backwards."],
+["2026-09-18","Uncertainty","MC vote disagreement","AUROC 0.876","used","Became the primary signal at the user's instruction."],
+["2026-09-18","Uncertainty","Does disagreement add information beyond confidence?","Combined AUROC 0.9123 against 0.9172 for confidence alone","nogain","Worse in 5 of 5 held-out cases."],
+["2026-09-19","Uncertainty","Deeper test-time dropout, then dropout built into the backbone","Ensemble accuracy 0.9259; resnet50_320 0.865 and 0.915","used","The deep-dropout ensemble behind the vote pipeline."],
+["2026-09-19","Gate","MC gate against confidence gate, end to end","Confidence 0.9612 and 0.9340 (540 tracked); MC 0.9595 and 0.9325 (525)","info","Near tie."],
+["2026-09-20","Gate","Softmax-free pipeline with vote combine","Pooled vote 0.9577 and 0.9287 at 525 flagged","used","Removed softmax from the pipeline."],
+["2026-09-20","Gate","Gate threshold sweep","Threshold 0.20: 0.9581 (525); 0.15: 0.9595 (649); 0.12: 0.9619 (729); 0.09 matches the softmax pipeline","used","Shipped the 9% gate: 0.9623 and 0.9351, 833 tracked, 131 fixed, 29 broken. Selected on test."],
+["2026-09-20","Classifier","Tight instrument-plus-buffer crops","Macro-F1 0.822 standard against 0.780 when trained tight and read in the standard view","harmful","Worse and slower to learn."],
+["2026-09-21","Gate","Gate confirmation on held-out fold1","fold1 selects 15%; the curve is flat from 0.9567 to 0.9586","info","The user kept 9%."],
+["2026-09-22","Uncertainty","Evidential (Dirichlet) uncertainty","AUROC 0.927 against 0.912 for the vote; 1/80 of the cost; threshold drifts more under EndoVis shift","used","Not adopted at first; shipped on 2026-09-29."],
+["2026-09-22","Tracking","Lighter SAM2 trackers","Small 0.9584 and 0.9334 (16.7 s per instrument); tiny 0.9577 and 0.9325; large 0.9623 and 0.9351 (24 s)","nogain","Modest speed gain for a small accuracy cost."],
+["2026-09-23","Gate","Hybrid gate, MC vote or evidential","Stopped before tracking; evidential AUROC 0.9165 against 0.8962","nogain","Does not catch the unanimous errors."],
+["2026-09-28","Gate","Evidential-gated pipeline switch","0.9507 and 0.9279 against the shipped 0.9623 and 0.9351","replaced","Worse at the time. The user chose it anyway for cost."],
+["2026-09-28","Decision","Keep the ensemble weight 0.40","","info","Gap on the held-out fold was small and mixed."],
+["2026-09-29","Uncertainty","Zero-shot EndoVis AUROC check","MC vote 0.624 and 0.718; softmax 0.652 and 0.744; evidential 0.663 and 0.727 (2018 and 2017)","info","The case against evidential rested on zero-shot transfer alone."],
+["2026-09-29","Generalization","Evidential ensemble trained on EndoVis","2018: 0.9266 and 0.9161 against MC 0.9279 and 0.9187 (McNemar p = 0.68)","info","A tie."],
+["2026-09-29","Gate","Are 80 MC passes needed?","4 votes AUROC 0.830; 20 votes 0.883; 80 votes 0.896","info","Mostly no."],
+["2026-09-29","Classifier","Ensemble size ablation","All four 0.9266 and 0.8898; drop resnet50_224 0.9252 and 0.8842; drop MobileNet baseline 0.9224 and 0.8767; drop resnet50_320 0.9112","used","All four kept. The 320 member matters most."],
+["2026-09-29","Gate","Evidential against vote at matched budgets","525: 0.9507 and 0.9273; 649: 0.9514 and 0.9284; 833: 0.9521 and 0.9242 (vote 0.9581, 0.9595, 0.9623)","info","Behind by 0.7 to 1.0 point on one seed."],
+["2026-09-29","Uncertainty","Uncertainty metrics beyond AUROC","AUROC MC 0.896, softmax 0.915, evidential 0.925; ECE evidential 0.040 against 0.032","info","Evidential is not better calibrated."],
+["2026-09-29","Classifier","Evidential seed noise","Base accuracy 0.9207, 0.9266, 0.9249","info","Seed 42 was the worst."],
+["2026-09-29","Decision","Ship the single-pass evidential pipeline","","used","The user's decision, for cost and defensibility."],
+["2026-09-30","Pipeline","Evidential four-member pipeline, three seeds, end to end","833 tracked: seed 42 0.9521 and 0.9242; seed 43 0.9619 and 0.9387; seed 44 0.9591 and 0.9329; mean 0.9577 +/- 0.0050 and 0.9320 +/- 0.0073","used","The roughly 0.958 pipeline the PI work builds on."],
+["2026-10-01","Real-time","Causal tracker trials, past frames only","Base 0.9144 and 0.8834; EdgeTAM 373 tracked 0.9262 and 0.8992; YOLO26s 313 tracked 0.9242 and 0.8899","replaced","Parked when the PI changed direction."],
+["2026-10-01","Real-time","SAM2.1-tiny as the tracker","Rejected by the user","nogain","Loses too much accuracy and is still slow."],
+["2026-10-01","Real-time","TAPNext++ point tracker probe","6.15 associated past frames against 7.48 for the IoU chain; 470 ms per frame","nogain","Negative."],
+["2026-10-01","Real-time","Class-prior boost for the Grasper","Helps fold1, hurts fold2","harmful","Not used."],
+["2026-10-01","Latency","Frame-level latency on the Titan Xp","Detector 19 ms; classifier 170 ms per frame; refinement compute median EdgeTAM 2.9 s, SAM2-large 13.3 s","info","SAM2-large tracking dominates the cost."],
+["2026-10-02","Classifier","Training arm P, mask perturbation","fold1 -0.0006; fold2 +0.0048","nogain","No resolvable effect."],
+["2026-10-02","Classifier","Training arm N, tracker-neighbour crop swap","fold1 0.9274 to 0.9336 (+0.0063); fold2 0.9169 to 0.9254 (+0.0085); official EdgeTAM run 736 tracked 0.9357 and 0.8946","used","Queued to replace the baseline members in the final pipeline."],
+["2026-10-04","Classifier","Training arms Y and NY, YOLO neighbours","fold1 Y +0.0028, NY -0.0035; fold2 Y +0.0058, NY +0.0024","nogain","The pre-registered choice was none."],
+["2026-10-02","Metric","mIoU, IoU and mcIoU ported from the MATIS code","Painted ground truth matches the dataset PNGs on the training cases","info","Test PNGs are not released, so test truth is painted from the JSON."],
+["2026-10-02","SAM segmenter","First ground-truth-box pipeline, SAM2 decoder fine-tuned (checkpoint chosen on test)","Seed 43, top 833: 85.00, 83.62, 74.30; three-seed 84.86, 83.68, 74.44; oracle ceiling 89.29, 89.29, 85.93","replaced","Replaced by the version chosen on a dev fold."],
+["2026-10-03","SAM segmenter","SAM2 fine-tuned on boxes, fold2 train and fold1 dev","Zero-shot 0.8545; decoder only 0.9035 (flip 0.9069); plus last 4 blocks 0.9059 (flip 0.9086)","used","Mean mask IoU on fold1. Ensemble member."],
+["2026-10-03","SAM segmenter","Test run with the fine-tuned SAM2 (gtft)","Mask IoU 0.9002; seed 43: 86.54, 85.33, 77.78; three-seed 86.34, 85.31, 77.59 (TAPIS 86.61, 83.38, 77.42)","used","Ahead of TAPIS on IoU and mcIoU, level on mIoU. Oracle boxes."],
+["2026-10-03","SAM segmenter","Mask-refinement network","fold1 0.9120 against SAM 0.9086 and SAM clipped to the box 0.9123","nogain","Rejected by the pre-registered rule."],
+["2026-10-03","SAM segmenter","SAM3 zero-shot with box prompts","0.8624 against 0.9109 for fine-tuned SAM2 on 157 instruments","nogain","Not competitive without fine-tuning."],
+["2026-10-04","SAM segmenter","SAM3 fine-tuned, fp32 (two runs)","fold1 flip-averaged: 0.9073 and 0.9076 (SAM2 0.9086)","used","Ensemble member. Both runs trained only the mask decoder: the encoder flag had no effect because the embedding function is no_grad (found 2026-10-05). fp16 is three times slower on this GPU."],
+["2026-10-04","SAM segmenter","SAM2 plus SAM3 ensemble","fold1 0.9131 (bar 0.9136); test mask IoU 0.9062 against 0.9002","used","Missed the registered bar by 0.0005; run on test as a disclosed extra."],
+["2026-10-04","SAM segmenter","Post-processing study on fold1","Clip to box 0.9131 to 0.9163; fill holes 0.9146, largest component 0.9119, polygon and erosion all lower","used","Only the clip helps, and it is an oracle-box effect."],
+["2026-10-04","SAM segmenter","Box clipping on the SAM2-only test run","86.54, 85.33, 77.78 to 86.77, 85.56, 78.01","used","Report unclipped as the headline, clipped as the oracle-box variant."],
+["2026-10-04","Decision","TAPIS comparison label corrected","Published TAPIS numbers use a Swin-L Mask2Former, not R50","info","Fixed in the scoring code."],
+["2026-10-04","Decision","ISINet latency comparison","","info","Shelved by the user. Weights downloaded, nothing built."],
+["2026-10-04","Pipeline","SAM2 plus SAM3 masks with baseline members (gtft_ens)","Seed 43, top 833: 87.03, 85.89, 78.16; three-seed 86.78, 85.72, 77.90 (TAPIS 86.61, 83.38, 77.42); oracle ceiling 90.98, 90.98, 88.47","used","Ahead of TAPIS on all three for seed 43. Run as a disclosed extra; clipped rows 87.20, 86.06, 78.33 are oracle-box."],
+["2026-10-04","Latency","TAPIS (Swin-L Mask2Former 215.5M, MViT 44.4M) against our stages, idle Titan Xp","TAPIS 484 ms per keyframe (Mask2Former 439, video model 45). Ours per frame: SAM2 533 ms (1,048 with flip), SAM3 1,158 ms (2,375 with flip), four-member classifier 96 ms","info","Our ensemble segmentation about 3.5 s per frame before tracking. SAM2-large tracking (13.3 s per tracked instrument) dominates."],
+["2026-10-04","Classifier","Arm N members (4 members, 3 seeds) on the gtft_ens masks and tracks","Three-seed 87.11, 85.97, 78.19 (gtft_ens 86.78, 85.72, 77.90); Prograsp IoU 61.1 to 66.7, Large Needle Driver 89.8 to 86.3","used","Helps Prograsp, hurts Large Needle Driver. In seed 43, 184 of 833 flagged instruments had no track."],
+["2026-10-05","SAM segmenter","SAM2 and SAM3 trained on all 8 training cases","Final test mask IoU 0.9077 against 0.9062 for the fold2-trained ensemble","used","More data added only +0.0015 mask IoU."],
+["2026-10-05","Pipeline","Final run: all-case segmentors with arm N members, test set","Seed 44 (registered headline): 87.49, 86.41, 79.78; three-seed 87.37, 86.22, 78.33 (TAPIS 86.61, 83.38, 77.42)","used","Ahead of TAPIS on all three. Oracle boxes. Clipped rows are oracle-box only."]
+];
+ROWS = ROWS.map(function (r, i) { return [r, i]; }).sort(function (a, b) { return a[0][0] < b[0][0] ? -1 : a[0][0] > b[0][0] ? 1 : a[1] - b[1]; }).map(function (x) { return x[0]; });
+var VERDICTS = [["used","Used"],["replaced","Used, then replaced"],["nogain","No gain, not used"],["harmful","Harmful, not used"],["info","Finding"],["pending","Queued or running"]];
+var VLABEL = {}; VERDICTS.forEach(function (v) { VLABEL[v[0]] = v[1]; });
+var state = { verdict: null, area: "", q: "" };
+var chipsEl = document.getElementById("chips"), areaEl = document.getElementById("area"), qEl = document.getElementById("q");
+var ledger = document.getElementById("ledger"), countEl = document.getElementById("count");
+
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function niceDate(d) { var p = d.split("-"); var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1] - 1]; return m + " " + (+p[2]) + ", " + p[0]; }
+
+function buildControls() {
+  var counts = {};
+  ROWS.forEach(function (r) { counts[r[4]] = (counts[r[4]] || 0) + 1; });
+  var all = document.createElement("button");
+  all.className = "chip"; all.type = "button"; all.setAttribute("aria-pressed", "true"); all.dataset.v = "";
+  all.innerHTML = "All <span class='n'>" + ROWS.length + "</span>";
+  chipsEl.appendChild(all);
+  VERDICTS.forEach(function (v) {
+    var b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.setAttribute("aria-pressed", "false"); b.dataset.v = v[0];
+    b.innerHTML = esc(v[1]) + " <span class='n'>" + (counts[v[0]] || 0) + "</span>";
+    chipsEl.appendChild(b);
+  });
+  chipsEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    state.verdict = b.dataset.v || null;
+    Array.prototype.forEach.call(chipsEl.children, function (c) { c.setAttribute("aria-pressed", String((c.dataset.v || null) === state.verdict)); });
+    render();
+  });
+  var areas = []; ROWS.forEach(function (r) { if (areas.indexOf(r[1]) < 0) areas.push(r[1]); });
+  areaEl.innerHTML = "<option value=''>All areas</option>" + areas.map(function (a) { return "<option>" + esc(a) + "</option>"; }).join("");
+  areaEl.addEventListener("change", function () { state.area = areaEl.value; render(); });
+  qEl.addEventListener("input", function () { state.q = qEl.value.trim().toLowerCase(); render(); });
+}
+
+function render() {
+  var shown = ROWS.filter(function (r) {
+    if (state.verdict && r[4] !== state.verdict) return false;
+    if (state.area && r[1] !== state.area) return false;
+    if (state.q && (r[2] + " " + r[3] + " " + r[5] + " " + r[1]).toLowerCase().indexOf(state.q) < 0) return false;
+    return true;
+  });
+  countEl.textContent = shown.length + " of " + ROWS.length + " experiments";
+  if (!shown.length) { ledger.innerHTML = "<div class='empty'>Nothing matches. Clear the filters or the search.</div>"; return; }
+  var html = "", last = "";
+  shown.forEach(function (r) {
+    if (r[0] !== last) { html += "<div class='date'>" + niceDate(r[0]) + "</div>"; last = r[0]; }
+    html += "<div class='row'><div class='area'>" + esc(r[1]) + "</div><div class='name'>" + esc(r[2]) + "</div><div class='num'>" + esc(r[3]) + "</div><div><span class='v " + r[4] + "'>" + esc(VLABEL[r[4]]) + "</span></div><div class='note'>" + esc(r[5]) + "</div></div>";
+  });
+  ledger.innerHTML = html;
+}
+buildControls(); render();
+</script>
