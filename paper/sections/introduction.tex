@@ -18,11 +18,11 @@ Most predictions do not need either; the problem is knowing which ones do.
 We use uncertainty to route that effort.
 A box prompts fine-tuned SAM2 and SAM3 segmenters, and a light four-member evidential ensemble classifies the masked crop in one forward pass, returning a class and an epistemic uncertainty \citep{sensoy2018evidential,duan2024evidential}.
 Ranking the instruments by this uncertainty serves both remedies: the highest-ranked are reviewed by a person, and the highest-ranked are followed through neighbouring frames and their predictions fused (Section~\ref{sec:method}).
-On the GraSP benchmark \citep{ayobi2024pixel}, checking one instrument in five finds 90\% of the errors on a held-out fold and 85\% on the test cases.
+On the GraSP benchmark \citep{ayobi2024pixel}, checking one instrument in five finds 90\%\footnote{On a held-out fold of four cases; on the five test cases the share is 85\% (Section~\ref{sec:effort}).} of the errors.
 We study recognition given the instruments' locations; detection is an upstream stage that we do not evaluate.
 Our contributions are:
 \begin{itemize}
 \item an effort curve for review and for refinement: reviewing 20\% of the instruments finds most of the errors (Section~\ref{sec:effort}), and refining 29\% of them recovers 97\% of the best gain we measured, concentrated on the weakest classes (Sections~\ref{sec:effort} and~\ref{sec:classes});
-\item an empirical comparison of uncertainty scores for this task, with calibration: a four-network single-pass evidential ensemble finds as many errors at a fixed budget as a 12-network deep ensemble and more than 80-pass MC dropout, while popular scores such as energy and mutual information rank errors worse than softmax confidence (Section~\ref{sec:uncertainty});
+\item an empirical comparison of uncertainty scores for this task, with calibration: a four-network single-pass evidential ensemble finds about as many errors at a fixed budget as a 12-network deep ensemble (which ranks errors better overall) and more than 80-pass MC dropout, while popular scores such as energy and mutual information rank errors worse than softmax confidence (Section~\ref{sec:uncertainty});
 \item controls and limits: the gain needs a tracker and not a static view of the same region (Section~\ref{sec:control}), and the uncertainty degrades under zero-shot transfer to another dataset (Section~\ref{sec:shift}).
 \end{itemize}
