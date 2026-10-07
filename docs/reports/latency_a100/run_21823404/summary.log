@@ -1,0 +1,12 @@
+rt_none/rt_539                 frame     201 ms | per instrument mean     213 ms (p95     270) | queue/keyframe     201 ms | gated  0.0% | track     nan ms
+rt_none/tau_fold1              frame     201 ms | per instrument mean     213 ms (p95     270) | queue/keyframe     201 ms | gated  0.0% | track     nan ms
+rt_yolo/rt_539                 frame     229 ms | per instrument mean     361 ms (p95    1169) | queue/keyframe     494 ms | gated 13.9% | track     563 ms
+rt_yolo/tau_fold1              frame     229 ms | per instrument mean     485 ms (p95    1416) | queue/keyframe     727 ms | gated 26.4% | track     563 ms
+rt_edgetam/rt_539              frame     201 ms | per instrument mean     546 ms (p95    2584) | queue/keyframe    1000 ms | gated 13.9% | track    2393 ms
+rt_edgetam/tau_fold1           frame     201 ms | per instrument mean     833 ms (p95    2770) | queue/keyframe    1689 ms | gated 26.4% | track    2393 ms
+causal_sam2/rt_539             frame     214 ms | per instrument mean    1031 ms (p95    6236) | queue/keyframe    2299 ms | gated 13.5% | track    5893 ms
+causal_sam2/tau_fold1          frame     214 ms | per instrument mean    1788 ms (p95    6238) | queue/keyframe    4268 ms | gated 26.9% | track    5893 ms
+noncausal_final/final_833      frame    1200 ms | per instrument mean    2745 ms (p95    7469) | queue/keyframe    5156 ms | gated 25.0% | track    6128 ms
+noncausal_final/tau_fold1      frame    1200 ms | per instrument mean    2523 ms (p95    7469) | queue/keyframe    4579 ms | gated 21.2% | track    6128 ms
+causal_final/final_833         frame    1043 ms | per instrument mean    2503 ms (p95    7004) | queue/keyframe    4805 ms | gated 25.0% | track    5890 ms
+causal_final/tau_fold1         frame    1043 ms | per instrument mean    2269 ms (p95    6954) | queue/keyframe    4199 ms | gated 21.2% | track    5890 ms

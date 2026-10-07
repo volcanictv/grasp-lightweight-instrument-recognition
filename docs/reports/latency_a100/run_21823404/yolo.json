@@ -1,0 +1,13 @@
+{
+ "stage": "yolo",
+ "device": "cuda:0",
+ "gpu": "NVIDIA A100-PCIE-40GB",
+ "yolo_weights": "/home/ab1340/grasp_work/weights_extra/yolo26s_official_last.pt",
+ "params_m": 11.439881,
+ "per_frame": {
+  "n": 200,
+  "median_ms": 11.571995506528765,
+  "p95_ms": 11.715226585511118,
+  "mean_ms": 11.643752881209366
+ }
+}

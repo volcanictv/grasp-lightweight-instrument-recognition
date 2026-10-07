@@ -1,0 +1,61 @@
+sam2 weights: _IncompatibleKeys(missing_keys=['maskmem_tpos_enc', 'no_mem_embed', 'no_mem_pos_enc', 'no_obj_ptr', 'no_obj_embed_spatial', 'image_encoder.trunk.pos_embed', 'image_encoder.trunk.pos_embed_window', 'image_encoder.trunk.patch_embed.proj.weight', 'image_encoder.trunk.patch_embed.proj.bias', 'mask_downsample.weight', 'mask_downsample.bias', 'memory_attention.layers.0.self_attn.q_proj.weight', 'memory_attention.layers.0.self_attn.q_proj.bias', 'memory_attention.layers.0.self_attn.k_proj.weight', 'memory_attention.layers.0.self_attn.k_proj.bias', 'memory_attention.layers.0.self_attn.v_proj.weight', 'memory_attention.layers.0.self_attn.v_proj.bias', 'memory_attention.layers.0.self_attn.out_proj.weight', 'memory_attention.layers.0.self_attn.out_proj.bias', 'memory_attention.layers.0.cross_attn_image.q_proj.weight', 'memory_attention.layers.0.cross_attn_image.q_proj.bias', 'memory_attention.layers.0.cross_attn_image.k_proj.weight', 'memory_attention.layers.0.cross_attn_image.k_proj.bias', 'memory_attention.layers.0.cross_attn_image.v_proj.weight', 'memory_attention.layers.0.cross_attn_image.v_proj.bias', 'memory_attention.layers.0.cross_attn_image.out_proj.weight', 'memory_attention.layers.0.cross_attn_image.out_proj.bias', 'memory_attention.layers.0.linear1.weight', 'memory_attention.layers.0.linear1.bias', 'memory_attention.layers.0.linear2.weight', 'memory_attention.layers.0.linear2.bias', 'memory_attention.layers.0.norm1.weight', 'memory_attention.layers.0.norm1.bias', 'memory_attention.layers.0.norm2.weight', 'memory_attention.layers.0.norm2.bias', 'memory_attention.layers.0.norm3.weight', 'memory_attention.layers.0.norm3.bias', 'memory_attention.layers.1.self_attn.q_proj.weight', 'memory_attention.layers.1.self_attn.q_proj.bias', 'memory_attention.layers.1.self_attn.k_proj.weight', 'memory_attention.layers.1.self_attn.k_proj.bias', 'memory_attention.layers.1.self_attn.v_proj.weight', 'memory_attention.layers.1.self_attn.v_proj.bias', 'memory_attention.layers.1.self_attn.out_proj.weight', 'memory_attention.layers.1.self_attn.out_proj.bias', 'memory_attention.layers.1.cross_attn_image.q_proj.weight', 'memory_attention.layers.1.cross_attn_image.q_proj.bias', 'memory_attention.layers.1.cross_attn_image.k_proj.weight', 'memory_attention.layers.1.cross_attn_image.k_proj.bias', 'memory_attention.layers.1.cross_attn_image.v_proj.weight', 'memory_attention.layers.1.cross_attn_image.v_proj.bias', 'memory_attention.layers.1.cross_attn_image.out_proj.weight', 'memory_attention.layers.1.cross_attn_image.out_proj.bias', 'memory_attention.layers.1.linear1.weight', 'memory_attention.layers.1.linear1.bias', 'memory_attention.layers.1.linear2.weight', 'memory_attention.layers.1.linear2.bias', 'memory_attention.layers.1.norm1.weight', 'memory_attention.layers.1.norm1.bias', 'memory_attention.layers.1.norm2.weight', 'memory_attention.layers.1.norm2.bias', 'memory_attention.layers.1.norm3.weight', 'memory_attention.layers.1.norm3.bias', 'memory_attention.layers.2.self_attn.q_proj.weight', 'memory_attention.layers.2.self_attn.q_proj.bias', 'memory_attention.layers.2.self_attn.k_proj.weight', 'memory_attention.layers.2.self_attn.k_proj.bias', 'memory_attention.layers.2.self_attn.v_proj.weight', 'memory_attention.layers.2.self_attn.v_proj.bias', 'memory_attention.layers.2.self_attn.out_proj.weight', 'memory_attention.layers.2.self_attn.out_proj.bias', 'memory_attention.layers.2.cross_attn_image.q_proj.weight', 'memory_attention.layers.2.cross_attn_image.q_proj.bias', 'memory_attention.layers.2.cross_attn_image.k_proj.weight', 'memory_attention.layers.2.cross_attn_image.k_proj.bias', 'memory_attention.layers.2.cross_attn_image.v_proj.weight', 'memory_attention.layers.2.cross_attn_image.v_proj.bias', 'memory_attention.layers.2.cross_attn_image.out_proj.weight', 'memory_attention.layers.2.cross_attn_image.out_proj.bias', 'memory_attention.layers.2.linear1.weight', 'memory_attention.layers.2.linear1.bias', 'memory_attention.layers.2.linear2.weight', 'memory_attention.layers.2.linear2.bias', 'memory_attention.layers.2.norm1.weight', 'memory_attention.layers.2.norm1.bias', 'memory_attention.layers.2.norm2.weight', 'memory_attention.layers.2.norm2.bias', 'memory_attention.layers.2.norm3.weight', 'memory_attention.layers.2.norm3.bias', 'memory_attention.layers.3.self_attn.q_proj.weight', 'memory_attention.layers.3.self_attn.q_proj.bias', 'memory_attention.layers.3.self_attn.k_proj.weight', 'memory_attention.layers.3.self_attn.k_proj.bias', 'memory_attention.layers.3.self_attn.v_proj.weight', 'memory_attention.layers.3.self_attn.v_proj.bias', 'memory_attention.layers.3.self_attn.out_proj.weight', 'memory_attention.layers.3.self_attn.out_proj.bias', 'memory_attention.layers.3.cross_attn_image.q_proj.weight', 'memory_attention.layers.3.cross_attn_image.q_proj.bias', 'memory_attention.layers.3.cross_attn_image.k_proj.weight', 'memory_attention.layers.3.cross_attn_image.k_proj.bias', 'memory_attention.layers.3.cross_attn_image.v_proj.weight', 'memory_attention.layers.3.cross_attn_image.v_proj.bias', 'memory_attention.layers.3.cross_attn_image.out_proj.weight', 'memory_attention.layers.3.cross_attn_image.out_proj.bias', 'memory_attention.layers.3.linear1.weight', 'memory_attention.layers.3.linear1.bias', 'memory_attention.layers.3.linear2.weight', 'memory_attention.layers.3.linear2.bias', 'memory_attention.layers.3.norm1.weight', 'memory_attention.layers.3.norm1.bias', 'memory_attention.layers.3.norm2.weight', 'memory_attention.layers.3.norm2.bias', 'memory_attention.layers.3.norm3.weight', 'memory_attention.layers.3.norm3.bias', 'memory_attention.norm.weight', 'memory_attention.norm.bias', 'memory_encoder.mask_downsampler.encoder.0.weight', 'memory_encoder.mask_downsampler.encoder.0.bias', 'memory_encoder.mask_downsampler.encoder.1.weight', 'memory_encoder.mask_downsampler.encoder.1.bias', 'memory_encoder.mask_downsampler.encoder.3.weight', 'memory_encoder.mask_downsampler.encoder.3.bias', 'memory_encoder.mask_downsampler.encoder.4.weight', 'memory_encoder.mask_downsampler.encoder.4.bias', 'memory_encoder.mask_downsampler.encoder.6.weight', 'memory_encoder.mask_downsampler.encoder.6.bias', 'memory_encoder.mask_downsampler.encoder.7.weight', 'memory_encoder.mask_downsampler.encoder.7.bias', 'memory_encoder.mask_downsampler.encoder.9.weight', 'memory_encoder.mask_downsampler.encoder.9.bias', 'memory_encoder.mask_downsampler.encoder.10.weight', 'memory_encoder.mask_downsampler.encoder.10.bias', 'memory_encoder.mask_downsampler.encoder.12.weight', 'memory_encoder.mask_downsampler.encoder.12.bias', 'memory_encoder.pix_feat_proj.weight', 'memory_encoder.pix_feat_proj.bias', 'memory_encoder.fuser.layers.0.gamma', 'memory_encoder.fuser.layers.0.dwconv.weight', 'memory_encoder.fuser.layers.0.dwconv.bias', 'memory_encoder.fuser.layers.0.norm.weight', 'memory_encoder.fuser.layers.0.norm.bias', 'memory_encoder.fuser.layers.0.pwconv1.weight', 'memory_encoder.fuser.layers.0.pwconv1.bias', 'memory_encoder.fuser.layers.0.pwconv2.weight', 'memory_encoder.fuser.layers.0.pwconv2.bias', 'memory_encoder.fuser.layers.1.gamma', 'memory_encoder.fuser.layers.1.dwconv.weight', 'memory_encoder.fuser.layers.1.dwconv.bias', 'memory_encoder.fuser.layers.1.norm.weight', 'memory_encoder.fuser.layers.1.norm.bias', 'memory_encoder.fuser.layers.1.pwconv1.weight', 'memory_encoder.fuser.layers.1.pwconv1.bias', 'memory_encoder.fuser.layers.1.pwconv2.weight', 'memory_encoder.fuser.layers.1.pwconv2.bias', 'memory_encoder.out_proj.weight', 'memory_encoder.out_proj.bias', 'obj_ptr_proj.layers.0.weight', 'obj_ptr_proj.layers.0.bias', 'obj_ptr_proj.layers.1.weight', 'obj_ptr_proj.layers.1.bias', 'obj_ptr_proj.layers.2.weight', 'obj_ptr_proj.layers.2.bias', 'obj_ptr_tpos_proj.weight', 'obj_ptr_tpos_proj.bias'], unexpected_keys=[])
+keyframe 1/32 CASE041/00035.jpg: 3 instruments, 1 gated, frame stage 1324 ms, total 1324 ms
+keyframe 2/32 CASE041/01400.jpg: 2 instruments, 1 gated, frame stage 222 ms, total 222 ms
+keyframe 3/32 CASE041/02730.jpg: 1 instruments, 1 gated, frame stage 153 ms, total 153 ms
+keyframe 4/32 CASE041/04025.jpg: 4 instruments, 0 gated, frame stage 267 ms, total 267 ms
+keyframe 5/32 CASE041/05285.jpg: 3 instruments, 2 gated, frame stage 218 ms, total 218 ms
+keyframe 6/32 CASE041/06545.jpg: 2 instruments, 0 gated, frame stage 186 ms, total 186 ms
+keyframe 7/32 CASE041/07805.jpg: 2 instruments, 0 gated, frame stage 185 ms, total 185 ms
+keyframe 8/32 CASE047/00665.jpg: 3 instruments, 1 gated, frame stage 218 ms, total 218 ms
+keyframe 9/32 CASE047/01995.jpg: 2 instruments, 0 gated, frame stage 184 ms, total 184 ms
+keyframe 10/32 CASE047/03325.jpg: 2 instruments, 0 gated, frame stage 199 ms, total 199 ms
+keyframe 11/32 CASE047/04585.jpg: 3 instruments, 2 gated, frame stage 233 ms, total 233 ms
+keyframe 12/32 CASE047/05950.jpg: 2 instruments, 2 gated, frame stage 181 ms, total 181 ms
+keyframe 13/32 CASE050/00735.jpg: 2 instruments, 0 gated, frame stage 210 ms, total 210 ms
+keyframe 14/32 CASE050/01995.jpg: 4 instruments, 1 gated, frame stage 270 ms, total 270 ms
+keyframe 15/32 CASE050/03255.jpg: 2 instruments, 0 gated, frame stage 200 ms, total 200 ms
+keyframe 16/32 CASE050/04550.jpg: 3 instruments, 1 gated, frame stage 209 ms, total 209 ms
+keyframe 17/32 CASE050/05845.jpg: 3 instruments, 0 gated, frame stage 216 ms, total 216 ms
+keyframe 18/32 CASE050/07175.jpg: 2 instruments, 0 gated, frame stage 205 ms, total 205 ms
+keyframe 19/32 CASE050/08435.jpg: 4 instruments, 0 gated, frame stage 275 ms, total 275 ms
+keyframe 20/32 CASE050/09695.jpg: 2 instruments, 0 gated, frame stage 197 ms, total 197 ms
+keyframe 21/32 CASE050/11025.jpg: 3 instruments, 0 gated, frame stage 244 ms, total 244 ms
+keyframe 22/32 CASE050/12355.jpg: 2 instruments, 0 gated, frame stage 185 ms, total 185 ms
+keyframe 23/32 CASE050/13615.jpg: 1 instruments, 1 gated, frame stage 162 ms, total 162 ms
+keyframe 24/32 CASE051/01015.jpg: 2 instruments, 0 gated, frame stage 179 ms, total 179 ms
+keyframe 25/32 CASE051/02380.jpg: 4 instruments, 3 gated, frame stage 256 ms, total 256 ms
+keyframe 26/32 CASE053/01155.jpg: 3 instruments, 0 gated, frame stage 207 ms, total 207 ms
+keyframe 27/32 CASE053/02415.jpg: 3 instruments, 1 gated, frame stage 209 ms, total 209 ms
+keyframe 28/32 CASE053/03780.jpg: 2 instruments, 0 gated, frame stage 180 ms, total 180 ms
+keyframe 29/32 CASE053/05040.jpg: 2 instruments, 2 gated, frame stage 167 ms, total 167 ms
+keyframe 30/32 CASE053/06335.jpg: 1 instruments, 1 gated, frame stage 132 ms, total 132 ms
+keyframe 31/32 CASE053/07595.jpg: 2 instruments, 0 gated, frame stage 168 ms, total 168 ms
+keyframe 32/32 CASE053/09380.jpg: 1 instruments, 1 gated, frame stage 131 ms, total 131 ms
+{
+ "keyframes": 30,
+ "instruments": 72,
+ "instruments_gated": 19,
+ "frame_stage": {
+  "n": 30,
+  "mean_ms": 200.84284000331536,
+  "median_ms": 199.5024470379576,
+  "p95_ms": 266.6277630487457,
+  "max_ms": 275.46451101079583
+ },
+ "keyframe_total": {
+  "n": 30,
+  "mean_ms": 200.84284000331536,
+  "median_ms": 199.5024470379576,
+  "p95_ms": 266.6277630487457,
+  "max_ms": 275.46451101079583
+ },
+ "track_gated": {
+  "n": 0
+ },
+ "track_all": {
+  "n": 0
+ },
+ "detect_per_keyframe": {
+  "n": 0
+ }
+}

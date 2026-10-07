@@ -1,0 +1,1030 @@
+{
+ "gpu": "NVIDIA A100-PCIE-40GB",
+ "mode": "track",
+ "seg": null,
+ "tracker": "sam2",
+ "causal": true,
+ "window": 20,
+ "tau": 0.000285,
+ "keyframes": [
+  {
+   "keyframe": "CASE041/00035.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 1323.9300490822643,
+   "gated": 1,
+   "instruments_gated": [
+    4
+   ],
+   "warmup": true
+  },
+  {
+   "keyframe": "CASE041/01400.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 221.6900980565697,
+   "gated": 1,
+   "instruments_gated": [
+    98
+   ],
+   "warmup": true
+  },
+  {
+   "keyframe": "CASE041/02730.jpg",
+   "n_instruments": 1,
+   "t_frame_ms": 152.59659092407674,
+   "gated": 1,
+   "instruments_gated": [
+    170
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE041/04025.jpg",
+   "n_instruments": 4,
+   "t_frame_ms": 266.6277630487457,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE041/05285.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 217.83490595407784,
+   "gated": 2,
+   "instruments_gated": [
+    374,
+    375
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE041/06545.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 186.48490693885833,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE041/07805.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 185.31396402977407,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE047/00665.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 217.511452967301,
+   "gated": 1,
+   "instruments_gated": [
+    1668
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE047/01995.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 183.57191793620586,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE047/03325.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 199.18718305416405,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE047/04585.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 233.30057400744408,
+   "gated": 2,
+   "instruments_gated": [
+    1505,
+    1506
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE047/05950.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 181.09098298009485,
+   "gated": 2,
+   "instruments_gated": [
+    1592,
+    1593
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/00735.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 210.39459900930524,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/01995.jpg",
+   "n_instruments": 4,
+   "t_frame_ms": 269.63797002099454,
+   "gated": 1,
+   "instruments_gated": [
+    1961
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/03255.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 199.81771102175117,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/04550.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 209.3477729940787,
+   "gated": 1,
+   "instruments_gated": [
+    2153
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/05845.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 215.56128293741494,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/07175.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 204.6566130593419,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/08435.jpg",
+   "n_instruments": 4,
+   "t_frame_ms": 275.46451101079583,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/09695.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 197.43665994610637,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/11025.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 244.02117205318063,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/12355.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 185.21497503388673,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE050/13615.jpg",
+   "n_instruments": 1,
+   "t_frame_ms": 162.45441301725805,
+   "gated": 1,
+   "instruments_gated": [
+    2741
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE051/01015.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 178.55279403738678,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE051/02380.jpg",
+   "n_instruments": 4,
+   "t_frame_ms": 256.43730408046395,
+   "gated": 3,
+   "instruments_gated": [
+    770,
+    772,
+    773
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/01155.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 207.05476903822273,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/02415.jpg",
+   "n_instruments": 3,
+   "t_frame_ms": 208.73409300111234,
+   "gated": 1,
+   "instruments_gated": [
+    946
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/03780.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 179.58192096557468,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/05040.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 166.87818197533488,
+   "gated": 2,
+   "instruments_gated": [
+    1109,
+    1110
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/06335.jpg",
+   "n_instruments": 1,
+   "t_frame_ms": 131.58372102770954,
+   "gated": 1,
+   "instruments_gated": [
+    1207
+   ],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/07595.jpg",
+   "n_instruments": 2,
+   "t_frame_ms": 167.6019560545683,
+   "gated": 0,
+   "instruments_gated": [],
+   "warmup": false
+  },
+  {
+   "keyframe": "CASE053/09380.jpg",
+   "n_instruments": 1,
+   "t_frame_ms": 131.33253797423095,
+   "gated": 1,
+   "instruments_gated": [
+    1360
+   ],
+   "warmup": false
+  }
+ ],
+ "instruments": {
+  "4": {
+   "index": 4,
+   "keyframe": "CASE041/00035.jpg",
+   "gated": true,
+   "s1": 0.04082861915230751,
+   "track_ms": 4274.436855921522,
+   "track_len": 21,
+   "label": 0
+  },
+  "5": {
+   "index": 5,
+   "keyframe": "CASE041/00035.jpg",
+   "gated": false,
+   "s1": 0.00015636443276889622,
+   "track_ms": 2879.8805630067363,
+   "track_len": 21,
+   "label": 3
+  },
+  "6": {
+   "index": 6,
+   "keyframe": "CASE041/00035.jpg",
+   "gated": false,
+   "s1": 8.172615707735531e-06,
+   "track_ms": 2568.1634050561115,
+   "track_len": 21,
+   "label": 1
+  },
+  "98": {
+   "index": 98,
+   "keyframe": "CASE041/01400.jpg",
+   "gated": true,
+   "s1": 0.003493573283776641,
+   "track_ms": 2357.2706220438704,
+   "track_len": 21,
+   "label": 0
+  },
+  "99": {
+   "index": 99,
+   "keyframe": "CASE041/01400.jpg",
+   "gated": false,
+   "s1": 3.384521676252916e-07,
+   "track_ms": 2403.8909999653697,
+   "track_len": 21,
+   "label": 3
+  },
+  "170": {
+   "index": 170,
+   "keyframe": "CASE041/02730.jpg",
+   "gated": true,
+   "s1": 0.0025574166793376207,
+   "track_ms": 2421.9692340120673,
+   "track_len": 21,
+   "label": 2
+  },
+  "262": {
+   "index": 262,
+   "keyframe": "CASE041/04025.jpg",
+   "gated": false,
+   "s1": 4.875923664826587e-08,
+   "track_ms": 2556.7471280228347,
+   "track_len": 21,
+   "label": 1
+  },
+  "263": {
+   "index": 263,
+   "keyframe": "CASE041/04025.jpg",
+   "gated": false,
+   "s1": 4.923104279441759e-05,
+   "track_ms": 1976.9832420861349,
+   "track_len": 10,
+   "label": 0
+  },
+  "264": {
+   "index": 264,
+   "keyframe": "CASE041/04025.jpg",
+   "gated": false,
+   "s1": 0.00024301896337419748,
+   "track_ms": 2403.9024820085615,
+   "track_len": 21,
+   "label": 3
+  },
+  "265": {
+   "index": 265,
+   "keyframe": "CASE041/04025.jpg",
+   "gated": false,
+   "s1": 4.9928414227906615e-05,
+   "track_ms": 2238.6528979986906,
+   "track_len": 20,
+   "label": 4
+  },
+  "374": {
+   "index": 374,
+   "keyframe": "CASE041/05285.jpg",
+   "gated": true,
+   "s1": 0.04353335127234459,
+   "track_ms": 2434.7802289994434,
+   "track_len": 20,
+   "label": 0
+  },
+  "375": {
+   "index": 375,
+   "keyframe": "CASE041/05285.jpg",
+   "gated": true,
+   "s1": 0.0068397377617657185,
+   "track_ms": 2375.0002330634743,
+   "track_len": 21,
+   "label": 3
+  },
+  "376": {
+   "index": 376,
+   "keyframe": "CASE041/05285.jpg",
+   "gated": false,
+   "s1": 6.46374755888246e-05,
+   "track_ms": 1963.1326810922474,
+   "track_len": 12,
+   "label": 1
+  },
+  "476": {
+   "index": 476,
+   "keyframe": "CASE041/06545.jpg",
+   "gated": false,
+   "s1": 1.9126380834677548e-07,
+   "track_ms": 2483.40902896598,
+   "track_len": 21,
+   "label": 2
+  },
+  "477": {
+   "index": 477,
+   "keyframe": "CASE041/06545.jpg",
+   "gated": false,
+   "s1": 4.020265009785362e-08,
+   "track_ms": 2485.577524988912,
+   "track_len": 21,
+   "label": 2
+  },
+  "546": {
+   "index": 546,
+   "keyframe": "CASE041/07805.jpg",
+   "gated": false,
+   "s1": 7.617209263344193e-08,
+   "track_ms": 2398.6654159380123,
+   "track_len": 19,
+   "label": 2
+  },
+  "547": {
+   "index": 547,
+   "keyframe": "CASE041/07805.jpg",
+   "gated": false,
+   "s1": 1.7193471535392746e-07,
+   "track_ms": 2520.716116996482,
+   "track_len": 21,
+   "label": 2
+  },
+  "1668": {
+   "index": 1668,
+   "keyframe": "CASE047/00665.jpg",
+   "gated": true,
+   "s1": 0.0011057088850066066,
+   "track_ms": 1987.3933830531314,
+   "track_len": 11,
+   "label": 0
+  },
+  "1669": {
+   "index": 1669,
+   "keyframe": "CASE047/00665.jpg",
+   "gated": false,
+   "s1": 7.269999002801342e-08,
+   "track_ms": 2048.7141450867057,
+   "track_len": 6,
+   "label": 4
+  },
+  "1670": {
+   "index": 1670,
+   "keyframe": "CASE047/00665.jpg",
+   "gated": false,
+   "s1": 2.621684325276874e-05,
+   "track_ms": 2410.302398027852,
+   "track_len": 21,
+   "label": 3
+  },
+  "1728": {
+   "index": 1728,
+   "keyframe": "CASE047/01995.jpg",
+   "gated": false,
+   "s1": 8.839797374093905e-06,
+   "track_ms": 2067.595451953821,
+   "track_len": 12,
+   "label": 0
+  },
+  "1729": {
+   "index": 1729,
+   "keyframe": "CASE047/01995.jpg",
+   "gated": false,
+   "s1": 1.2049806628056103e-06,
+   "track_ms": 2458.797996980138,
+   "track_len": 21,
+   "label": 3
+  },
+  "1408": {
+   "index": 1408,
+   "keyframe": "CASE047/03325.jpg",
+   "gated": false,
+   "s1": 3.779100268275215e-07,
+   "track_ms": 2463.15372409299,
+   "track_len": 21,
+   "label": 2
+  },
+  "1409": {
+   "index": 1409,
+   "keyframe": "CASE047/03325.jpg",
+   "gated": false,
+   "s1": 5.942993652752193e-08,
+   "track_ms": 2492.464932030998,
+   "track_len": 20,
+   "label": 2
+  },
+  "1505": {
+   "index": 1505,
+   "keyframe": "CASE047/04585.jpg",
+   "gated": true,
+   "s1": 0.000306900852592662,
+   "track_ms": 2601.8660900881514,
+   "track_len": 21,
+   "label": 5
+  },
+  "1506": {
+   "index": 1506,
+   "keyframe": "CASE047/04585.jpg",
+   "gated": true,
+   "s1": 0.0010648033348843455,
+   "track_ms": 2555.3041259991005,
+   "track_len": 21,
+   "label": 3
+  },
+  "1507": {
+   "index": 1507,
+   "keyframe": "CASE047/04585.jpg",
+   "gated": false,
+   "s1": 1.5444280165866076e-07,
+   "track_ms": 2530.8642350137234,
+   "track_len": 21,
+   "label": 0
+  },
+  "1592": {
+   "index": 1592,
+   "keyframe": "CASE047/05950.jpg",
+   "gated": true,
+   "s1": 0.005904740188270807,
+   "track_ms": 2636.3381720148027,
+   "track_len": 21,
+   "label": 2
+  },
+  "1593": {
+   "index": 1593,
+   "keyframe": "CASE047/05950.jpg",
+   "gated": true,
+   "s1": 0.0010596186621114612,
+   "track_ms": 2405.091758002527,
+   "track_len": 20,
+   "label": 2
+  },
+  "1856": {
+   "index": 1856,
+   "keyframe": "CASE050/00735.jpg",
+   "gated": false,
+   "s1": 1.4285024917626288e-05,
+   "track_ms": 2588.3517519105226,
+   "track_len": 21,
+   "label": 0
+  },
+  "1857": {
+   "index": 1857,
+   "keyframe": "CASE050/00735.jpg",
+   "gated": false,
+   "s1": 1.916844070137813e-07,
+   "track_ms": 2574.161243974231,
+   "track_len": 21,
+   "label": 3
+  },
+  "1961": {
+   "index": 1961,
+   "keyframe": "CASE050/01995.jpg",
+   "gated": true,
+   "s1": 0.0005848503205925226,
+   "track_ms": 2028.32884399686,
+   "track_len": 14,
+   "label": 4
+  },
+  "1962": {
+   "index": 1962,
+   "keyframe": "CASE050/01995.jpg",
+   "gated": false,
+   "s1": 2.780729300866369e-05,
+   "track_ms": 2342.5660979701206,
+   "track_len": 20,
+   "label": 0
+  },
+  "1963": {
+   "index": 1963,
+   "keyframe": "CASE050/01995.jpg",
+   "gated": false,
+   "s1": 5.589656939264387e-05,
+   "track_ms": 2681.7125079687685,
+   "track_len": 21,
+   "label": 3
+  },
+  "1964": {
+   "index": 1964,
+   "keyframe": "CASE050/01995.jpg",
+   "gated": false,
+   "s1": 4.3852441677927345e-08,
+   "track_ms": 2561.948030954227,
+   "track_len": 20,
+   "label": 6
+  },
+  "2064": {
+   "index": 2064,
+   "keyframe": "CASE050/03255.jpg",
+   "gated": false,
+   "s1": 4.014243677374907e-05,
+   "track_ms": 2777.1917970385402,
+   "track_len": 21,
+   "label": 0
+  },
+  "2065": {
+   "index": 2065,
+   "keyframe": "CASE050/03255.jpg",
+   "gated": false,
+   "s1": 1.1976535461144522e-06,
+   "track_ms": 2364.472296903841,
+   "track_len": 21,
+   "label": 3
+  },
+  "2152": {
+   "index": 2152,
+   "keyframe": "CASE050/04550.jpg",
+   "gated": false,
+   "s1": 0.00010423780622659251,
+   "track_ms": 2500.9728770237416,
+   "track_len": 21,
+   "label": 0
+  },
+  "2153": {
+   "index": 2153,
+   "keyframe": "CASE050/04550.jpg",
+   "gated": true,
+   "s1": 0.010418197140097618,
+   "track_ms": 2325.992197962478,
+   "track_len": 21,
+   "label": 1
+  },
+  "2154": {
+   "index": 2154,
+   "keyframe": "CASE050/04550.jpg",
+   "gated": false,
+   "s1": 7.689834092161618e-06,
+   "track_ms": 2249.4069669628516,
+   "track_len": 19,
+   "label": 3
+  },
+  "2242": {
+   "index": 2242,
+   "keyframe": "CASE050/05845.jpg",
+   "gated": false,
+   "s1": 1.597608445536025e-07,
+   "track_ms": 2176.183937001042,
+   "track_len": 18,
+   "label": 4
+  },
+  "2243": {
+   "index": 2243,
+   "keyframe": "CASE050/05845.jpg",
+   "gated": false,
+   "s1": 3.634752943071362e-08,
+   "track_ms": 2573.276164010167,
+   "track_len": 21,
+   "label": 0
+  },
+  "2244": {
+   "index": 2244,
+   "keyframe": "CASE050/05845.jpg",
+   "gated": false,
+   "s1": 3.7127156247152016e-06,
+   "track_ms": 2454.576647025533,
+   "track_len": 21,
+   "label": 3
+  },
+  "2349": {
+   "index": 2349,
+   "keyframe": "CASE050/07175.jpg",
+   "gated": false,
+   "s1": 1.1035668734393766e-07,
+   "track_ms": 2476.1738510569558,
+   "track_len": 21,
+   "label": 3
+  },
+  "2350": {
+   "index": 2350,
+   "keyframe": "CASE050/07175.jpg",
+   "gated": false,
+   "s1": 7.157643153732351e-07,
+   "track_ms": 2563.434981973842,
+   "track_len": 21,
+   "label": 0
+  },
+  "2453": {
+   "index": 2453,
+   "keyframe": "CASE050/08435.jpg",
+   "gated": false,
+   "s1": 2.3988682187336963e-06,
+   "track_ms": 2494.156926055439,
+   "track_len": 21,
+   "label": 3
+  },
+  "2454": {
+   "index": 2454,
+   "keyframe": "CASE050/08435.jpg",
+   "gated": false,
+   "s1": 1.374378797436293e-07,
+   "track_ms": 1987.6080369576812,
+   "track_len": 12,
+   "label": 4
+  },
+  "2455": {
+   "index": 2455,
+   "keyframe": "CASE050/08435.jpg",
+   "gated": false,
+   "s1": 1.261575107491808e-06,
+   "track_ms": 2312.237562960945,
+   "track_len": 19,
+   "label": 0
+  },
+  "2456": {
+   "index": 2456,
+   "keyframe": "CASE050/08435.jpg",
+   "gated": false,
+   "s1": 3.1401791602547746e-06,
+   "track_ms": 2788.540248060599,
+   "track_len": 21,
+   "label": 1
+  },
+  "2567": {
+   "index": 2567,
+   "keyframe": "CASE050/09695.jpg",
+   "gated": false,
+   "s1": 4.45107707491843e-06,
+   "track_ms": 2753.488766029477,
+   "track_len": 21,
+   "label": 3
+  },
+  "2568": {
+   "index": 2568,
+   "keyframe": "CASE050/09695.jpg",
+   "gated": false,
+   "s1": 1.047726436809171e-05,
+   "track_ms": 2303.573245066218,
+   "track_len": 21,
+   "label": 4
+  },
+  "2802": {
+   "index": 2802,
+   "keyframe": "CASE050/11025.jpg",
+   "gated": false,
+   "s1": 4.4033738959115e-05,
+   "track_ms": 2477.3975339485332,
+   "track_len": 21,
+   "label": 3
+  },
+  "2803": {
+   "index": 2803,
+   "keyframe": "CASE050/11025.jpg",
+   "gated": false,
+   "s1": 1.671272548264824e-05,
+   "track_ms": 2239.4384630024433,
+   "track_len": 19,
+   "label": 4
+  },
+  "2804": {
+   "index": 2804,
+   "keyframe": "CASE050/11025.jpg",
+   "gated": false,
+   "s1": 4.1244756943115135e-08,
+   "track_ms": 2674.5044990675524,
+   "track_len": 21,
+   "label": 0
+  },
+  "2667": {
+   "index": 2667,
+   "keyframe": "CASE050/12355.jpg",
+   "gated": false,
+   "s1": 2.7959487169937347e-08,
+   "track_ms": 2383.2088010385633,
+   "track_len": 21,
+   "label": 2
+  },
+  "2668": {
+   "index": 2668,
+   "keyframe": "CASE050/12355.jpg",
+   "gated": false,
+   "s1": 4.203056960250251e-07,
+   "track_ms": 2558.510842034593,
+   "track_len": 21,
+   "label": 2
+  },
+  "2741": {
+   "index": 2741,
+   "keyframe": "CASE050/13615.jpg",
+   "gated": true,
+   "s1": 0.016991708427667618,
+   "track_ms": 2727.413900080137,
+   "track_len": 21,
+   "label": 2
+  },
+  "663": {
+   "index": 663,
+   "keyframe": "CASE051/01015.jpg",
+   "gated": false,
+   "s1": 4.2045499867526814e-05,
+   "track_ms": 1667.7155729848891,
+   "track_len": 3,
+   "label": 0
+  },
+  "664": {
+   "index": 664,
+   "keyframe": "CASE051/01015.jpg",
+   "gated": false,
+   "s1": 7.566719517626552e-08,
+   "track_ms": 2510.5189461028203,
+   "track_len": 20,
+   "label": 3
+  },
+  "770": {
+   "index": 770,
+   "keyframe": "CASE051/02380.jpg",
+   "gated": true,
+   "s1": 0.0004256691026967019,
+   "track_ms": 1754.9240509979427,
+   "track_len": 6,
+   "label": 4
+  },
+  "771": {
+   "index": 771,
+   "keyframe": "CASE051/02380.jpg",
+   "gated": false,
+   "s1": 0.00011485892173368484,
+   "track_ms": 2525.6347950780764,
+   "track_len": 21,
+   "label": 3
+  },
+  "772": {
+   "index": 772,
+   "keyframe": "CASE051/02380.jpg",
+   "gated": true,
+   "s1": 0.008836224675178528,
+   "track_ms": 2327.593534020707,
+   "track_len": 21,
+   "label": 0
+  },
+  "773": {
+   "index": 773,
+   "keyframe": "CASE051/02380.jpg",
+   "gated": true,
+   "s1": 0.0005142479203641415,
+   "track_ms": 2513.662473997101,
+   "track_len": 21,
+   "label": 0
+  },
+  "875": {
+   "index": 875,
+   "keyframe": "CASE053/01155.jpg",
+   "gated": false,
+   "s1": 1.8658152839634567e-05,
+   "track_ms": 2331.2802559230477,
+   "track_len": 21,
+   "label": 4
+  },
+  "876": {
+   "index": 876,
+   "keyframe": "CASE053/01155.jpg",
+   "gated": false,
+   "s1": 0.0001971935125766322,
+   "track_ms": 2380.608943058178,
+   "track_len": 18,
+   "label": 0
+  },
+  "877": {
+   "index": 877,
+   "keyframe": "CASE053/01155.jpg",
+   "gated": false,
+   "s1": 6.111274331033201e-08,
+   "track_ms": 2582.2945589898154,
+   "track_len": 21,
+   "label": 3
+  },
+  "946": {
+   "index": 946,
+   "keyframe": "CASE053/02415.jpg",
+   "gated": true,
+   "s1": 0.004083673935383558,
+   "track_ms": 2355.9587210183963,
+   "track_len": 19,
+   "label": 0
+  },
+  "947": {
+   "index": 947,
+   "keyframe": "CASE053/02415.jpg",
+   "gated": false,
+   "s1": 2.10266443900764e-06,
+   "track_ms": 2510.491025983356,
+   "track_len": 21,
+   "label": 3
+  },
+  "948": {
+   "index": 948,
+   "keyframe": "CASE053/02415.jpg",
+   "gated": false,
+   "s1": 9.909216203141114e-08,
+   "track_ms": 2173.925123992376,
+   "track_len": 18,
+   "label": 4
+  },
+  "1019": {
+   "index": 1019,
+   "keyframe": "CASE053/03780.jpg",
+   "gated": false,
+   "s1": 1.579645868332591e-05,
+   "track_ms": 2139.5115950144827,
+   "track_len": 13,
+   "label": 3
+  },
+  "1020": {
+   "index": 1020,
+   "keyframe": "CASE053/03780.jpg",
+   "gated": false,
+   "s1": 8.551683094992768e-06,
+   "track_ms": 2388.2960149785504,
+   "track_len": 21,
+   "label": 0
+  },
+  "1109": {
+   "index": 1109,
+   "keyframe": "CASE053/05040.jpg",
+   "gated": true,
+   "s1": 0.0042741564102470875,
+   "track_ms": 2052.8584040002897,
+   "track_len": 15,
+   "label": 0
+  },
+  "1110": {
+   "index": 1110,
+   "keyframe": "CASE053/05040.jpg",
+   "gated": true,
+   "s1": 0.00035419745836406946,
+   "track_ms": 2416.1115939496085,
+   "track_len": 21,
+   "label": 3
+  },
+  "1207": {
+   "index": 1207,
+   "keyframe": "CASE053/06335.jpg",
+   "gated": true,
+   "s1": 0.0012512175599113107,
+   "track_ms": 2399.193170014769,
+   "track_len": 21,
+   "label": 0
+  },
+  "1284": {
+   "index": 1284,
+   "keyframe": "CASE053/07595.jpg",
+   "gated": false,
+   "s1": 1.7698874216875993e-05,
+   "track_ms": 2582.4898169375956,
+   "track_len": 21,
+   "label": 3
+  },
+  "1285": {
+   "index": 1285,
+   "keyframe": "CASE053/07595.jpg",
+   "gated": false,
+   "s1": 2.1838793600181816e-06,
+   "track_ms": 2484.2942759860307,
+   "track_len": 21,
+   "label": 0
+  },
+  "1360": {
+   "index": 1360,
+   "keyframe": "CASE053/09380.jpg",
+   "gated": true,
+   "s1": 0.02877839468419552,
+   "track_ms": 2320.213119033724,
+   "track_len": 21,
+   "label": 4
+  }
+ },
+ "summary": {
+  "keyframes": 30,
+  "instruments": 72,
+  "instruments_gated": 19,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "keyframe_total": {
+   "n": 0
+  },
+  "track_gated": {
+   "n": 19,
+   "mean_ms": 2349.4733281213007,
+   "median_ms": 2399.193170014769,
+   "p95_ms": 2636.3381720148027,
+   "max_ms": 2727.413900080137
+  },
+  "track_all": {
+   "n": 72,
+   "mean_ms": 2392.692050508534,
+   "median_ms": 2428.3747315057553,
+   "p95_ms": 2681.7125079687685,
+   "max_ms": 2788.540248060599
+  },
+  "detect_per_keyframe": {
+   "n": 0
+  }
+ }
+}
