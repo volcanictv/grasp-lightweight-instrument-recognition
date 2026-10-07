@@ -18,7 +18,7 @@ To bound the effect, the non-causal run is also scored with the gate threshold c
 
 \subsection{Comparison with the state of the art}
 \label{sec:results}
-\begin{table}[t]
+\begin{table}[tbp]
 \floatconts
   {tab:results}
   {\caption{Instrument segmentation on the GraSP test set. $\dagger$ published by \citet{ayobi2024pixel}; they find their own boxes, ours use the given boxes. Latency: end to end per instrument on one Titan Xp, estimated from stage times (TAPIS: per keyframe, measured). Causal: uses past frames only.}}
@@ -42,11 +42,19 @@ Table~\ref{tab:results} follows the format of the GraSP benchmark.
 The non-causal pipeline is above TAPIS on all three scores, clearly so on IoU (its 95\% bootstrap interval over the five test cases is 85.6 to 87.1, TAPIS is 83.4) and by 0.8 on mIoU (TAPIS lies just below the interval 86.9 to 88.2); on mcIoU the difference of 0.9 is within the interval (76.3 to 79.8).
 The IoU margin is the one most inflated by the given boxes, because spurious classes count against a method that has to detect.
 The causal pipeline is 2.4 mIoU and 1.1 IoU below TAPIS, but TAPIS needs future frames, and the causal rows are the ones a live system can run.
+Figure~\ref{fig:qualitative} shows test frames: the causal pipeline labels every instrument correctly in 83\% of the test frames and the non-causal one in 90\%.
 \todo{causal SAM2-large tracking on both mask sets (runs in progress)}
+
+\begin{figure}[tbp]
+\floatconts
+  {fig:qualitative}
+  {\caption{Test frames: ground truth, the causal real-time pipeline and the non-causal pipeline (masks coloured by class; $*$ sent to tracking; green: class fixed by tracking; red: wrong). In the last row the causal pipeline calls a Prograsp Forceps a Grasper; the non-causal one recovers it.}}
+  {\includegraphics[width=0.92\linewidth]{figures/fig3_qualitative.pdf}}
+\end{figure}
 
 \subsection{Evidence-gated tracking}
 \label{sec:gate}
-\begin{figure}[t]
+\begin{figure}[tbp]
 \floatconts
   {fig:tradeoff}
   {\caption{(a) Instrument accuracy as the instruments with the weakest evidence are sent to tracking; dashed, the best possible gate over the same instruments. (b) mIoU against estimated latency; filled markers use only past frames, open markers need future frames.}}
@@ -60,7 +68,7 @@ The causal tracker matters: EdgeTAM adds 2.1 mIoU over no tracking and YOLO26s a
 Segmentation takes 207\,ms per frame with SAM2-tiny and mirror averaging, which on held-out masks matches SAM2-large without it (mask IoU 0.906 for both, 402\,ms) and stays within 0.003 of SAM2-large with it (807\,ms).
 
 \subsection{Ablations}
-\begin{table}[t]
+\begin{table}[tbp]
 \floatconts
   {tab:ladder}
   {\caption{Steps of the non-causal pipeline (mean of three classifier seeds, 833 instruments tracked).}}
@@ -80,7 +88,7 @@ Table~\ref{tab:ladder} shows what each step adds; steps of 0.3 or less are withi
 SAM3 raises the mask IoU against the ground truth from 0.900 to 0.906, and tracker-style crops help most on the Prograsp Forceps (IoU 61 to 67) at some cost on the Large Needle Driver (90 to 86).
 
 \label{sec:uncertainty}
-\begin{table}[t]
+\begin{table}[tbp]
 \floatconts
   {tab:uncertainty}
   {\caption{Gate signal: an MC-dropout vote ensemble (80 stochastic passes) against the evidential ensemble (one pass). Held-out fold: mean $\pm$ SD over three seeds.}}
@@ -103,7 +111,7 @@ It also flags errors on which every member predicts the same wrong class, which 
 \todo{one sentence on the earlier softmax-gated pipeline, if we keep it; otherwise leave it out}
 
 \subsection{Latency}
-\begin{table}[t]
+\begin{table}[tbp]
 \floatconts
   {tab:latency}
   {\caption{Latency of the causal EdgeTAM pipeline on one Titan Xp, milliseconds. \todo{rerun on the A100}}}
