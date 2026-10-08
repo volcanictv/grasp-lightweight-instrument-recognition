@@ -74,7 +74,10 @@ def cmd_select(a: argparse.Namespace) -> None:
         n = min(n, a.max_instruments)
     chosen = sorted(int(i) for i in order[:n])
     Path(a.out).write_text(json.dumps({"errors": [{"index": i} for i in chosen]}))
-    print(f"tracking {len(chosen)} of {len(done)} instruments (the highest S1)")
+    for k in range(a.shards if a.shards > 1 else 0):   # interleaved by S1 rank, so the shards cost about the same
+        by_rank = sorted(chosen, key=lambda i: -s1[i])
+        Path(a.out).with_name(f"{Path(a.out).stem}_shard{k}.json").write_text(json.dumps({"errors": [{"index": i} for i in sorted(by_rank[k :: a.shards])]}))
+    print(f"tracking {len(chosen)} of {len(done)} instruments (the highest S1), in {max(1, a.shards)} shard(s)")
 
 
 def cmd_score(a: argparse.Namespace) -> None:
@@ -97,7 +100,7 @@ def main() -> None:
     e = sub.add_parser("ens-config")
     e.add_argument("--dir", required=True), e.add_argument("--out", required=True)
     s = sub.add_parser("select")
-    s.add_argument("--logits", required=True), s.add_argument("--frac", type=float, default=1.0), s.add_argument("--max-instruments", type=int, default=0), s.add_argument("--out", required=True)
+    s.add_argument("--logits", required=True), s.add_argument("--frac", type=float, default=1.0), s.add_argument("--max-instruments", type=int, default=0), s.add_argument("--shards", type=int, default=1), s.add_argument("--out", required=True)
     r = sub.add_parser("score")
     r.add_argument("--split", required=True), r.add_argument("--masks", required=True), r.add_argument("--logits", required=True), r.add_argument("--tracked-dir", required=True)
     r.add_argument("--fracs", type=float, nargs="+", default=[0.1, 0.2, 0.29, 0.4, 0.5]), r.add_argument("--frames-out", required=True), r.add_argument("--out", required=True)

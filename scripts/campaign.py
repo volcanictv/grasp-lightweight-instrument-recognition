@@ -38,10 +38,12 @@ class Task:
     outputs: list[str] = field(default_factory=list)   # files that must exist after the command succeeds
     priority: int = 0                          # higher first among the tasks that are ready
     retries: int = 1                           # extra attempts after a failure
+    light: bool = False                        # small GPU footprint and mostly waiting on the CPU: up to --slots-per-gpu light tasks may share one GPU (never with a heavy task)
 
 
 class Campaign:
-    def __init__(self, tasks: list[Task], out: Path, gpus: list[str], cpu_slots: int, deadline: float) -> None:
+    def __init__(self, tasks: list[Task], out: Path, gpus: list[str], cpu_slots: int, deadline: float, slots_per_gpu: int = 1) -> None:
+        self.slots_per_gpu = max(1, slots_per_gpu)
         self.tasks = {t.name: t for t in tasks}
         assert len(self.tasks) == len(tasks), "duplicate task names"
         for t in tasks:
@@ -103,17 +105,23 @@ class Campaign:
             print(f"[{time.strftime('%T')}] FAILED {name} ({why}); its dependents will be skipped. See {self.out / 'logs' / (name + '.log')}", flush=True)
 
     def schedule(self) -> None:
-        busy = {g for _p, g, _t in self.running.values() if g is not None}
+        load: dict[str, list[bool]] = {g: [] for g in self.gpus}   # per GPU: the light flags of its running tasks
+        for n, (_p, g, _t) in self.running.items():
+            if g is not None and g in load:
+                load[g].append(self.tasks[n].light)
         n_cpu = sum(1 for n, (_p, g, _t) in self.running.items() if g is None)
         remaining = self.deadline - time.time()
         for t in self.ready():
             if self.stop or t.minutes * 60 * 1.15 > remaining:
                 continue
             if t.needs_gpu:
-                free = [g for g in self.gpus if g not in busy]
-                if free:
-                    self.start(t, free[0])
-                    busy.add(free[0])
+                if t.light:   # prefer a GPU that already carries light tasks (keeps whole GPUs free for the heavy ones), then an empty one
+                    fits = [g for g in self.gpus if load[g] and all(load[g]) and len(load[g]) < self.slots_per_gpu] or [g for g in self.gpus if not load[g]]
+                else:
+                    fits = [g for g in self.gpus if not load[g]]
+                if fits:
+                    self.start(t, fits[0])
+                    load[fits[0]].append(t.light)
             elif n_cpu < self.cpu_slots:
                 self.start(t, None)
                 n_cpu += 1
@@ -183,6 +191,7 @@ def main() -> int:
     ap.add_argument("--gpus", default=os.environ.get("CUDA_VISIBLE_DEVICES", "0"), help="GPU ids to use, comma separated (default: the ones Slurm gave this job)")
     ap.add_argument("--budget-hours", type=float, default=24.0, help="no task starts that would not finish inside this many hours from now")
     ap.add_argument("--cpu-slots", type=int, default=2, help="CPU-only tasks that may run next to the GPU tasks")
+    ap.add_argument("--slots-per-gpu", type=int, default=1, help="light tasks (classifier members, logits) that may share one GPU; heavy tasks (training, tracking) always get a whole GPU")
     ap.add_argument("--smoke", action="store_true", help="tiny versions of every task, for testing the whole chain")
     ap.add_argument("--tasks-module", default="campaign_tasks")
     ap.add_argument("--only", default="", help="comma separated task names (their dependencies are included)")
@@ -207,7 +216,7 @@ def main() -> int:
             print(f"{t.name:44s} {'gpu' if t.needs_gpu else 'cpu'}  {t.minutes:7.0f} min  after: {', '.join(t.deps) or '-'}")
         print(f"{len(tasks)} tasks, about {total:.1f} GPU-hours, about {total / max(1, len(args.gpus.split(','))):.1f} hours on {len(args.gpus.split(','))} GPUs if the graph keeps them busy")
         return 0
-    c = Campaign(tasks, args.out, [g.strip() for g in args.gpus.split(",") if g.strip() != ""], args.cpu_slots, time.time() + args.budget_hours * 3600)
+    c = Campaign(tasks, args.out, [g.strip() for g in args.gpus.split(",") if g.strip() != ""], args.cpu_slots, time.time() + args.budget_hours * 3600, args.slots_per_gpu)
     return c.run()
 
 

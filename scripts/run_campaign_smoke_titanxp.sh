@@ -9,5 +9,5 @@ export SAM2_CKPT_DIR=/home/yzx/sam2/checkpoints
 export EDGETAM_CKPT=/home/yzx/EdgeTAM/checkpoints/edgetam.pt
 export MALLOC_ARENA_MAX=2
 OUT=${1:-$HOME/cs_smoke}
-$PY_MAIN scripts/campaign.py --out "$OUT" --smoke --gpus 0,1 --budget-hours 2 --cpu-slots 2
+$PY_MAIN scripts/campaign.py --out "$OUT" --smoke --gpus 0,1 --slots-per-gpu 2 --budget-hours 2 --cpu-slots 2
 echo "campaign exit code: $?"

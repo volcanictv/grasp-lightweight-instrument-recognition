@@ -39,6 +39,21 @@ def build(cfg: dict, Task) -> list:
     nb_test = f"{out}/neighbours/test"
     neighbours = " ".join([*nb_official, nb_test])
     t = lambda minutes, full: max(2.0, minutes / 10) if smoke else full  # estimate in minutes: the smoke runs are short
+    shards = max(1, int(os.environ.get("TRACK_SHARDS", "2")))   # tracking of a fold is split in this many tasks, so a fold's chain is shorter and the last GPUs are not left waiting
+    workers = int(os.environ.get("CAMPAIGN_WORKERS", "4"))      # data-loader workers of a classifier run: the CPUs per concurrently running GPU task
+
+    def track(name, fold, window, ens, masks, idx_dir, tdir, tmpname, minutes, prio, dep):
+        """The tracking tasks of one run: one per shard of the chosen instruments (cv_pipeline.py select writes track_idx_shard<k>.json)."""
+        out_tasks = []
+        for k in range(shards):
+            idx = f"{idx_dir}/track_idx_shard{k}.json" if shards > 1 else f"{idx_dir}/track_idx.json"
+            out_tasks.append(Task(name if shards == 1 else f"{name}_sh{k}",
+                                  f"{pre}{py} -u scripts/evaluate_temporal_track_ensemble.py --split {fold}_test --window {window} --ensemble-config {ens} "
+                                  f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml --init-masks {masks} "
+                                  f"--error-cases-json {idx} --tmp-dir {tmp}/{tmpname}_{k} --frame-logits-out {tdir}/frames_shard{k}.npz --masks-out {tdir}/masks_shard{k}.pkl "
+                                  f"--device cuda:0 --save-every 25 --data-root {dq} --out {tdir}/tracked_shard{k}.json",
+                                  deps=[dep], outputs=[f"{tdir}/frames_shard{k}.npz"], minutes=minutes / shards, priority=prio))
+        return out_tasks, [x.name for x in out_tasks]
 
     tasks = [Task("neighbours_test", f"{pre}{pyet} -u scripts/build_temporal_neighbors.py --json-split test --out-dir {nb_test} --sam-checkpoint {etck} --data-root {dq} "
                   f"{'--max-frames 3 ' if smoke else ''}--device cuda:0", outputs=[f"{nb_test}/meta.json"], minutes=t(0, 60), priority=10)]
@@ -59,35 +74,30 @@ def build(cfg: dict, Task) -> list:
         ]
         for m, (minutes, prio) in MEMBERS.items():
             tasks.append(Task(f"{fold}_clf_{m}", f"{pre}{py} -u scripts/cv_pipeline.py clf-run --fold {fold} --member {m} --seed 42 --dir {fo}/clf --neighbours {neighbours} "
-                              f"--data-root {dq} --epochs {1 if smoke else 20} --python {py}", deps=["neighbours_test"], outputs=[f"{fo}/clf/{m}.ok"], minutes=t(minutes, minutes), priority=prio))
+                              f"--data-root {dq} --epochs {1 if smoke else 20} --workers {workers} --python {py}", deps=["neighbours_test"], outputs=[f"{fo}/clf/{m}.ok"],
+                              minutes=t(minutes, minutes), priority=prio, light=True))
         tasks += [
             Task(f"{fold}_ens", f"{pre}{py} scripts/cv_pipeline.py ens-config --dir {fo}/clf --out {fo}/ens4.yaml", needs_gpu=False, deps=[f"{fold}_clf_{m}" for m in MEMBERS],
                  outputs=[f"{fo}/ens4.yaml"], minutes=1, priority=9),
             Task(f"{fold}_logits", f"{pre}{py} -u scripts/extract_logits_from_masks.py --masks {fo}/final/masks.pkl --ensemble-config {fo}/ens4.yaml --split {fold}_test --data-root {dq} "
-                 f"--device cuda:0 --out {fo}/final/logits.npz", deps=[f"{fold}_masks", f"{fold}_ens"], outputs=[f"{fo}/final/logits.npz"], minutes=t(0, 10), priority=6),
-            Task(f"{fold}_select", f"{pre}{py} scripts/cv_pipeline.py select --logits {fo}/final/logits.npz --frac 0.5 {'--max-instruments 6 ' if smoke else ''}--out {fo}/final/track_idx.json",
+                 f"--device cuda:0 --out {fo}/final/logits.npz", deps=[f"{fold}_masks", f"{fold}_ens"], outputs=[f"{fo}/final/logits.npz"], minutes=t(0, 10), priority=6, light=True),
+            Task(f"{fold}_select", f"{pre}{py} scripts/cv_pipeline.py select --logits {fo}/final/logits.npz --frac 0.5 {'--max-instruments 6 ' if smoke else ''}--shards {shards} --out {fo}/final/track_idx.json",
                  needs_gpu=False, deps=[f"{fold}_logits"], outputs=[f"{fo}/final/track_idx.json"], minutes=1, priority=6),
-            Task(f"{fold}_track", f"{pre}{py} -u scripts/evaluate_temporal_track_ensemble.py --split {fold}_test --window 10 --ensemble-config {fo}/ens4.yaml "
-                 f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml --init-masks {fo}/final/masks.pkl "
-                 f"--error-cases-json {fo}/final/track_idx.json --tmp-dir {tmp}/{fold} --frame-logits-out {fo}/final/tracked/frames_shard0.npz --masks-out {fo}/final/tracked/masks_shard0.pkl "
-                 f"--device cuda:0 --save-every 25 --data-root {dq} --out {fo}/final/tracked/tracked_shard0.json", deps=[f"{fold}_select"], outputs=[f"{fo}/final/tracked/frames_shard0.npz"],
-                 minutes=t(0, 100), priority=4),
+        ]
+        trk, trk_names = track(f"{fold}_track", fold, 10, f"{fo}/ens4.yaml", f"{fo}/final/masks.pkl", f"{fo}/final", f"{fo}/final/tracked", fold, t(0, 100), 4, f"{fold}_select")
+        tasks += trk + [
             Task(f"{fold}_score", f"{pre}{py} scripts/cv_pipeline.py score --split {fold}_test --masks {fo}/final/masks.pkl --logits {fo}/final/logits.npz --tracked-dir {fo}/final/tracked "
-                 f"--frames-out {fo}/final/frames.pkl --out {fo}/score.json --python {py}", needs_gpu=False, deps=[f"{fold}_track"], outputs=[f"{fo}/score.json"], minutes=10, priority=1),
+                 f"--frames-out {fo}/final/frames.pkl --out {fo}/score.json --python {py}", needs_gpu=False, deps=trk_names, outputs=[f"{fo}/score.json"], minutes=10, priority=1),
         ]
         if smoke:
             continue
         # extra 1: the tracking window (k frames each side) on the same masks, logits and instruments; the +-10 run above is the main one
         for k in (2, 3, 5):
-            tasks += [
-                Task(f"{fold}_track_w{k}", f"{pre}{py} -u scripts/evaluate_temporal_track_ensemble.py --split {fold}_test --window {k} --ensemble-config {fo}/ens4.yaml "
-                     f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml --init-masks {fo}/final/masks.pkl "
-                     f"--error-cases-json {fo}/final/track_idx.json --tmp-dir {tmp}/{fold}_w{k} --frame-logits-out {fo}/final/tracked_w{k}/frames_shard0.npz "
-                     f"--masks-out {fo}/final/tracked_w{k}/masks_shard0.pkl --device cuda:0 --save-every 25 --data-root {dq} --out {fo}/final/tracked_w{k}/tracked_shard0.json",
-                     deps=[f"{fold}_select"], outputs=[f"{fo}/final/tracked_w{k}/frames_shard0.npz"], minutes=25 + 5 * k, priority=2),
+            wtrk, wnames = track(f"{fold}_track_w{k}", fold, k, f"{fo}/ens4.yaml", f"{fo}/final/masks.pkl", f"{fo}/final", f"{fo}/final/tracked_w{k}", f"{fold}_w{k}", 25 + 5 * k, 2, f"{fold}_select")
+            tasks += wtrk + [
                 Task(f"{fold}_score_w{k}", f"{pre}{py} scripts/cv_pipeline.py score --split {fold}_test --masks {fo}/final/masks.pkl --logits {fo}/final/logits.npz "
                      f"--tracked-dir {fo}/final/tracked_w{k} --frames-out {fo}/final/frames_w{k}.pkl --out {fo}/score_w{k}.json --python {py}", needs_gpu=False,
-                     deps=[f"{fold}_track_w{k}"], outputs=[f"{fo}/score_w{k}.json"], minutes=10, priority=1),
+                     deps=wnames, outputs=[f"{fo}/score_w{k}.json"], minutes=10, priority=1),
             ]
     # extra 2: variance from the segmenter's training seed, on fold 0 only: a second and third SAM2 fine-tune (SAM3 and the classifiers are reused), then the same chain downstream
     fold, fo = "cv5_f0", f"{out}/cv5_f0"
@@ -102,14 +112,12 @@ def build(cfg: dict, Task) -> list:
                  outputs=[f"{so}/final/masks.pkl"], minutes=25, priority=3),
             Task(f"seed{s}_logits", f"{pre}{py} -u scripts/extract_logits_from_masks.py --masks {so}/final/masks.pkl --ensemble-config {fo}/ens4.yaml --split {fold}_test --data-root {dq} "
                  f"--device cuda:0 --out {so}/final/logits.npz", deps=[f"seed{s}_masks", f"{fold}_ens"], outputs=[f"{so}/final/logits.npz"], minutes=10, priority=3),
-            Task(f"seed{s}_select", f"{pre}{py} scripts/cv_pipeline.py select --logits {so}/final/logits.npz --frac 0.5 --out {so}/final/track_idx.json", needs_gpu=False,
+            Task(f"seed{s}_select", f"{pre}{py} scripts/cv_pipeline.py select --logits {so}/final/logits.npz --frac 0.5 --shards {shards} --out {so}/final/track_idx.json", needs_gpu=False,
                  deps=[f"seed{s}_logits"], outputs=[f"{so}/final/track_idx.json"], minutes=1, priority=3),
-            Task(f"seed{s}_track", f"{pre}{py} -u scripts/evaluate_temporal_track_ensemble.py --split {fold}_test --window 10 --ensemble-config {fo}/ens4.yaml "
-                 f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml --init-masks {so}/final/masks.pkl "
-                 f"--error-cases-json {so}/final/track_idx.json --tmp-dir {tmp}/seed{s} --frame-logits-out {so}/final/tracked/frames_shard0.npz --masks-out {so}/final/tracked/masks_shard0.pkl "
-                 f"--device cuda:0 --save-every 25 --data-root {dq} --out {so}/final/tracked/tracked_shard0.json", deps=[f"seed{s}_select"],
-                 outputs=[f"{so}/final/tracked/frames_shard0.npz"], minutes=100, priority=2),
+        ]
+        strk, snames = track(f"seed{s}_track", fold, 10, f"{fo}/ens4.yaml", f"{so}/final/masks.pkl", f"{so}/final", f"{so}/final/tracked", f"seed{s}", 100, 2, f"seed{s}_select")
+        tasks += strk + [
             Task(f"seed{s}_score", f"{pre}{py} scripts/cv_pipeline.py score --split {fold}_test --masks {so}/final/masks.pkl --logits {so}/final/logits.npz --tracked-dir {so}/final/tracked "
-                 f"--frames-out {so}/final/frames.pkl --out {so}/score.json --python {py}", needs_gpu=False, deps=[f"seed{s}_track"], outputs=[f"{so}/score.json"], minutes=10, priority=1),
+                 f"--frames-out {so}/final/frames.pkl --out {so}/score.json --python {py}", needs_gpu=False, deps=snames, outputs=[f"{so}/score.json"], minutes=10, priority=1),
         ]
     return tasks
