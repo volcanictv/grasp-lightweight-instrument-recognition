@@ -24,6 +24,9 @@ INK, MUTED, ACCENT, GREY, AMBER, RED, TEAL = "#1c2430", "#5d6877", "#0b6e8a", "#
 CLASSES = ["Bipolar Forceps", "Prograsp Forceps", "Large Needle Driver", "Monopolar Curved Scissors", "Suction Instrument", "Clip Applier", "Laparoscopic Grasper"]
 
 
+HL = "\\rowcolor{green!18} "  # highlights the row(s) that carry the point of the table
+
+
 def f2(x: float) -> str:
     return f"{x:.2f}"
 
@@ -70,7 +73,7 @@ def main() -> None:
             put(f"num{key.capitalize()}{m}Hi", f2(hi))
             cells.append(f"{f2(p)} [{f2(lo)}, {f2(hi)}]")
         put(f"num{key.capitalize()}Acc", f"{100 * acc[key]:.2f}", "instance accuracy, percent")
-        rows1.append(f"{label} & " + " & ".join(cells) + f" & {100 * acc[key]:.2f}\\% \\\\")
+        rows1.append((HL if key == "tau" else "") + f"{label} & " + " & ".join(cells) + f" & {100 * acc[key]:.2f}\\% \\\\")
     tab1 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:main}\n  {\\caption{Main results on the 5 GraSP test cases (2,861 instruments), ground-truth boxes; 3-seed mean, 95\\% case-bootstrap intervals in brackets.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Method & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU & \\bfseries Inst.\\ acc.\\\\\n  \\midrule\n  "
             + "\n  ".join(rows1) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
@@ -95,7 +98,7 @@ def main() -> None:
     rows2 = []
     for i, (name, share, g, _x) in enumerate(comp):
         sav = "--" if i == 0 else f"{100 * (1 - g / full):.1f}\\%"
-        rows2.append(f"{name} & {share} & {g:,.1f} & {sav} \\\\".replace(",", "{,}"))
+        rows2.append((HL if name.startswith("Gated") else "") + f"{name} & {share} & {g:,.1f} & {sav} \\\\".replace(",", "{,}"))
         put(f"numGflops{['Single', 'ShareGate', 'Gated', 'All'][i]}", f"{g:,.1f}".replace(",", "{,}"), "GFLOPs per instrument, multiply-add convention")
         put(f"numSaving{['Single', 'ShareGate', 'Gated', 'All'][i]}", "0" if i == 0 else f"{100 * (1 - g / full):.1f}")
     put("numGpuFrameStage", f3(GF["a100_seconds"]["single_pass_per_frame"]), "seconds per frame on an A100 (job 21823404)")
@@ -133,7 +136,7 @@ def main() -> None:
     rows3 = [f"Single pass (0\\%) & \\multicolumn{{{len(shares)}}}{{c}}{{{f2(single_m)}}} \\\\", "\\midrule"]
     for n in names_all:
         v = cur(n)
-        rows3.append(f"{label_all[n]} & " + " & ".join(f2(x) for x in v) + " \\\\")
+        rows3.append((HL if n == "S" else "") + f"{label_all[n]} & " + " & ".join(f2(x) for x in v) + " \\\\")
     for nm, key in (("S", "numBudgetS"), ("largest belief", "numBudgetBelief"), ("softmax max-prob", "numBudgetSoftmax"), ("random", "numBudgetRandom"), ("best possible", "numBudgetBest")):
         for sh, x in zip(shares, cur(nm)):
             put(f"{key}{SHARE_WORD[int(sh.rstrip('%'))]}", f"{x:.3f}", "mIoU at that share of instruments refined, 3-seed mean, gate_baselines.json")
@@ -193,6 +196,8 @@ def main() -> None:
         put(f"numClass{letter}Gated", f2(g))
         put(f"numClass{letter}Gain", f"{g - s:+.2f}")
         rows4.append(f"{c} & {f2(s)} & {f2(g)} & {g - s:+.2f} \\\\")
+    top3 = set(np.argsort(gains)[-3:].tolist())
+    rows4 = [(HL if i in top3 else "") + r for i, r in enumerate(rows4)]
     tab4 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:perclass}\n  {\\caption{Per-class IoU on the test cases, single pass and gated temporal refinement at $\\tau=1.7\\times10^{-5}$ (3-seed mean); gain in points.}}\n"
             "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Class & \\bfseries Single & \\bfseries Gated $\\tau$ & \\bfseries Gain\\\\\n  \\midrule\n  " + "\n  ".join(rows4) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_perclass_supp.tex").write_text(tab4, encoding="utf-8")
@@ -217,7 +222,7 @@ def main() -> None:
     rows5 = []
     for name, e in BT["methods"].items():
         for sig, v in e["signals"].items():
-            rows5.append(f"{name}: {sig} & {e['networks']} & {e['calibration']['accuracy']:.3f} & {e['calibration']['ece']:.3f} & {v['auroc']:.3f} & {100 * v['caught20']:.1f}\\% \\\\")
+            rows5.append((HL if sig == "epistemic S1" else "") + f"{name}: {sig} & {e['networks']} & {e['calibration']['accuracy']:.3f} & {e['calibration']['ece']:.3f} & {v['auroc']:.3f} & {100 * v['caught20']:.1f}\\% \\\\")
     S1 = BT["methods"]["Evidential (1 pass)"]["signals"]["epistemic S1"]
     mb = BT["methods"]["Evidential (1 pass)"]["signals"]["max-belief"]
     ms = BT["methods"]["Softmax ensemble"]["signals"]["max-softmax"]
@@ -242,7 +247,7 @@ def main() -> None:
     rows6 = []
     for k in sorted(WIN, key=lambda x: int(x)):
         w = WIN[k]
-        rows6.append(f"$\\pm{k}$ & {100 * w['mIoU']:.2f} & {100 * w['IoU']:.2f} & {100 * w['mcIoU']:.2f} \\\\")
+        rows6.append((HL if str(k) == "10" else "") + f"$\\pm{k}$ & {100 * w['mIoU']:.2f} & {100 * w['IoU']:.2f} & {100 * w['mcIoU']:.2f} \\\\")
     tab6 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:window}\n  {\\caption{Tracking window $\\pm k$ frames for the 833 highest-$S_1$ instruments; 3-seed mean, $k=0$ is the single pass.}}\n"
             "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Window & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU\\\\\n  \\midrule\n  " + "\n  ".join(rows6) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_window_supp.tex").write_text(tab6, encoding="utf-8")
