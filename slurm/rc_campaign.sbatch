@@ -3,15 +3,15 @@
 # plus the extras: tracking-window sweep, segmenter-seed variance), resumable: finished tasks are never redone, so after any stop (time limit, node failure, maintenance) the SAME command
 # continues where it left off:   cd ~/grasp_work && sbatch --export=ALL,CODE_DIR=<staged code directory> <that directory>/slurm/rc_campaign.sbatch
 # Utilisation: tasks are packed onto the two GPUs (a GPU measured below 50% takes more light tasks, scripts/campaign.py); per-minute GPU utilisation goes to $OUT/gpu_util.csv.
-# Sized from the onboard smoke job (job 21827048): see the comments next to --cpus-per-task and --mem. Slack notification when it starts, ends or fails.
+# Sizing: the onboard smoke job (21827048, tiny tasks, 4 tasks at a time) peaked at 13 GB and used about 10% of 4 CPUs; the real tasks are larger and up to 6 run at once (two classifier runs with 3 loader workers each, trainings, tracking), so 64 GB and 12 CPUs, to be adjusted from the first hours of the real run. Slack notification when it starts, ends or fails.
 #SBATCH --job-name=grasp-campaign
 #SBATCH --comment="5-fold CV of the GT-box pipeline + window sweep + segmenter seeds, 2 a100, resumable"
 #SBATCH --account=robot-surg
 #SBATCH --partition=sporc-gpu
 #SBATCH --gres=gpu:a100:2
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=96g
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=64g
 #SBATCH --time=1-06:00:00
 #SBATCH --mail-user=slack:@ab1340
 #SBATCH --mail-type=BEGIN,END,FAIL

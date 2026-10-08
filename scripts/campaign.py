@@ -148,10 +148,10 @@ class Campaign:
             if self.stop or t.minutes * 60 * 1.15 > remaining:
                 continue
             if t.needs_gpu:
-                if t.light:   # prefer a GPU that already carries light tasks (keeps whole GPUs free for the heavy ones), then an empty one
+                if t.light:   # an EMPTY GPU first (spread the work: every GPU should be busy), and only when none is empty stack onto a GPU of light tasks
                     # a GPU of light tasks takes another one while it has a free slot, or (up to --max-share) while it is measured below the utilisation target and has the memory
-                    fits = [g for g in self.gpus if load[g] and all(load[g]) and (len(load[g]) < self.slots_per_gpu or (len(load[g]) < self.max_share and self.underused(g, t.mem_gb)))] \
-                        or [g for g in self.gpus if not load[g]]
+                    fits = [g for g in self.gpus if not load[g]] or \
+                        [g for g in self.gpus if load[g] and all(load[g]) and (len(load[g]) < self.slots_per_gpu or (len(load[g]) < self.max_share and self.underused(g, t.mem_gb)))]
                 else:
                     fits = [g for g in self.gpus if not load[g]]
                 if fits:
