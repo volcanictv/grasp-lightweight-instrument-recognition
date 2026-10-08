@@ -26,10 +26,13 @@ Reviewing 20\% of the instruments finds 90.2\% of the errors on the held-out fol
 The curves lie close together, as the AUROCs of Table~\ref{tab:uncertainty} show; the evidential score leads at the point where a reviewer would stop.
 
 Figure~\ref{fig:effort}b shows the same ranking used for refinement.
-Refining the 19\% with the weakest evidence raises instrument accuracy from 0.909 to 0.948, which is 81\% of the gain reached at 31\% (0.957); refining 29\% recovers 97\% of the best gain we measured, which is reached at 42\% (0.958).
-A gate that knew which instruments refinement would fix would reach 0.970 on the same instruments, so the evidence captures most of what a gate can capture but not all of it.
-Counted in multiply-adds (GFLOPs), the single pass costs 2.95\,TFLOPs per instrument (SAM2-large and SAM3 with mirror averaging on a frame, shared by its instruments, plus the four-member classifier) and refining an instrument a further 25.6\,TFLOPs (SAM2-large over 21 frames and 21 classifications), so refining 29\% costs 10.4\,TFLOPs per instrument on average and the held-out threshold (about 45\% refined) 14.5, against an estimated 28.5 if every instrument were refined: 64\% and 49\% less (Appendix Table~\ref{tab:cost}).
-\todo{refine every instrument, which needs tracks for the instruments beyond 42\%, so that ``of refining all'' and the 59\% saving are measured; with those tracks, add the softmax, MC-dropout and random gates to panel (b)}
+Refining the 19\% with the weakest evidence raises instrument accuracy from 0.909 to 0.948.
+We also refined every instrument, which gives accuracy 0.957 and 87.27 mIoU, 86.20 IoU and 78.11 mcIoU, a gain of 3.80 mIoU over the single pass.
+The 19\% most uncertain recover 81\% of that gain (86.56 mIoU), and the 29\% already match it (87.37, 86.22 and 78.33); at the held-out threshold the scores are 87.50, 86.43 and 78.90, slightly above refining every instrument.
+Refining everything is therefore not the best use of the effort: refinement also changes some correct labels to wrong ones, and ordered by the gate, the instruments refined last add nothing.
+A gate that knew which instruments refinement would fix would reach 0.970 accuracy on the same instruments, so the evidence captures most of what a gate can capture but not all of it.
+Counted in multiply-adds (GFLOPs), the single pass costs 2.95\,TFLOPs per instrument (SAM2-large and SAM3 with mirror averaging on a frame, shared by its instruments, plus the four-member classifier) and refining an instrument a further 25.6\,TFLOPs (SAM2-large over 21 frames and 21 classifications), so refining 29\% costs 10.4\,TFLOPs per instrument on average and the held-out threshold (about 45\% refined) 14.5, against 28.5 when every instrument is refined: 64\% and 49\% less (Appendix Table~\ref{tab:cost}).
+\todo{gates compared on the refine-all tracks (evidential, one minus the largest belief, entropy of belief, random, best possible; 3-seed rerun running), and the softmax and MC-dropout gates, which need the cross-entropy members on the test crops; add them to panel (b). On seed 42 the evidential gate is behind the belief and entropy gates at 19\% refined (85.99 against 86.30 and 86.37 mIoU) and equal from 29\%, all far above random (83.58 at 19\%)}
 
 \subsection{Where the gain goes}
 \label{sec:classes}
