@@ -53,3 +53,7 @@ error_gallery/
 # ONNX exports from scripts/evaluate_int8_quantization.py -- reproducible
 # output (240MB, fp32 + int8 per model), not source.
 onnx_export/
+
+# The paper draft is private: it lives in this folder and in the Overleaf project, never in git (scripts/overleaf_sync.ps1 reads the folder, not git).
+paper/
+paper_local/
