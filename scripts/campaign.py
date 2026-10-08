@@ -39,11 +39,16 @@ class Task:
     priority: int = 0                          # higher first among the tasks that are ready
     retries: int = 1                           # extra attempts after a failure
     light: bool = False                        # small GPU footprint and mostly waiting on the CPU: up to --slots-per-gpu light tasks may share one GPU (never with a heavy task)
+    mem_gb: float = 8.0                        # GPU memory the task needs at most: a light task is added to a busy GPU only when that much (plus a margin) is free
 
 
 class Campaign:
-    def __init__(self, tasks: list[Task], out: Path, gpus: list[str], cpu_slots: int, deadline: float, slots_per_gpu: int = 1) -> None:
+    def __init__(self, tasks: list[Task], out: Path, gpus: list[str], cpu_slots: int, deadline: float, slots_per_gpu: int = 1, max_share: int = 3, util_target: float = 50.0) -> None:
         self.slots_per_gpu = max(1, slots_per_gpu)
+        self.max_share, self.util_target = max(self.slots_per_gpu, max_share), util_target
+        self.samples: dict[str, list[tuple[float, float, float, float]]] = {g: [] for g in gpus}   # per GPU: (time, utilisation %, memory used MiB, memory total MiB)
+        self.last_sample = 0.0
+        self.last_start: dict[str, float] = {}
         self.tasks = {t.name: t for t in tasks}
         assert len(self.tasks) == len(tasks), "duplicate task names"
         for t in tasks:
@@ -85,7 +90,35 @@ class Campaign:
         log.flush()
         proc = subprocess.Popen(["bash", "-c", t.cmd], env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         self.running[t.name] = (proc, gpu, time.time())
+        if gpu is not None:
+            self.last_start[gpu] = time.time()
         print(f"[{time.strftime('%T')}] start  {t.name:42s} gpu {gpu}  (about {t.minutes:.0f} min)", flush=True)
+
+    def sample(self) -> None:
+        """Every 15 s: utilisation and memory of each GPU (nvidia-smi), kept for the last five minutes; schedule() uses them to decide whether a GPU can take one more light task."""
+        if time.time() - self.last_sample < 15:
+            return
+        self.last_sample = time.time()
+        try:
+            res = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=20)
+        except (OSError, subprocess.TimeoutExpired):
+            return
+        for line in res.stdout.strip().splitlines():
+            try:
+                idx, util, used, total = [x.strip() for x in line.split(",")]
+                if idx in self.samples:
+                    self.samples[idx] = (self.samples[idx] + [(time.time(), float(util), float(used), float(total))])[-20:]
+            except ValueError:
+                continue
+
+    def underused(self, gpu: str, need_gb: float) -> bool:
+        """True when this GPU's mean utilisation over the last two minutes is below the target and it has the memory (plus a 3 GB margin) for another task of need_gb."""
+        recent = [s for s in self.samples.get(gpu, []) if time.time() - s[0] <= 120]
+        if len(recent) < 4 or time.time() - self.last_start.get(gpu, 0.0) < 120:   # a task that has just started is still loading: do not judge yet
+            return False
+        mean_util = sum(s[1] for s in recent) / len(recent)
+        free_gb = (recent[-1][3] - recent[-1][2]) / 1024
+        return mean_util < self.util_target and free_gb >= need_gb + 3.0
 
     def finish(self, name: str, rc: int) -> None:
         proc, gpu, t0 = self.running.pop(name)
@@ -116,7 +149,9 @@ class Campaign:
                 continue
             if t.needs_gpu:
                 if t.light:   # prefer a GPU that already carries light tasks (keeps whole GPUs free for the heavy ones), then an empty one
-                    fits = [g for g in self.gpus if load[g] and all(load[g]) and len(load[g]) < self.slots_per_gpu] or [g for g in self.gpus if not load[g]]
+                    # a GPU of light tasks takes another one while it has a free slot, or (up to --max-share) while it is measured below the utilisation target and has the memory
+                    fits = [g for g in self.gpus if load[g] and all(load[g]) and (len(load[g]) < self.slots_per_gpu or (len(load[g]) < self.max_share and self.underused(g, t.mem_gb)))] \
+                        or [g for g in self.gpus if not load[g]]
                 else:
                     fits = [g for g in self.gpus if not load[g]]
                 if fits:
@@ -170,6 +205,7 @@ class Campaign:
             if self.stop and not self.running:
                 print("stopped on request; finished tasks are kept, the rest rerun on resubmission", flush=True)
                 break
+            self.sample()
             if not self.stop:
                 self.schedule()
             self.gpu_log()
@@ -192,6 +228,8 @@ def main() -> int:
     ap.add_argument("--budget-hours", type=float, default=24.0, help="no task starts that would not finish inside this many hours from now")
     ap.add_argument("--cpu-slots", type=int, default=2, help="CPU-only tasks that may run next to the GPU tasks")
     ap.add_argument("--slots-per-gpu", type=int, default=1, help="light tasks (classifier members, logits) that may share one GPU; heavy tasks (training, tracking) always get a whole GPU")
+    ap.add_argument("--max-share", type=int, default=3, help="most light tasks on one GPU when it is measured below --util-target and has the memory")
+    ap.add_argument("--util-target", type=float, default=50.0, help="a GPU whose utilisation (mean of the last two minutes) is below this percentage may take one more light task")
     ap.add_argument("--smoke", action="store_true", help="tiny versions of every task, for testing the whole chain")
     ap.add_argument("--tasks-module", default="campaign_tasks")
     ap.add_argument("--only", default="", help="comma separated task names (their dependencies are included)")
@@ -216,7 +254,7 @@ def main() -> int:
             print(f"{t.name:44s} {'gpu' if t.needs_gpu else 'cpu'}  {t.minutes:7.0f} min  after: {', '.join(t.deps) or '-'}")
         print(f"{len(tasks)} tasks, about {total:.1f} GPU-hours, about {total / max(1, len(args.gpus.split(','))):.1f} hours on {len(args.gpus.split(','))} GPUs if the graph keeps them busy")
         return 0
-    c = Campaign(tasks, args.out, [g.strip() for g in args.gpus.split(",") if g.strip() != ""], args.cpu_slots, time.time() + args.budget_hours * 3600, args.slots_per_gpu)
+    c = Campaign(tasks, args.out, [g.strip() for g in args.gpus.split(",") if g.strip() != ""], args.cpu_slots, time.time() + args.budget_hours * 3600, args.slots_per_gpu, args.max_share, args.util_target)
     return c.run()
 
 

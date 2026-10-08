@@ -40,5 +40,9 @@ for g in ${CUDA_VISIBLE_DEVICES//,/ }; do CUDA_VISIBLE_DEVICES=$g $PY_MAIN -c "i
 $PY_MAIN scripts/campaign.py --out "$OUT" --smoke --slots-per-gpu 2 --budget-hours 0.8 --cpu-slots 1
 rc=$?
 echo "campaign exit code: $rc"
+# the utilisation-aware packing of the driver, inside this Slurm allocation: idle sleeper tasks (GPUs stay below 50%), so after two minutes each GPU must take more light tasks, up to 3, and a heavy task must never share one
+echo "== packing test"; nvidia-smi --query-gpu=index,uuid,utilization.gpu,memory.used,memory.total --format=csv,noheader
+$PY_MAIN scripts/campaign.py --out "$OUT/packtest" --slots-per-gpu 1 --max-share 3 --budget-hours 0.25 --tasks-module campaign_packtest
+echo "packing test exit code: $?"; tail -n 6 "$OUT/packtest/gpu_util.csv" 2>/dev/null
 sacct -j "${SLURM_JOB_ID:-0}" --format=JobID,Elapsed,MaxRSS,AveCPU,State -P 2>/dev/null | head -n 10 || true
 exit $rc

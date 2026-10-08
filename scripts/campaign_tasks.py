@@ -52,7 +52,7 @@ def build(cfg: dict, Task) -> list:
                                   f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt --sam2-config configs/sam2.1/sam2.1_hiera_l.yaml --init-masks {masks} "
                                   f"--error-cases-json {idx} --tmp-dir {tmp}/{tmpname}_{k} --frame-logits-out {tdir}/frames_shard{k}.npz --masks-out {tdir}/masks_shard{k}.pkl "
                                   f"--device cuda:0 --save-every 25 --data-root {dq} --out {tdir}/tracked_shard{k}.json",
-                                  deps=[dep], outputs=[f"{tdir}/frames_shard{k}.npz"], minutes=minutes / shards, priority=prio))
+                                  deps=[dep], outputs=[f"{tdir}/frames_shard{k}.npz"], minutes=minutes / shards, priority=prio, light=True, mem_gb=12))
         return out_tasks, [x.name for x in out_tasks]
 
     tasks = [Task("neighbours_test", f"{pre}{pyet} -u scripts/build_temporal_neighbors.py --json-split test --out-dir {nb_test} --sam-checkpoint {etck} --data-root {dq} "
@@ -70,17 +70,17 @@ def build(cfg: dict, Task) -> list:
             Task(f"{fold}_masks", f"{pre}{py3} -u scripts/gtbox_sam_masks_ensemble.py --split {fold}_test --sam2-weights {fo}/sam2/weights.pt --sam3-weights {fo}/sam3/weights.pt "
                  f"--sam2-checkpoint {ck}/sam2.1_hiera_large.pt {'--limit-frames 10 ' if smoke else ''}--data-root {dq} --out {fo}/masks_part0.pkl --device cuda:0 && "
                  f"{py3} scripts/merge_gtbox_mask_parts.py --parts {fo}/masks_part0.pkl --variant {fold} --out-dir {fo}/final", deps=[f"{fold}_sam2", f"{fold}_sam3"],
-                 outputs=[f"{fo}/final/masks.pkl"], minutes=t(0, 25), priority=6),
+                 outputs=[f"{fo}/final/masks.pkl"], minutes=t(0, 25), priority=6, light=True, mem_gb=14),
         ]
         for m, (minutes, prio) in MEMBERS.items():
             tasks.append(Task(f"{fold}_clf_{m}", f"{pre}{py} -u scripts/cv_pipeline.py clf-run --fold {fold} --member {m} --seed 42 --dir {fo}/clf --neighbours {neighbours} "
                               f"--data-root {dq} --epochs {1 if smoke else 20} --workers {workers} --python {py}", deps=["neighbours_test"], outputs=[f"{fo}/clf/{m}.ok"],
-                              minutes=t(minutes, minutes), priority=prio, light=True))
+                              minutes=t(minutes, minutes), priority=prio, light=True, mem_gb=6))
         tasks += [
             Task(f"{fold}_ens", f"{pre}{py} scripts/cv_pipeline.py ens-config --dir {fo}/clf --out {fo}/ens4.yaml", needs_gpu=False, deps=[f"{fold}_clf_{m}" for m in MEMBERS],
                  outputs=[f"{fo}/ens4.yaml"], minutes=1, priority=9),
             Task(f"{fold}_logits", f"{pre}{py} -u scripts/extract_logits_from_masks.py --masks {fo}/final/masks.pkl --ensemble-config {fo}/ens4.yaml --split {fold}_test --data-root {dq} "
-                 f"--device cuda:0 --out {fo}/final/logits.npz", deps=[f"{fold}_masks", f"{fold}_ens"], outputs=[f"{fo}/final/logits.npz"], minutes=t(0, 10), priority=6, light=True),
+                 f"--device cuda:0 --out {fo}/final/logits.npz", deps=[f"{fold}_masks", f"{fold}_ens"], outputs=[f"{fo}/final/logits.npz"], minutes=t(0, 10), priority=6, light=True, mem_gb=6),
             Task(f"{fold}_select", f"{pre}{py} scripts/cv_pipeline.py select --logits {fo}/final/logits.npz --frac 0.5 {'--max-instruments 6 ' if smoke else ''}--shards {shards} --out {fo}/final/track_idx.json",
                  needs_gpu=False, deps=[f"{fold}_logits"], outputs=[f"{fo}/final/track_idx.json"], minutes=1, priority=6),
         ]
