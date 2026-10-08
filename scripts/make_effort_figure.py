@@ -50,11 +50,11 @@ def main() -> None:
     best = [single] + [float(np.mean([G["seeds"][s]["curves"]["best possible"][k]["mIoU"] for s in seeds])) for k in keys]
     ax.plot([0] + shares, best, ls="--", color=INK, lw=0.9, label="best possible order", zorder=1)
     ax.axhline(single, color=MUTED, lw=0.6, ls="-")
-    ax.text(101, single, "single pass 83.5", fontsize=6.3, color=MUTED, va="center")
+    ax.text(101, single - 0.05, "single pass 83.5", fontsize=6.3, color=MUTED, va="top")
     ax.axhline(full, color=MUTED, lw=0.6, ls="-")
     ax.text(101, full, f"tracking all {full:.1f}", fontsize=6.3, color=MUTED, va="center")
     ax.axhline(tta, color=RED, lw=0.7, ls="-.")
-    ax.text(101, tta, f"21 augmented views of the keyframe, all {tta:.1f}", fontsize=6.3, color=RED, va="center")
+    ax.text(101, tta + 0.05, f"21 views, all {tta:.1f}", fontsize=6.3, color=RED, va="bottom")
     shares_tau = [float(x) for x in B.get("tau_shares", [])] if isinstance(B.get("tau_shares"), list) else []
     tau_point = B["estimates"]["gated (tau 1.7e-05)"]["three_seed_mean"]["mIoU"]["point"]
     ax.errorbar([44.9], [tau_point], xerr=[[44.9 - 42.4], [47.2 - 44.9]], fmt="*", color=INK, ms=8, capsize=2.5, lw=0.8, zorder=5)
@@ -66,8 +66,8 @@ def main() -> None:
     ax.grid(color="#e1e5ea", lw=0.5)
     top = ax.secondary_xaxis("top", functions=(lambda x: 2.95 + (28.53 - 2.95) * x / 100, lambda t: (t - 2.95) * 100 / (28.53 - 2.95)))
     top.set_xlabel("average TFLOPs per instrument", fontsize=7)
-    ax.legend(loc="lower right", fontsize=6.3, frameon=False, ncol=2, handlelength=1.8)
-    fig.subplots_adjust(left=0.09, right=0.74, top=0.86, bottom=0.14)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), fontsize=6.3, frameon=False, ncol=4, handlelength=1.8, columnspacing=1.2)
+    fig.subplots_adjust(left=0.09, right=0.80, top=0.86, bottom=0.27)
     args.out.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out / "fig3_effort.pdf")
     fig.savefig(args.out / "fig3_effort.png", dpi=200)
