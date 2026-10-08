@@ -27,6 +27,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from campaign_usage import UsageMonitor, split_name  # noqa: E402
+
 
 @dataclass
 class Task:
@@ -49,6 +51,7 @@ class Campaign:
         self.samples: dict[str, list[tuple[float, float, float, float]]] = {g: [] for g in gpus}   # per GPU: (time, utilisation %, memory used MiB, memory total MiB)
         self.last_sample = 0.0
         self.last_start: dict[str, float] = {}
+        self.usage = UsageMonitor(out)
         self.tasks = {t.name: t for t in tasks}
         assert len(self.tasks) == len(tasks), "duplicate task names"
         for t in tasks:
@@ -99,17 +102,35 @@ class Campaign:
         if time.time() - self.last_sample < 15:
             return
         self.last_sample = time.time()
+        latest: dict[str, tuple[float, float, float]] = {}
         try:
             res = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=20)
+            lines = res.stdout.strip().splitlines()
         except (OSError, subprocess.TimeoutExpired):
-            return
-        for line in res.stdout.strip().splitlines():
+            lines = []
+        for line in lines:
             try:
                 idx, util, used, total = [x.strip() for x in line.split(",")]
                 if idx in self.samples:
                     self.samples[idx] = (self.samples[idx] + [(time.time(), float(util), float(used), float(total))])[-20:]
+                    latest[idx] = (float(util), float(used), float(total))
             except ValueError:
                 continue
+        # the same readings, plus the processes of every running task, go to the usage monitor (scripts/campaign_usage.py)
+        self.usage.sample({n: (p.pid, g) for n, (p, g, _t) in self.running.items()}, latest)
+
+    def progress_block(self) -> str:
+        groups: dict[str, list] = {}
+        for t in self.tasks.values():
+            grp, stage = split_name(t.name)
+            d = groups.setdefault(grp, [0, 0, []])
+            d[1] += 1
+            d[0] += int(self.done(t))
+            if t.name in self.running:
+                d[2].append(stage)
+        info = [(n, g, (time.time() - t0) / 60, self.tasks[n].minutes) for n, (_p, g, t0) in self.running.items()]
+        pending = sum(t.minutes for t in self.tasks.values() if t.needs_gpu and not self.done(t))
+        return self.usage.progress({k: (v[0], v[1], v[2]) for k, v in groups.items()}, info, pending, len(self.gpus), sum(self.done(t) for t in self.tasks.values()), len(self.tasks))
 
     def underused(self, gpu: str, need_gb: float) -> bool:
         """True when this GPU's mean utilisation over the last two minutes is below the target and it has the memory (plus a 3 GB margin) for another task of need_gb."""
@@ -125,9 +146,10 @@ class Campaign:
         t = self.tasks[name]
         missing = [o for o in t.outputs if not Path(o).exists()]
         minutes = (time.time() - t0) / 60
+        usage_txt = self.usage.task_done(name, gpu, minutes * 60)
         if rc == 0 and not missing:
-            self.marker(t).write_text(json.dumps({"minutes": round(minutes, 1), "gpu": gpu, "finished": time.strftime("%F %T"), "cmd": t.cmd}))
-            print(f"[{time.strftime('%T')}] done   {name:42s} {minutes:6.1f} min", flush=True)
+            self.marker(t).write_text(json.dumps({"minutes": round(minutes, 1), "gpu": gpu, "finished": time.strftime("%F %T"), "cmd": t.cmd, "usage": usage_txt}))
+            print(f"[{time.strftime('%T')}] done   {name:42s} {minutes:6.1f} min | {usage_txt}", flush=True)
             return
         self.attempts[name] = self.attempts.get(name, 0) + 1
         why = f"exit {rc}" if rc != 0 else f"missing outputs {missing[:2]}"
@@ -210,6 +232,8 @@ class Campaign:
                 self.schedule()
             self.gpu_log()
             self.status()
+            if self.usage.due():
+                print(f"[{time.strftime('%T')}] " + self.progress_block(), flush=True)
             startable = [t for t in self.ready() if t.minutes * 60 * 1.15 <= self.deadline - time.time()]
             if not self.running and not startable:
                 break  # everything is done, failed, blocked, or too long for the time that is left
@@ -218,6 +242,9 @@ class Campaign:
         summary = {t.name: ("done" if self.done(t) else "failed" if t.name in self.failed else "blocked" if self.blocked(t) else "not started") for t in self.tasks.values()}
         (self.out / "campaign_summary.json").write_text(json.dumps(summary, indent=1))
         print(f"finished: {sum(v == 'done' for v in summary.values())} of {len(summary)} tasks done; not done: {skipped}", flush=True)
+        table = self.usage.final_table()
+        print(table, flush=True)
+        (self.out / "usage_final.txt").write_text(table + "\n")
         return 0 if not skipped else 1
 
 
