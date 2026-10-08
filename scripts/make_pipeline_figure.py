@@ -14,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 from matplotlib.patches import Circle, FancyBboxPatch, Polygon, Rectangle
 
 plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["Arial", "Liberation Sans", "DejaVu Sans"], "mathtext.fontset": "dejavusans",
@@ -47,7 +48,7 @@ def arrow(ax, p, q, color=INK, lw=0.7, dotted=False, rad=0.0):
 
 def thumb(ax, img, x, y, w, ec=INK, lw=0.6, z=3):
     h = w * img.shape[0] / img.shape[1]
-    ax.imshow(img, extent=(x, x + w, y, y + h), aspect="auto", zorder=z)
+    ax.imshow(img, extent=(x, x + w, y, y + h), aspect="auto", zorder=z, interpolation="lanczos")
     ax.add_patch(Rectangle((x, y), w, h, fc="none", ec=ec, lw=lw, zorder=z + 1))
     return h
 
@@ -70,7 +71,8 @@ def main() -> None:
     f1 = mpimg.imread(FIG_DIR / "f03a_sample_frame_1.png")[..., :3]
     f2 = mpimg.imread(FIG_DIR / "f03b_sample_frame_2.png")[..., :3]
     blue = (f1[..., 2] > f1[..., 0] + 0.12) & (f1[..., 2] > 0.45)
-    mask_img = np.repeat(blue[..., None].astype(float), 3, axis=2)
+    soft = gaussian_filter(blue.astype(float), 2.0)  # smooth edges so the mask does not look blocky when scaled
+    mask_img = np.repeat(np.clip((soft - 0.5) * 6 + 0.5, 0, 1)[..., None], 3, axis=2)
     out_img = f1.copy()
     out_img[blue] = 0.55 * out_img[blue] + 0.45 * np.array([0.30, 0.69, 0.31])  # recoloured mask in the output
 
@@ -101,18 +103,19 @@ def main() -> None:
 
     # (2) evidential ensemble
     container(ax, 50, 13, 81, 38, "(2) Evidential ensemble")
-    rbox(ax, 52, 16, 15, 20, GOLD_T, GOLD)
-    label(ax, 59.5, 18.6, "4 networks", size=5.8)
-    for i in range(4):
-        rbox(ax, 54, 21 + i * 3.5, 11, 2.7, "white", GOLD, lw=0.5, r=0.5)
-    arrow(ax, (46.5, 27), (52, 27))
-    arrow(ax, (67, 27), (70, 27))
-    for i, c in enumerate((GOLD, GOLD, GOLD)):
-        parallelogram(ax, 70.5, 18.5 + i * 3.6, 4.5, 2.6, GOLD, GOLD_T)
-    label(ax, 74, 31.5, r"belief $\mu$", size=5.4)
-    label(ax, 74, 34.3, r"class $\hat{y}$", size=5.4)
-    rbox(ax, 76.6, 20.5, 4, 8, "white", GOLD, lw=0.7, r=0.6)
-    label(ax, 78.6, 24.5, "$S$", size=7.5, weight="bold")
+    rbox(ax, 51.5, 16, 18.5, 20, GOLD_T, GOLD)
+    label(ax, 60.75, 18.4, "4 networks, one pass", size=4.9)
+    for i, name in enumerate(("ResNet-50, 320 px", "ResNet-50, 224 px", "MobileNetV3-S, stretch", "MobileNetV3-S, letterbox")):
+        rbox(ax, 52.5, 20.6 + i * 3.9, 16.5, 3.3, "white", GOLD, lw=0.5, r=0.5)
+        label(ax, 60.75, 22.25 + i * 3.9, name, size=3.9)
+    arrow(ax, (46.5, 27), (51.5, 27))
+    arrow(ax, (70, 27), (71.6, 27))
+    for i in range(3):
+        parallelogram(ax, 71.9, 18.5 + i * 3.6, 3.4, 2.6, GOLD, GOLD_T, skew=1.0)
+    label(ax, 74.2, 31.5, r"belief $\mu$", size=5.2)
+    label(ax, 74.2, 34.3, r"class $\hat{y}$", size=5.2)
+    rbox(ax, 77.4, 20.5, 3.2, 8, "white", GOLD, lw=0.7, r=0.6)
+    label(ax, 79.0, 24.5, "$S$", size=7.2, weight="bold")
 
     # (3) uncertainty gate
     container(ax, 83, 13, 100, 38, "(3) Uncertainty\ngate", align="r")
@@ -159,8 +162,8 @@ def main() -> None:
     label(ax, 112, 45.6, "keep the one-pass label", size=4.8, color=GREEN)
 
     fig.subplots_adjust(0.003, 0.003, 0.997, 0.997)
-    fig.savefig(args.out / "fig_pipeline.pdf")
-    fig.savefig(args.out / "fig_pipeline.png", dpi=200)
+    fig.savefig(args.out / "fig_pipeline.pdf", dpi=600)  # vector backends resample thumbnails at this dpi
+    fig.savefig(args.out / "fig_pipeline.png", dpi=300)
     print("wrote", args.out / "fig_pipeline.pdf")
 
 
