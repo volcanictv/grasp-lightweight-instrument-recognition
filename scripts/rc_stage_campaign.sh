@@ -36,8 +36,8 @@ cd ~/grasp_yolo26/experiments/temporal_neighbors && tar -cf - --transform="s,^,d
 cd "$R/frames-001/frames" && tar -chf - --transform="s,^,data/GraSP/frames-001/frames/," CASE*'
 
 say "streaming code, annotations, weights, neighbour crops and frames (one login: approve the Duo push on your phone)"
-{ git archive --format=tar --prefix="code_$COMMIT/" HEAD; ssh -o BatchMode=yes $SRC "$SRCSIDE"; } | ssh $DST "$REMOTE" | tee /tmp/rc_stage_cluster_report.txt
-rc=${PIPESTATUS[1]}
+{ git archive --format=tar --prefix="code_$COMMIT/" HEAD; ssh -o BatchMode=yes $SRC "$SRCSIDE"; } | dd bs=4M status=progress | ssh $DST "$REMOTE" | tee /tmp/rc_stage_cluster_report.txt   # dd prints the bytes streamed so far (about 15 GB in total)
+rc=${PIPESTATUS[2]}
 [ "$rc" -eq 0 ] || die "the transfer failed (exit $rc); nothing was retried"
 grep '^COUNT ' /tmp/rc_stage_cluster_report.txt | awk '{print $2, $3}' | sort > /tmp/rc_stage_cluster_counts.txt
 sort /tmp/rc_stage_titanxp_counts.txt | diff - /tmp/rc_stage_cluster_counts.txt && say "every case has the same file count on titanxp and the cluster: staging complete, code is in code_$COMMIT" || die "file counts differ (see the diff above)"
