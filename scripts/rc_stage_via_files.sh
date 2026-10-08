@@ -29,7 +29,7 @@ send)
   [ -f "$STAGE/commit.txt" ] || die "run the build step first"
   cd "$STAGE" || die "no $STAGE"
   say "one scp of $(ls *.tar | wc -l) tar files; approve the Duo push when asked"
-  scp -o ConnectTimeout=30 *.tar commit.txt counts_titanxp.txt "$DST":grasp_work_incoming/ || die "scp failed (no retry); if it says the directory does not exist, run: ssh $DST 'mkdir -p grasp_work_incoming' and then this step again"
+  scp -r -o ConnectTimeout=30 "$STAGE" "$DST":grasp_work_incoming || die "scp failed (no retry); if ~/grasp_work_incoming already exists on the cluster, scp would nest the folder: tell me before running it again"
   say "sent"; ;;
 unpack)
   ssh $DST 'set -e; W=$HOME/grasp_work; I=$HOME/grasp_work_incoming
