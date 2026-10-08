@@ -71,8 +71,7 @@ def main() -> None:
             cells.append(f"{f2(p)} [{f2(lo)}, {f2(hi)}]")
         put(f"num{key.capitalize()}Acc", f"{100 * acc[key]:.2f}", "instance accuracy, percent")
         rows1.append(f"{label} & " + " & ".join(cells) + f" & {100 * acc[key]:.2f}\\% \\\\")
-    tab1 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:main}\n  {\\caption{Main results on the GraSP test cases (5 cases, 1,125 frames, 2,861 instruments), mean over three classifier seeds; 95\\% case-bootstrap intervals in brackets. "
-            "All results use oracle ground-truth boxes. The gated threshold was selected during development on fold~1 with an earlier pipeline whose classifiers were trained on fold~2, and then applied unchanged to the final pipeline.}}\n"
+    tab1 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:main}\n  {\\caption{Main results on the 5 GraSP test cases (2,861 instruments), ground-truth boxes; 3-seed mean, 95\\% case-bootstrap intervals in brackets.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Method & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU & \\bfseries Inst.\\ acc.\\\\\n  \\midrule\n  "
             + "\n  ".join(rows1) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_main.tex").write_text(tab1, encoding="utf-8")
@@ -101,8 +100,7 @@ def main() -> None:
         put(f"numSaving{['Single', 'ShareGate', 'Gated', 'All'][i]}", "0" if i == 0 else f"{100 * (1 - g / full):.1f}")
     put("numGpuFrameStage", f3(GF["a100_seconds"]["single_pass_per_frame"]), "seconds per frame on an A100 (job 21823404)")
     put("numGpuRefinement", f3(GF["a100_seconds"]["refinement_per_instrument"]), "seconds per refined instrument on an A100")
-    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Compute per instrument, averaged over all test instruments (GFLOPs, one multiply-add counted as one FLOP). On an A100 the single-pass frame stage took about "
-            f"{GF['a100_seconds']['single_pass_per_frame']:.3f}\\,s and refinement about 6.087\\,s per refined instrument.}}}}\n"
+    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Compute per instrument, averaged over all test instruments (GFLOPs, multiply-add counted as one FLOP).}}}}\n"
             "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Policy & \\bfseries Refined share & \\bfseries GFLOPs/instrument & \\bfseries Saving vs.\\ refine-all\\\\\n  \\midrule\n  " + "\n  ".join(rows2)
             + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n").replace("}}}}", "}}")
     (O / "tables" / "tab_compute.tex").write_text(tab2, encoding="utf-8")
@@ -139,7 +137,7 @@ def main() -> None:
     for nm, key in (("S", "numBudgetS"), ("largest belief", "numBudgetBelief"), ("softmax max-prob", "numBudgetSoftmax"), ("random", "numBudgetRandom"), ("best possible", "numBudgetBest")):
         for sh, x in zip(shares, cur(nm)):
             put(f"{key}{SHARE_WORD[int(sh.rstrip('%'))]}", f"{x:.3f}", "mIoU at that share of instruments refined, 3-seed mean, gate_baselines.json")
-    tab3 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:budget}\n  {\\caption{Test mIoU when the given share of instruments (columns) is refined in the order of each score; 3-seed mean. The best possible ordering is an oracle (instruments whose label tracking fixes first).}}\n"
+    tab3 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:budget}\n  {\\caption{Test mIoU when the given share of instruments is refined in the order of each score; 3-seed mean. Best possible is an oracle.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{l" + "r" * len(shares) + "}\n  \\toprule\n  \\bfseries Ordering & " + " & ".join(f"\\bfseries {s.replace('%', chr(92) + '%')}" for s in shares)
             + "\\\\\n  \\midrule\n  " + "\n  ".join(rows3) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_budget_supp.tex").write_text(tab3, encoding="utf-8")
@@ -235,8 +233,7 @@ def main() -> None:
         put(f"numPaired{lab}Auroc", f"{a['point']:+.3f}")
         put(f"numPaired{lab}AurocLo", f"{a['ci95_cases'][0]:+.3f}")
         put(f"numPaired{lab}AurocHi", f"{a['ci95_cases'][1]:+.3f}")
-    tab5 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:uncertainty}\n  {\\caption{Error detection on the final test crops (2,861 instruments; 3 seeds, the 12-network rows pool the seeds). AUROC: separation of wrong from right single-pass labels. "
-            "Errors found: share of all errors among the 20\\% of instruments with the highest score. CE: cross-entropy members trained with the recipe of the evidential finals.}}\n"
+    tab5 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:uncertainty}\n  {\\caption{Error detection on the test crops. Found@20: share of errors among the 20\\% highest-scoring instruments. CE: cross-entropy members.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrr}\n  \\toprule\n  \\bfseries Method: score & \\bfseries Nets & \\bfseries Acc. & \\bfseries ECE & \\bfseries AUROC & \\bfseries Found@20\\\\\n  \\midrule\n  "
             + "\n  ".join(rows5) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_uncertainty_supp.tex").write_text(tab5, encoding="utf-8")
@@ -246,7 +243,7 @@ def main() -> None:
     for k in sorted(WIN, key=lambda x: int(x)):
         w = WIN[k]
         rows6.append(f"$\\pm{k}$ & {100 * w['mIoU']:.2f} & {100 * w['IoU']:.2f} & {100 * w['mcIoU']:.2f} \\\\")
-    tab6 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:window}\n  {\\caption{Tracking window: only the frames within $k$ of the keyframe are fused, for the 833 instruments with the highest $S_1$ (a fixed budget), mean of three seeds; $k=0$ is the single pass.}}\n"
+    tab6 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:window}\n  {\\caption{Tracking window $\\pm k$ frames for the 833 highest-$S_1$ instruments; 3-seed mean, $k=0$ is the single pass.}}\n"
             "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Window & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU\\\\\n  \\midrule\n  " + "\n  ".join(rows6) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_window_supp.tex").write_text(tab6, encoding="utf-8")
 
