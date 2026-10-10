@@ -50,6 +50,7 @@ def main() -> None:
     ap.add_argument("--perms", type=int, default=3)
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--save-frames", type=Path, default=None, help="directory for gate_frames_s<seed>.pkl: per-frame class IoUs of every (ordering, share) setting, for scripts/bootstrap_gate_curves.py")
     args = ap.parse_args()
     weights = CONFIGS["four"]
     ds = GraspRegionDataset(args.data_root, "test", letterbox=True)
@@ -67,12 +68,15 @@ def main() -> None:
         border[i] = x <= 2 or y <= 2 or x + w >= W - 2 or y + h >= H - 2
     rng = np.random.default_rng(0)
 
+    kept: dict = {}  # per-frame class IoUs of the last score() call, for --save-frames
+
     def score(pred: np.ndarray, conf: np.ndarray, done: np.ndarray) -> tuple[dict, dict]:
         res = []
         for f, ix in frames:
             shape = tuple(ds.instances[ix[0]][1]["size"])
             res.append(frame_class_ious(paint(shape, [(sam[i], int(pred[i]) + 1, float(conf[i])) for i in ix if done[i]]), gts[f]))
         out = aggregate(res)
+        kept["frames"] = [(f, r[0], r[1]) for (f, _ix), r in zip(frames, res)]
         return {k: 100 * float(out[k]) for k in ("mIoU", "IoU", "mcIoU")}, out.get("per_class_iou", {})
 
     report: dict = {"shares": args.shares, "seeds": {}}
@@ -96,8 +100,11 @@ def main() -> None:
             f = flag & usable
             return np.where(f, tpred, base), np.where(f, tconf, base_conf)
 
+        fl: dict[str, list] = {}  # per-frame class IoUs per setting (saved with --save-frames)
         single, per_class = score(base, base_conf, done)
+        fl["single"] = kept["frames"]
         full, _ = score(*labels(usable), done)
+        fl["refine_all"] = kept["frames"]
         # class prior: instruments predicted as the weakest classes (single-pass IoU, ascending) first, S inside a class
         weak_order = sorted(per_class, key=lambda c: per_class[c]) if per_class else list(range(1, 8))
         class_rank = {int(c) - 1: r for r, c in enumerate(weak_order)}
@@ -135,19 +142,24 @@ def main() -> None:
                 flag = np.zeros(len(y), bool)
                 flag[order[: int(round(sh * len(order)))]] = True
                 curves[name][f"{int(round(100 * sh))}%"] = score(*labels(flag), done)[0]
+                fl[f"{name}|{int(round(100 * sh))}%"] = kept["frames"]
             print(f"seed {seed} {name:22s}" + " ".join(f"{int(round(100 * s))}%={curves[name][f'{int(round(100 * s))}%']['mIoU']:.2f}" for s in args.shares), flush=True)
         perms = [rng.permutation(pool) for _ in range(args.perms)]
         curves["random"] = {}
         for sh in args.shares:
             runs = []
-            for p in perms:
+            for pi, p in enumerate(perms):
                 flag = np.zeros(len(y), bool)
                 flag[p[: int(round(sh * len(p)))]] = True
                 runs.append(score(*labels(flag), done)[0])
+                fl[f"random{pi}|{int(round(100 * sh))}%"] = kept["frames"]
             curves["random"][f"{int(round(100 * sh))}%"] = {k: float(np.mean([r[k] for r in runs])) for k in ("mIoU", "IoU", "mcIoU")}
         report["seeds"][str(seed)] = {"single": single, "refine_all": full, "curves": curves, "ce_signals_present": ce_path.exists()}
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(report, indent=1))
+        if args.save_frames:
+            args.save_frames.mkdir(parents=True, exist_ok=True)
+            (args.save_frames / f"gate_frames_s{seed}.pkl").write_bytes(pickle.dumps(fl))
     print("wrote", args.out)
 
 
