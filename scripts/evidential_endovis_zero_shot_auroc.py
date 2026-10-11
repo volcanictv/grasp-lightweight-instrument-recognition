@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path("/home/yzx/Desktop/Classification Surgurical Tools")
+ROOT = Path.home() / "Desktop/Classification Surgurical Tools"
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 import numpy as np

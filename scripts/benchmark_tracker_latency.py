@@ -70,7 +70,8 @@ def main() -> None:
     ap.add_argument("--error-cases-json", type=Path)
     ap.add_argument("--detections-cache", type=Path)
     ap.add_argument("--n-instances", type=int, default=20)
-    ap.add_argument("--window", type=int, default=10)
+    ap.add_argument("--window", type=int, default=10, help="frames each side (non-causal) or past frames (--causal; the causal pipeline uses 20)")
+    ap.add_argument("--causal", action="store_true", help="propagate backward from the keyframe only, over the past window: what a live system can do")
     ap.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
@@ -132,14 +133,15 @@ def main() -> None:
         from surgical_ai.data.region_dataset import GraspRegionDataset
         predictor = build_sam2_video_predictor(args.sam2_config, str(args.sam2_checkpoint), device=str(device))
         result["params_m"] = sum(p.numel() for p in predictor.parameters()) / 1e6
+        result["causal"], result["window"] = args.causal, args.window
         ds = GraspRegionDataset(args.data_root, args.split, letterbox=True)
         frames_root = args.data_root / "frames-001" / "frames"
         idx = [e["index"] for e in json.loads(args.error_cases_json.read_text())["errors"]][: args.n_instances]
-        tmp = Path("/tmp/bench_prop_frames")
+        tmp = Path(os.environ.get("BENCH_TMP", "/tmp/bench_prop_frames"))  # on a shared machine set BENCH_TMP to a private directory: this directory is deleted and recreated
         per_instance, per_frame = [], []
         for n, i in enumerate(idx):
             case, stem = ds.instances[i][0].split("/")
-            nums, c = build_track_frame_nums(frames_root, case, int(stem.replace(".jpg", "")), args.window)
+            nums, c = build_track_frame_nums(frames_root, case, int(stem.replace(".jpg", "")), args.window, 0 if args.causal else None)
             if tmp.exists():
                 shutil.rmtree(tmp)
             tmp.mkdir(parents=True)
@@ -150,8 +152,9 @@ def main() -> None:
             t0 = time.perf_counter()
             state = predictor.init_state(video_path=str(tmp))
             predictor.add_new_mask(state, frame_idx=c, obj_id=1, mask=gt)
-            for _ in predictor.propagate_in_video(state):
-                pass
+            if not args.causal:
+                for _ in predictor.propagate_in_video(state):
+                    pass
             for _ in predictor.propagate_in_video(state, reverse=True):
                 pass
             torch.cuda.synchronize(device)

@@ -7,7 +7,7 @@
 set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 LOG=experiments/final_arm.log
 say() { echo "[$(date +%H:%M:%S)] $*" | tee -a $LOG; }
 

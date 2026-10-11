@@ -10,7 +10,7 @@ VARIANT=${1:-finetuned}
 SEEDS="42 43 44"
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 ENS_TPL=${ENS_TPL:-configs/evidential/ens_E_official_s%s_lam0p01a10.yaml}  # %s = seed; the arm N run sets configs/arms/ens4_N_official_s%s.yaml
 ens() { printf "$ENS_TPL" "$1"; }
 D=experiments/gtbox_sam/$VARIANT

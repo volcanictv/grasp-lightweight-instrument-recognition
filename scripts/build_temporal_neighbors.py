@@ -46,7 +46,7 @@ def save_crop(frame: np.ndarray, mask: np.ndarray, path: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--json-split", required=True, choices=["train", "fold1", "fold2"])
+    ap.add_argument("--json-split", required=True, help="train, fold1, fold2, or test (for the cross-validation folds, whose training sets contain the official test cases); unknown names fail when the split is loaded")
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--sam-config", default="configs/edgetam.yaml")
     ap.add_argument("--sam-checkpoint", type=Path, default=Path.home() / "EdgeTAM" / "checkpoints" / "edgetam.pt")

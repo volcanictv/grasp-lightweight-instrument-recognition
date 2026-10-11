@@ -6,7 +6,7 @@
 set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 say "waiting for the gtft_ens pipeline"
 until [ -f experiments/gtbox_sam/gtft_ens/pipeline.done ] && [ -f experiments/latency.done ]; do sleep 120; done  # the latency suite needs idle GPUs first

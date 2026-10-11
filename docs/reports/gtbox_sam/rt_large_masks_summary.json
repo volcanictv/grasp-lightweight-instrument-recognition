@@ -1,0 +1,16 @@
+{
+ "variant": "gtft",
+ "instruments": 2861,
+ "mean_mask_iou": 0.8965060160686498,
+ "iou_ge_0.5": 0.9895141558895492,
+ "iou_ge_0.75": 0.9217056973086334,
+ "per_class_mean_iou": {
+  "Bipolar Forceps": 0.8878990009331452,
+  "Prograsp Forceps": 0.8012935810370846,
+  "Large Needle Driver": 0.9270008173204376,
+  "Monopolar Curved Scissors": 0.9464306923394978,
+  "Suction Instrument": 0.8558203763993354,
+  "Clip Applier": 0.8908769520643043,
+  "Laparoscopic Grasper": 0.839481806192652
+ }
+}

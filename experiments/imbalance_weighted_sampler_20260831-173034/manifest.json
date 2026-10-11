@@ -57,7 +57,7 @@
   "trainable_params": 1525031,
   "total_params": 1525031,
   "wall_clock_seconds": 169.30164289474487,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/imbalance_weighted_sampler_20260831-173034/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/imbalance_weighted_sampler_20260831-173034/best.pt",
   "final_metrics": {
     "mean_ap": 0.7136586434699109,
     "macro_f1": 0.6674835959367575,

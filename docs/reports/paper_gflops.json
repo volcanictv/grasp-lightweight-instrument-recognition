@@ -1,0 +1,42 @@
+{
+ "convention": "GFLOPs, one multiply-add counted as one FLOP (fvcore convention); matmul, convolution and attention only",
+ "instruments_per_frame": 2.543111111111111,
+ "stages_gflops": {
+  "SAM2.1-large, one pass": 913.237527552,
+  "SAM2.1-tiny, one pass": 148.025903616,
+  "SAM3, one pass": 2810.056035328,
+  "classifier, four members, one crop": 12.539246464,
+  "SAM2-large tracking, 21 frames": 25320.73536384,
+  "refinement of one instrument": 25584.059539584003
+ },
+ "params_m": {
+  "SAM2.1-large": 224.446642,
+  "SAM2.1-tiny": 38.962498,
+  "SAM3": 458.260369,
+  "classifier members": 50.094812
+ },
+ "single_pass_per_instrument": 2945.6967225776275,
+ "single_pass_per_frame": 7491.234065150748,
+ "tiny_segmenter_single_pass_per_instrument": 131.1706979580958,
+ "average": {
+  "29% refined": {
+   "share": 0.29,
+   "gflops": 10365.073989056988,
+   "saving_vs_all": 0.6366925152177361
+  },
+  "held-out threshold, 45% refined": {
+   "share": 0.45,
+   "gflops": 14458.523515390429,
+   "saving_vs_all": 0.493212511788387
+  },
+  "every instrument refined": {
+   "share": 1.0,
+   "gflops": 28529.75626216163,
+   "saving_vs_all": 0.0
+  }
+ },
+ "a100_seconds": {
+  "single_pass_per_frame": 1.2230876209191943,
+  "refinement_per_instrument": 6.086836964859126
+ }
+}

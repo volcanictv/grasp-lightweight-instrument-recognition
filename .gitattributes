@@ -1,0 +1,8 @@
+# Scripts and configs that run on Linux machines (titanxp, the RIT cluster) must keep Unix line endings in every checkout and in `git archive`
+# (core.autocrlf=true on the Windows laptop otherwise turns them into CRLF, which Slurm rejects and bash cannot run).
+*.sh text eol=lf
+*.sbatch text eol=lf
+*.py text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf

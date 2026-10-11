@@ -1,0 +1,40 @@
+{
+ "convention": "GFLOPs, one multiply-add counted as one FLOP (fvcore convention); matmul, convolution and attention only",
+ "sam2_large": {
+  "one_pass_one_box": 913.237527552,
+  "one_pass_three_boxes": 916.89323008,
+  "per_extra_box": 1.827851264000003,
+  "params_m": 224.446642
+ },
+ "sam2_tiny": {
+  "one_pass_one_box": 148.025903616,
+  "one_pass_three_boxes": 151.681606144,
+  "per_extra_box": 1.827851264000003,
+  "params_m": 38.962498
+ },
+ "classifier_members": {
+  "resnet50_320": {
+   "gflops": 8.341108736,
+   "params_m": 23.522375,
+   "image_size": 320
+  },
+  "resnet50_224": {
+   "gflops": 4.087150592,
+   "params_m": 23.522375,
+   "image_size": 224
+  },
+  "baseline": {
+   "gflops": 0.055493568,
+   "params_m": 1.525031,
+   "image_size": 224
+  },
+  "letterbox_crop": {
+   "gflops": 0.055493568,
+   "params_m": 1.525031,
+   "image_size": 224
+  }
+ },
+ "classifier_four_members": 12.539246464,
+ "sam2_large_tracking_21_frames": 25320.73536384,
+ "refined_instrument": 25584.059539584003
+}

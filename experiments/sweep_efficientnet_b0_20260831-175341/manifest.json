@@ -58,7 +58,7 @@
   "trainable_params": 4016515,
   "total_params": 4016515,
   "wall_clock_seconds": 299.77399158477783,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/sweep_efficientnet_b0_20260831-175341/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/sweep_efficientnet_b0_20260831-175341/best.pt",
   "final_metrics": {
     "mean_ap": 0.8081621200647638,
     "macro_f1": 0.7494024087101783,

@@ -1,0 +1,20 @@
+{
+ "stage": "propagate",
+ "device": "cuda:0",
+ "gpu": "NVIDIA A100-PCIE-40GB",
+ "params_m": 224.446642,
+ "causal": false,
+ "window": 10,
+ "per_instance": {
+  "n": 18,
+  "median_ms": 4824.539152963553,
+  "p95_ms": 4841.207380424021,
+  "mean_ms": 4818.220393570502
+ },
+ "per_propagated_frame": {
+  "n": 18,
+  "median_ms": 241.22695764817763,
+  "p95_ms": 242.06036902120104,
+  "mean_ms": 240.91101967852512
+ }
+}

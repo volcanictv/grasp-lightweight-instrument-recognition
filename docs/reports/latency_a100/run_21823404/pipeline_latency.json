@@ -1,0 +1,450 @@
+{
+ "rt_none/rt_539": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "none",
+  "causal": true,
+  "window": 20,
+  "tau": 0.0019063748186454177,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.0,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 213.36533689625665,
+   "median_ms": 209.04093299759552,
+   "p95_ms": 269.63797002099454,
+   "max_ms": 275.46451101079583
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "per_track_all_timed": {
+   "n": 0
+  }
+ },
+ "rt_none/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "none",
+  "causal": true,
+  "window": 20,
+  "tau": 0.000285,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.0,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 213.36533689625665,
+   "median_ms": 209.04093299759552,
+   "p95_ms": 269.63797002099454,
+   "max_ms": 275.46451101079583
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "per_track_all_timed": {
+   "n": 0
+  }
+ },
+ "rt_yolo/rt_539": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "yolo",
+  "causal": true,
+  "window": 20,
+  "tau": 0.0019063748186454177,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.1388888888888889,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 229.15825749514624,
+   "median_ms": 226.7356960219331,
+   "p95_ms": 282.20582008361816,
+   "max_ms": 312.18925793655217
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 361.1602006324877,
+   "median_ms": 252.47772398870438,
+   "p95_ms": 1168.6135940253735,
+   "max_ms": 1564.507756032981
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 494.0580004632163,
+   "median_ms": 253.95100499736145,
+   "p95_ms": 1215.9709229599684,
+   "max_ms": 2142.765191034414
+  },
+  "per_track_all_timed": {
+   "n": 72,
+   "mean_ms": 562.8472130516052,
+   "median_ms": 564.4770360086113,
+   "p95_ms": 1164.8992599220946,
+   "max_ms": 1261.5490250755101
+  }
+ },
+ "rt_yolo/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "yolo",
+  "causal": true,
+  "window": 20,
+  "tau": 0.000285,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.2638888888888889,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 229.15825749514624,
+   "median_ms": 226.7356960219331,
+   "p95_ms": 282.20582008361816,
+   "max_ms": 312.18925793655217
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 484.6604862686945,
+   "median_ms": 257.05074903089553,
+   "p95_ms": 1416.2931060418487,
+   "max_ms": 1976.066926959902
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 726.7299527612826,
+   "median_ms": 266.68115094071254,
+   "p95_ms": 1880.083114025183,
+   "max_ms": 3075.0497239641845
+  },
+  "per_track_all_timed": {
+   "n": 72,
+   "mean_ms": 562.8472130516052,
+   "median_ms": 564.4770360086113,
+   "p95_ms": 1164.8992599220946,
+   "max_ms": 1261.5490250755101
+  }
+ },
+ "rt_edgetam/rt_539": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.0019063748186454177,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.1388888888888889,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 546.3947500102222,
+   "median_ms": 215.56128293741494,
+   "p95_ms": 2584.030838101171,
+   "max_ms": 2889.868313097395
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 1000.1134314768327,
+   "median_ms": 216.53636795235798,
+   "p95_ms": 2817.4291549948975,
+   "max_ms": 5027.6153680169955
+  },
+  "per_track_all_timed": {
+   "n": 72,
+   "mean_ms": 2392.692050508534,
+   "median_ms": 2428.3747315057553,
+   "p95_ms": 2681.7125079687685,
+   "max_ms": 2788.540248060599
+  }
+ },
+ "rt_edgetam/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.000285,
+  "keyframes": 30,
+  "instruments": 72,
+  "gated_share": 0.2638888888888889,
+  "frame_stage": {
+   "n": 30,
+   "mean_ms": 200.84284000331536,
+   "median_ms": 199.5024470379576,
+   "p95_ms": 266.6277630487457,
+   "max_ms": 275.46451101079583
+  },
+  "own_track_latency_per_instrument": {
+   "n": 72,
+   "mean_ms": 833.3652429282665,
+   "median_ms": 217.67317946068943,
+   "p95_ms": 2770.099778077565,
+   "max_ms": 2889.868313097395
+  },
+  "queue_latency_per_keyframe": {
+   "n": 30,
+   "mean_ms": 1688.842614480139,
+   "median_ms": 255.32446755096316,
+   "p95_ms": 5222.520912997425,
+   "max_ms": 6852.617363096215
+  },
+  "per_track_all_timed": {
+   "n": 72,
+   "mean_ms": 2392.692050508534,
+   "median_ms": 2428.3747315057553,
+   "p95_ms": 2681.7125079687685,
+   "max_ms": 2788.540248060599
+  }
+ },
+ "causal_sam2/rt_539": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.0019063748186454177,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.1346153846153846,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 214.41051963483915,
+   "median_ms": 202.90833798935637,
+   "p95_ms": 266.77811797708273,
+   "max_ms": 443.30456596799195
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 1031.227956933435,
+   "median_ms": 225.31955054728314,
+   "p95_ms": 6235.628756927326,
+   "max_ms": 6434.4154129503295
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 2299.415159644559,
+   "median_ms": 225.31955054728314,
+   "p95_ms": 6237.793538020924,
+   "max_ms": 12315.451252041385
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 5892.949436083794,
+   "median_ms": 5921.572860504966,
+   "p95_ms": 6151.027624960989,
+   "max_ms": 6258.157203905284
+  }
+ },
+ "causal_sam2/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.000285,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.2692307692307692,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 214.41051963483915,
+   "median_ms": 202.90833798935637,
+   "p95_ms": 266.77811797708273,
+   "max_ms": 443.30456596799195
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 1788.2946977400793,
+   "median_ms": 258.0577185144648,
+   "p95_ms": 6237.793538020924,
+   "max_ms": 6434.4154129503295
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 4267.788685741834,
+   "median_ms": 261.52226846897975,
+   "p95_ms": 12318.021026090719,
+   "max_ms": 16354.89835194312
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 5892.949436083794,
+   "median_ms": 5921.572860504966,
+   "p95_ms": 6151.027624960989,
+   "max_ms": 6258.157203905284
+  }
+ },
+ "noncausal_final/final_833": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": false,
+  "window": 10,
+  "tau": 0.0001645160373300314,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.25,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 1199.779925897019,
+   "median_ms": 1150.7016110117547,
+   "p95_ms": 1473.5147469909862,
+   "max_ms": 1637.0036590378731
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 2744.7968621339755,
+   "median_ms": 1327.9807104845531,
+   "p95_ms": 7468.861588975415,
+   "max_ms": 8898.763368022628
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 5156.223953055451,
+   "median_ms": 4066.7028300231323,
+   "p95_ms": 14263.197044027038,
+   "max_ms": 18347.43209904991
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 6127.77998115948,
+   "median_ms": 6057.640243030619,
+   "p95_ms": 6623.26954503078,
+   "max_ms": 7261.759708984755
+  }
+ },
+ "noncausal_final/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": false,
+  "window": 10,
+  "tau": 0.000285,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.21153846153846154,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 1199.779925897019,
+   "median_ms": 1150.7016110117547,
+   "p95_ms": 1473.5147469909862,
+   "max_ms": 1637.0036590378731
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 2522.6653543829275,
+   "median_ms": 1323.4155509853736,
+   "p95_ms": 7468.861588975415,
+   "max_ms": 8898.763368022628
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 4578.682032902725,
+   "median_ms": 1394.3292130134068,
+   "p95_ms": 12415.183888981119,
+   "max_ms": 14263.197044027038
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 6127.77998115948,
+   "median_ms": 6057.640243030619,
+   "p95_ms": 6623.26954503078,
+   "max_ms": 7261.759708984755
+  }
+ },
+ "causal_final/final_833": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.0001645160373300314,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.25,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 1042.5234752940014,
+   "median_ms": 1041.1002324544825,
+   "p95_ms": 1104.684928082861,
+   "max_ms": 1106.6936909919605
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 2502.67554903985,
+   "median_ms": 1068.6880690045655,
+   "p95_ms": 7003.775167977437,
+   "max_ms": 7155.288652982563
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 4805.209470610134,
+   "median_ms": 3806.5072715398856,
+   "p95_ms": 12928.080681012943,
+   "max_ms": 18032.757468987256
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 5890.386649774602,
+   "median_ms": 5912.708036543336,
+   "p95_ms": 6127.31225695461,
+   "max_ms": 6164.257711963728
+  }
+ },
+ "causal_final/tau_fold1": {
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "tracker": "sam2",
+  "causal": true,
+  "window": 20,
+  "tau": 0.000285,
+  "keyframes": 20,
+  "instruments": 52,
+  "gated_share": 0.21153846153846154,
+  "frame_stage": {
+   "n": 20,
+   "mean_ms": 1042.5234752940014,
+   "median_ms": 1041.1002324544825,
+   "p95_ms": 1104.684928082861,
+   "max_ms": 1106.6936909919605
+  },
+  "own_track_latency_per_instrument": {
+   "n": 52,
+   "mean_ms": 2269.3794120009093,
+   "median_ms": 1068.6880690045655,
+   "p95_ms": 6953.5958509659395,
+   "max_ms": 7062.641030992381
+  },
+  "queue_latency_per_keyframe": {
+   "n": 20,
+   "mean_ms": 4198.6395143088885,
+   "median_ms": 1100.5864050239325,
+   "p95_ms": 11973.48546399735,
+   "max_ms": 12928.080681012943
+  },
+  "per_track_all_timed": {
+   "n": 52,
+   "mean_ms": 5890.386649774602,
+   "median_ms": 5912.708036543336,
+   "p95_ms": 6127.31225695461,
+   "max_ms": 6164.257711963728
+  }
+ }
+}

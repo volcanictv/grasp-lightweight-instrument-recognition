@@ -71,7 +71,7 @@ def main() -> None:
     ap.add_argument("--neighbour-dir", nargs="+", default=None, help="neighbour crops of the TRAINING cases (several dirs for official)")
     ap.add_argument("--yolo-neighbour-dir", nargs="+", default=None, help="YOLO-tracker neighbour crops of the training cases (arms Y, NY)")
     ap.add_argument("--data-root", type=Path, required=True)
-    ap.add_argument("--python", default="/home/yzx/miniconda3/envs/surgical/bin/python")
+    ap.add_argument("--python", default=str(Path.home() / "miniconda3/envs/surgical/bin/python"))
     ap.add_argument("--gpus", nargs="+", type=int, default=[0, 1])
     ap.add_argument("--members", nargs="+", default=MEMBERS, choices=list(mk.MEMBERS),
                     help="default: the three members of the training experiments; add resnet50_224 for the four-member evidential ensemble of the GT-box pipeline")

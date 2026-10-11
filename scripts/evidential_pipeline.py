@@ -22,7 +22,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import evidential_make_configs as mk
 
-PY = "/home/yzx/miniconda3/envs/surgical/bin/python"
+PY = str(Path.home() / "miniconda3/envs/surgical/bin/python")
 EXP = REPO_ROOT / "experiments"
 OUT = REPO_ROOT / "experiments_edl"
 GRID = [(0.01, 10), (0.1, 10), (1.0, 10), (0.142857, 0)]

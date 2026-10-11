@@ -7,7 +7,7 @@
 set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 YPY=$HOME/yolo26_venv/bin/python
 LOG=experiments/overnight_yolo_arms.log
 TN=experiments/temporal_neighbors

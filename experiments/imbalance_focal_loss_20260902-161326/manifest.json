@@ -59,7 +59,7 @@
   "trainable_params": 1525031,
   "total_params": 1525031,
   "wall_clock_seconds": 828.5757787227631,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/imbalance_focal_loss_20260902-161326/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/imbalance_focal_loss_20260902-161326/best.pt",
   "final_metrics": {
     "mean_ap": 0.7358793361235009,
     "macro_f1": 0.6770049497994773,

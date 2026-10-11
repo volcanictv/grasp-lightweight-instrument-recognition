@@ -1,0 +1,12 @@
+ok: checkpoints/sam2/sam2.1_hiera_tiny.pt
+ok: checkpoints/sam2/sam2.1_hiera_small.pt
+ok: checkpoints/sam2/sam2.1_hiera_large.pt
+ok: EdgeTAM/checkpoints/edgetam.pt
+ok: code/weights/evidential_armN_seed44/mobilenet_baseline.pt
+ok: code/weights/evidential_armN_seed44/mobilenet_letterbox.pt
+ok: code/weights/evidential_armN_seed44/resnet50_224.pt
+ok: code/weights/evidential_armN_seed44/resnet50_320.pt
+ok: weights_extra/yolo26s_official_last.pt
+ok: weights_ft/tiny_all8.pt
+ok: weights_ft/large_all8.pt
+ok: weights_ft/sam3_all8.pt

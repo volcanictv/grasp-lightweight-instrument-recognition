@@ -7,6 +7,7 @@ dataset authors; we only parse what they already produced.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -62,3 +63,24 @@ def resolve_train_val_split(config_split: str) -> tuple[str, str]:
             f"Unknown data.split '{config_split}'. Valid: {sorted(_TRAIN_VAL_SPLITS)}"
         )
     return _TRAIN_VAL_SPLITS[config_split]
+
+
+def _register_extra_splits() -> None:
+    """Case-level cross-validation folds (scripts/build_cv_splits.py) are registered from a JSON file named in GRASP_EXTRA_SPLITS.
+
+    The official splits above are never changed; the file adds names, e.g. {"splits": {"cv5_f0_test": "grasp_short-term_cv5_f0_test.json"},
+    "train_val": {"cv5_f0": ["cv5_f0_train", "cv5_f0_test"]}}. Without the variable nothing changes.
+    """
+    path = os.environ.get("GRASP_EXTRA_SPLITS")
+    if not path:
+        return
+    registry = json.loads(Path(path).read_text(encoding="utf-8"))
+    for name in registry.get("splits", {}):
+        if name in SHORT_TERM_SPLITS and name in ("train", "test", "fold1", "fold2"):
+            raise ValueError(f"extra split '{name}' would replace an official split")
+    SHORT_TERM_SPLITS.update(registry.get("splits", {}))
+    for name, pair in registry.get("train_val", {}).items():
+        _TRAIN_VAL_SPLITS[name] = (pair[0], pair[1])
+
+
+_register_extra_splits()

@@ -8,7 +8,7 @@
 set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 R=experiments/sam2_gtbox
 D=experiments/gtbox_sam/gtft
 say() { echo "[$(date +%H:%M:%S)] $*"; }

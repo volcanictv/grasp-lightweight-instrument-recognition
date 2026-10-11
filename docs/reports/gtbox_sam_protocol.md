@@ -134,3 +134,64 @@ While packaging the weights, the SAM3 delta (the tensors that differ from the ba
 - The SAM2 fine-tune is not affected: its own forward pass has no such decorator and its delta holds the decoder, prompt encoder, neck and last four Hiera blocks
   (169 tensors).
 - Not tested: whether really training the SAM3 encoder would help. The flag now prints a warning.
+
+## Addendum, 2026-10-05 (second): can the GT-box pipeline run in real time
+
+Fixed before any run of it. The PI direction parked the real-time goal on 2026-10-02; the user restarted it on 2026-10-05. Ground-truth boxes stay the input (a detector is out of scope).
+
+- Definition. Online and causal: one keyframe per second, only frames up to the current one, mean end-to-end latency at most 1.0 s per keyframe on one Titan Xp
+  (Pascal, no fast half precision; fp32 unless a stage is measured faster in another precision). Budget split: segmentation at most 0.5 s, classification and
+  overhead at most 0.15 s, tracking amortised at most 0.35 s per keyframe. Latency is measured per stage on 60 test frames (scripts/benchmark_gtbox_stage_latency.py)
+  and, for tracking, in a streaming replay. What a faster GPU would allow is not measured and is not claimed.
+- Rung S (segmenter speed). SAM2.1 small and tiny fine-tuned with the large model's dev recipe (fold2 training cases, last four Hiera blocks and neck unfrozen,
+  dev fold1, checkpoint chosen on fold1 mean mask IoU without flip). Reference: the large model's fold1 value for the same recipe (0.9059 without flip, 0.9086 with).
+  Rule: take the fastest variant whose fold1 no-flip mean IoU is within 0.005 of the large model's; if none qualifies, keep the large model. Flip averaging is used
+  only if the chosen segmenter with flip stays within the 0.5 s segmentation budget.
+- Rung A (no tracking). The chosen segmenter trained on all eight training cases with the same fixed schedule as the final run (last epoch, no checkpoint choice;
+  the all-case SAM2-large weights already exist), test masks, the arm N four-member evidential ensemble of seeds 42, 43 and 44 on those masks, no gate, no tracking.
+- Rung B (causal tracking). Rung A plus EdgeTAM tracking of the gated instruments over the past 20 frames only, initialised from the segmenter's mask, the
+  tracker, look-back and combine unchanged from the causal preregistration (docs/reports/causal_tracker_preregistration.md). Gate: the 539 most uncertain instruments
+  (19%, the budget of the fold1-chosen threshold) and the same threshold 2.85e-4 of that preregistration, both reported; nothing is tuned on test. Streaming
+  replay reports the amortised tracking time per keyframe.
+- Rung C (association fusion, no tracker). Each instrument's belief is fused with the beliefs of earlier instruments matched by box overlap in the previous k
+  keyframes, no ground-truth identity used. Settings (overlap threshold from {0.3, 0.5}, k from {3, 5, 10}) chosen on fold1 only with the fold2-trained members,
+  by the rule of the causal preregistration (highest fold1 accuracy, then the cheapest within 0.001). If fold1 shows no gain, rung C is reported as negative and not run on test.
+- Scoring. mIoU, IoU and mcIoU as in the final run (unclipped headline), three seeds, beside the non-causal final (87.37 / 86.22 / 78.33) and TAPIS. Every rung is
+  reported whatever the result. Segmenters are trained once, so the seed spread covers the classifier only. The oracle-box caveat applies to every row.
+
+## Addendum, 2026-10-06: YOLO26s as the causal tracker (rung B2), added after rung B
+
+Rung B used EdgeTAM only; the first addendum named no other tracker and YOLO was left out without a registered reason. The user asked for it, so it is run now,
+after the EdgeTAM scores were seen (disclosed: its settings are not chosen with that knowledge, they are the locked ones of the causal preregistration).
+
+- Rung B2: the rung A tiny + flip masks (all-case SAM2.1 tiny) and the arm N four-member ensemble of seeds 42, 43 and 44, as in rung B, with the YOLO26s-seg
+  tracker in place of EdgeTAM: official-split weights (experiments/yolo26_seg_official_20260930-131921/weights/last.pt), 15 past frames only, matching min-IoU 0.1,
+  coast 3, centre-frame fallback, conf 0.1, imgsz 640, the track started from the segmenter's mask. Gate: S1 >= 5.75e-4 (the YOLO tracker's fold1-chosen
+  threshold of the causal preregistration) and, separately, the 539 most uncertain. Nothing is tuned.
+- Reported beside rung B, whatever the result. Latency: YOLO per frame from docs/reports/causal_realtime/latency/yolo.json (10.5 ms median), matching on the CPU
+  measured in the run.
+
+## Addendum, 2026-10-06 (second): causal SAM2-large propagation
+
+Fixed before the run. The final pipeline tracks with SAM2-large over 10 frames on each side of the keyframe, which uses future frames. This run makes the propagation causal and measures what it costs.
+
+- Tracker: SAM2-large (the same checkpoint and configuration as the final run), propagated backward only from the keyframe over the 20 past frames (21 frames with the keyframe; `--causal --window 20` of scripts/evaluate_temporal_track_ensemble.py),
+  initialised from the segmenter's mask. The look-back of 20 matches rung B (EdgeTAM) so the two causal trackers are compared like for like. Classifier, evidential fusion and frame combine unchanged. No setting is tuned.
+- Two runs. (a) The final pipeline's masks (all-case SAM2 + SAM3 ensemble, arm N members, seeds 42, 43, 44): only the tracker changes from non-causal to causal, scored beside the non-causal final (87.37 / 86.22 / 78.33). (b) The real-time pipeline's masks (SAM2-tiny with flip, rung A) with SAM2-large in place of EdgeTAM, scored beside rung B.
+- Gates, both reported: the 539 most uncertain instruments, S1 >= 2.85e-4 (the causal preregistration's threshold), and for run (a) also the 833 most uncertain (the final run's headline budget). Tracks are made once for the union over the three seeds of the instruments any of these gates selects.
+- Scoring as in the final run (mIoU, IoU, mcIoU, unclipped headline, three seeds). Reported whatever the result. SAM2-large's cost is unchanged (about 21 frames per tracked instrument), so this run answers accuracy, not speed.
+
+## Addendum, 2026-10-07: story change, the static-box control, and an exploratory fusion analysis (written before either result is seen)
+
+- Why. The paper now leads with evidence-gated multi-frame refinement and treats the causal (past frames only) pipeline as a deployment note. The track-stability analysis (docs/reports/realtime/track_stability.json) found that among the instruments fixed by tracking the median instrument keeps only 1 to 1.5 consecutive frames with mask overlap, so "tracking" may be a misnomer for what the gain really is.
+- Control (new, registered here). For every instrument the registered final runs track (experiments/gtbox_sam/final/tracked_causal_sam2/idx.json), the keyframe's own mask and given box are applied unchanged to the neighbouring frames, with no propagation. The four members of each of the three classifier seeds classify those crops. Windows: the past 20 frames (causal) and 10 frames each side (non-causal). Fusion, gate, budgets (tau 2.85e-4, top 539, top 833) and scoring are exactly those of scripts/gtbox_sam_final_eval.py. Script: scripts/static_mask_control.py. Reported whatever the result, next to the tracked rows. Reading: if the static rows recover most of the gain, the gain is multi-view evidence and the text says "multi-frame fusion"; if they recover little, the tracker matters.
+- Exploratory (labelled as such, scored on the test cases only, never replacing the registered headline). scripts/explore_causal_fusion.py re-scores the causal final run from its saved per-frame logits under four fusion rules (registered, evidence summed over frames, plain mean of frame vectors, keyframe counted twice) and with the three classifier seeds pooled into one 12-member ensemble. All variants are reported; none is selected here. A pooled ensemble is a different (three times larger) classifier and would be reported as such with its cost.
+- Box clipping stays an oracle-box variant (the given boxes are the tight extent of the ground-truth masks). It is reported in the appendix only and is never used to claim a win over TAPIS, which finds its own boxes.
+- Not run yet. A two-fold cross-validated end-to-end run on fold1 and fold2 to compare with Table 10 of the GraSP paper (ISINet, QPD Mask DINO, TAPIS Frame and Full in R50 and Swin-L). It needs a classifier ensemble and a SAM2 segmenter trained on each fold, SAM2 only (no SAM3), a single classifier seed, and about 7 hours on the two Titan Xp GPUs; to be registered with its own addendum when approved.
+
+## Addendum, 2026-10-07 (second): refining every instrument, to measure the effort curve to 100% and to compare gating signals (written before the run)
+
+- Why. The paper's effort curve stops at 42% of the instruments (1,2xx tracked), so "the share of the gain recovered of refining all" and the saving against refining all are extrapolations, and softmax, evidential and random gates cannot be compared on real refinement outcomes. This run tracks the remaining instruments.
+- Run. Every instrument of the official test split with a non-empty final mask that is not already in experiments/gtbox_sam/final/tracked (the union of the registered final run) is tracked exactly as in the registered final run: SAM2.1-large (sam2.1_hiera_large.pt) propagating the final pipeline's SAM2 + SAM3 mask over the 10 frames on each side of the keyframe, the arm N members of seed 42 classifying the propagated frames, then the saved masks re-classified with the members of seeds 43 and 44. Outputs in experiments/gtbox_sam/final/tracked_rest, tracked_rest_s43, tracked_rest_s44; the existing tracked directories are not changed. Script: scripts/run_refine_all.sh.
+- Analysis (CPU, after the run, reported whatever the result). With tracks for every instrument: (1) the accuracy and the three scores when every instrument is refined, and the share of that gain recovered by refining 19%, 29% and 31%; (2) for each gating signal, the gain as a function of the share refined: evidential epistemic S1 (the registered gate), one minus the largest belief, the entropy of the belief, and a random order (mean of 100 permutations), plus the best possible gate; (3) the time saved against refining all from the measured cost per tracked instrument. Softmax-confidence and MC-dropout gates need the cross-entropy members on the test crops and are a separate step.
+- No configuration is chosen from this run: the operating point and the threshold of the main results are unchanged.

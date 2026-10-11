@@ -58,7 +58,7 @@
   "trainable_params": 4210999,
   "total_params": 4210999,
   "wall_clock_seconds": 222.07929062843323,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/sweep_mobilenet_v3_large_20260831-174946/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/sweep_mobilenet_v3_large_20260831-174946/best.pt",
   "final_metrics": {
     "mean_ap": 0.8093352245566365,
     "macro_f1": 0.7536918113427783,

@@ -55,7 +55,7 @@
   "trainable_params": 41107511,
   "total_params": 41329911,
   "wall_clock_seconds": 13233.18753194809,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_resnet50_weighted_loss_20260901-005514/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/detection_resnet50_weighted_loss_20260901-005514/best.pt",
   "final_metrics": {
     "map50": 0.7998137610067924,
     "map50_95": 0.5873069619361226,

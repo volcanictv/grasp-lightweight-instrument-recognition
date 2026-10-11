@@ -58,7 +58,7 @@
   "trainable_params": 2102401,
   "total_params": 2102401,
   "wall_clock_seconds": 3827.1846783161163,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/segmentation_cosine_lr_20260901-054549/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/segmentation_cosine_lr_20260901-054549/best.pt",
   "final_metrics": {
     "miou": 0.320873489794712,
     "mean_dice": 0.4600600451670317,

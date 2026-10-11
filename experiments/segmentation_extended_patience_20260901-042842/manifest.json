@@ -57,7 +57,7 @@
   "trainable_params": 2102401,
   "total_params": 2102401,
   "wall_clock_seconds": 4422.549483060837,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/segmentation_extended_patience_20260901-042842/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/segmentation_extended_patience_20260901-042842/best.pt",
   "final_metrics": {
     "miou": 0.3194326049027581,
     "mean_dice": 0.45970384582523477,
