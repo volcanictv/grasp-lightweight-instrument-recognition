@@ -58,7 +58,7 @@
   "trainable_params": 23522375,
   "total_params": 23522375,
   "wall_clock_seconds": 2587.540008544922,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/region_letterbox_resnet50_20260902-225519/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/region_letterbox_resnet50_20260902-225519/best.pt",
   "final_metrics": {
     "accuracy": 0.9136665501572877,
     "macro_f1": 0.8704998726334788,

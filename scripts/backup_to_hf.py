@@ -5,7 +5,7 @@ because it holds GraSP-derived crops and masks and the internal decision log. Re
 
 Usage:
     titanxp (repo root):  python scripts/backup_to_hf.py titanxp --repo AryanB005/grasp-pipeline-backup
-    laptop (any folder):  python scripts/backup_to_hf.py docs --docs-dir "C:/Users/aryan/Classification Surgurical Tools/docs" --repo AryanB005/grasp-pipeline-backup
+    laptop (any folder):  python scripts/backup_to_hf.py docs --docs-dir "<laptop-home>/Classification Surgurical Tools/docs" --repo AryanB005/grasp-pipeline-backup
 """
 from __future__ import annotations
 

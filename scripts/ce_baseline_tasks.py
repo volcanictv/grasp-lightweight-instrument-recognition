@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 MEMBERS = {"resnet50_320": 50, "resnet50_224": 30, "baseline": 15, "letterbox_crop": 15}   # estimated minutes on a Titan Xp
-PY = os.environ.get("PY_MAIN", "/home/yzx/miniconda3/envs/surgical/bin/python")
+PY = os.environ.get("PY_MAIN", str(Path.home() / "miniconda3/envs/surgical/bin/python"))
 
 
 def build(cfg: dict, Task) -> list:

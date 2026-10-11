@@ -33,11 +33,11 @@
   "seed": 42,
   "split_files": {
     "fold2": {
-      "path": "C:\\Users\\aryan\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold2.json",
+      "path": "C:\\Users\\<user>\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold2.json",
       "sha256": "05720a1edafa7f7d571c5fda0c9d9c82d734765f306c2e0313ba9d13b4c564aa"
     },
     "fold1": {
-      "path": "C:\\Users\\aryan\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold1.json",
+      "path": "C:\\Users\\<user>\\Classification Surgurical Tools\\GraSp\\annotations\\grasp_short-term_fold1.json",
       "sha256": "7301b6ee9c2a8ea5e511800b6adf19c8bc43345827d832aa2018d09935255cbc"
     }
   },
@@ -57,7 +57,7 @@
   "trainable_params": 23522375,
   "total_params": 23522375,
   "wall_clock_seconds": 4612.57390666008,
-  "best_checkpoint": "C:\\Users\\aryan\\Classification Surgurical Tools\\experiments\\region_letterbox_resnet50_320_fold1_20260905-084615\\best.pt",
+  "best_checkpoint": "C:\\Users\\<user>\\Classification Surgurical Tools\\experiments\\region_letterbox_resnet50_320_fold1_20260905-084615\\best.pt",
   "final_metrics": {
     "accuracy": 0.9146831530139103,
     "macro_f1": 0.8661090671280718,

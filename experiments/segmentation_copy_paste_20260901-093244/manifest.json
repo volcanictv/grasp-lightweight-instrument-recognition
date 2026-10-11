@@ -67,7 +67,7 @@
   "trainable_params": 2102401,
   "total_params": 2102401,
   "wall_clock_seconds": 3661.5737376213074,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/segmentation_copy_paste_20260901-093244/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/segmentation_copy_paste_20260901-093244/best.pt",
   "final_metrics": {
     "miou": 0.30926537936656484,
     "mean_dice": 0.4447396527693682,

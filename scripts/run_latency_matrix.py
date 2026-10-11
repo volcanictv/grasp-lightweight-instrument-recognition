@@ -5,8 +5,8 @@ set so about 13% of instruments fire; pass the threshold measured on the referen
 compared on identical work) and allgated (gate 0, the worst case).
 
 Usage (laptop, from the repo root):
-    python scripts/run_latency_matrix.py --segment C:/Users/aryan/bench/segment --yolo-weights C:/Users/aryan/bench/yolo26s_official_last.pt \\
-        --edgetam-repo C:/Users/aryan/bench/EdgeTAM --sam2-repo C:/Users/aryan/bench/sam2 --tau13 2.7642995387644804e-05 \\
+    python scripts/run_latency_matrix.py --segment <laptop-home>/bench/segment --yolo-weights <laptop-home>/bench/yolo26s_official_last.pt \\
+        --edgetam-repo <laptop-home>/bench/EdgeTAM --sam2-repo <laptop-home>/bench/sam2 --tau13 2.7642995387644804e-05 \\
         --out-dir experiments/rt_latency_laptop
 """
 from __future__ import annotations

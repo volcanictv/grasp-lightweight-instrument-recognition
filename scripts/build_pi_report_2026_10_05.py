@@ -1,7 +1,7 @@
 """Builds the PI report page. Every number below comes from a result file or a logged result (see the source line at the bottom of the page)."""
 from pathlib import Path
 
-OUT = Path(r"C:\Users\aryan\.claude\jobs\02cd3b07\tmp\pi_report.html")
+OUT = Path.home() / "pi_report.html"
 
 # ---------- chart 1: headline dot plot, shared axis ----------
 AX_MIN, AX_MAX = 74.0, 90.0

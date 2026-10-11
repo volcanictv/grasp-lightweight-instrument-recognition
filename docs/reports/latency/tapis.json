@@ -1,6 +1,6 @@
 {
  "gpu": "NVIDIA TITAN Xp",
- "frame": "/home/yzx/Desktop/Classification Surgurical Tools/GraSP/frames-001/frames/CASE002/05381.jpg",
+ "frame": "/home/<user>/Desktop/Classification Surgurical Tools/GraSP/frames-001/frames/CASE002/05381.jpg",
  "frame_hw": [
   800,
   1280

@@ -1,5 +1,5 @@
 # Pushes the repo's paper/ folder to the Overleaf project through Overleaf's git bridge.
-# The token is read from the DPAPI-encrypted file under C:\Users\aryan\.secrets (see the credentials note), used only for this process's
+# The token is read from the DPAPI-encrypted file under $env:USERPROFILE\.secrets, used only for this process's
 # Authorization header, and never written to a file, a remote URL or the output.
 #
 # Usage:  powershell -File scripts/overleaf_sync.ps1 -Message "intro: tighten the contributions"
@@ -11,9 +11,9 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $repoPaper = Join-Path (Split-Path $PSScriptRoot -Parent) "paper"
-$work = "C:\Users\aryan\.claude\jobs\02cd3b07\tmp\overleaf_repo"
+$work = Join-Path $env:TEMP "overleaf_repo"
 
-$s = Get-Content "C:\Users\aryan\.secrets\overleaf_git_token.dpapi" | ConvertTo-SecureString
+$s = Get-Content (Join-Path $env:USERPROFILE ".secrets\overleaf_git_token.dpapi") | ConvertTo-SecureString
 $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)
 $tok = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b)
 [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b)
@@ -38,6 +38,6 @@ Get-ChildItem $repoPaper -Exclude "README.md", "build" | Copy-Item -Destination 
 & git add -A
 & git diff --cached --quiet
 if ($LASTEXITCODE -eq 0) { "nothing to push"; exit 0 }
-& git -c user.name="Aryan Bhatta" -c user.email="ab1340@rit.edu" commit -q -m $Message
+& git -c user.name="paper sync" -c user.email="noreply@users.noreply.github.com" commit -q -m $Message
 G push origin HEAD:main
 "pushed: $Message"

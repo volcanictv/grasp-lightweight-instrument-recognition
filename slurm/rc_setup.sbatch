@@ -11,7 +11,8 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=24g
 #SBATCH --time=0-00:30:00
-#SBATCH --mail-user=slack:@ab1340
+#SBATCH --mail-user=slack:@YOUR_RC_USERNAME
+# YOUR_RC_USERNAME is a placeholder: submit with  sbatch --mail-user=slack:@<your RC username> ...  (the command line overrides this line)
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err

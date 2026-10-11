@@ -6,7 +6,7 @@ set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
 export MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=1048576 MALLOC_TRIM_THRESHOLD_=1048576
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 D=experiments/gtbox_sam/final
 ens() { echo configs/arms/ens4_N_official_s$1.yaml; }
 say() { echo "[$(date +%H:%M:%S)] $*"; }

@@ -5,7 +5,7 @@ set -uo pipefail
 GPU=${1:-1}
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 D=experiments/gtbox_sam/final
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 say "classifying the neighbouring frames"

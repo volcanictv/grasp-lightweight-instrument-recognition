@@ -4,7 +4,7 @@
 set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 until [ "$(ls ~/ce_campaign/*.ok 2>/dev/null | wc -l)" -ge 12 ]; do sleep 60; done
 say "all 12 baseline members trained; extracting test-crop logits"

@@ -57,7 +57,7 @@
   "trainable_params": 1525031,
   "total_params": 1525031,
   "wall_clock_seconds": 1377.464313030243,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/region_baseline_fold1_20260903-015022/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/region_baseline_fold1_20260903-015022/best.pt",
   "final_metrics": {
     "accuracy": 0.8574961360123647,
     "macro_f1": 0.8180536469015746,

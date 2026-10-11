@@ -3,7 +3,7 @@
 Inputs (all 3-seed means on the five official test cases unless stated): docs/reports/gtbox_sam/{bootstrap_heldout_row,tta_vs_tracking,gate_baselines,baselines_on_test,final_3seed,final_static_noncausal_3seed}.json,
 docs/reports/paper_gflops.json, docs/reports/refine_all_analysis.json, reviewer_check_window.json (window sweep).
 
-    python scripts/make_paper_skeleton.py --evidence C:/Users/aryan/paper_sandbox/evidence --out C:/Users/aryan/paper_sandbox/paper_v5_skeleton
+    python scripts/make_paper_skeleton.py --evidence <laptop-home>/paper_sandbox/evidence --out <laptop-home>/paper_sandbox/paper_v5_skeleton
 """
 from __future__ import annotations
 

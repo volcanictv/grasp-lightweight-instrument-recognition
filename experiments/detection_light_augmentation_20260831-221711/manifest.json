@@ -52,7 +52,7 @@
   "trainable_params": 18902083,
   "total_params": 18960979,
   "wall_clock_seconds": 3129.0923280715942,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_light_augmentation_20260831-221711/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/detection_light_augmentation_20260831-221711/best.pt",
   "final_metrics": {
     "map50": 0.8039770079860734,
     "map50_95": 0.5979598341621237,

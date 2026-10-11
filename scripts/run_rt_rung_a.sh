@@ -7,7 +7,7 @@ set -uo pipefail
 VARIANT=$1; WEIGHTS=$2; CKPT=$3; CFG=$4; GPU=${5:-0}
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 D=experiments/gtbox_sam/$VARIANT
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 mkdir -p $D $D/empty_tracks docs/reports/gtbox_sam

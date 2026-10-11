@@ -58,7 +58,7 @@
   "trainable_params": 11180103,
   "total_params": 11180103,
   "wall_clock_seconds": 205.46205401420593,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/sweep_resnet18_20260831-175902/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/sweep_resnet18_20260831-175902/best.pt",
   "final_metrics": {
     "mean_ap": 0.7979009252960705,
     "macro_f1": 0.7400115841204459,

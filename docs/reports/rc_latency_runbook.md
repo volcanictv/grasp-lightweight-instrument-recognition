@@ -12,18 +12,18 @@ Whole pipelines, decoded frame to final label, 32 test keyframes with full 20-pa
 ## Steps (you run these; I never see the passphrase or the token)
 
 1. **Check the batch files without running anything** (after step 2): `sbatch --test-only code/slurm/rc_setup.sbatch` and the same for `rc_latency.sbatch`. This validates account, partition and resources only. Also `sinfo -s` to confirm the CPU partition name used in `rc_setup.sbatch` (`sporc-cpu`); edit the `#SBATCH --partition` line if it differs.
-2. Login from PowerShell: `ssh ab1340@sporcsubmit.rc.rit.edu`, then
+2. Login from PowerShell: `ssh <user>@<cluster-login-host>`, then
    `mkdir -p ~/grasp_work/logs ~/grasp_work/weights_extra ~/grasp_work/weights_ft && git clone --depth 1 --branch realtime-gtbox https://github.com/volcanictv/grasp-lightweight-instrument-recognition ~/grasp_work/code`
 3. From the laptop (PowerShell), through titanxp, 118 MB bundle, 23 MB YOLO weights, 2.8 GB fine-tuned segmenters:
-   `scp -r titanxp:~/rc_bundle/subset3 .\rc_bundle`, then `scp -r .\rc_bundle ab1340@sporcsubmit.rc.rit.edu:~/grasp_work/bundle`
-   `scp titanxp:~/rc_dry/weights_extra/yolo26s_official_last.pt .`, then `scp yolo26s_official_last.pt ab1340@sporcsubmit.rc.rit.edu:~/grasp_work/weights_extra/`
-   `scp titanxp:~/grasp_yolo26/experiments/sam2_gtbox/tiny_all8/weights.pt tiny_all8.pt`, `scp titanxp:~/grasp_yolo26/experiments/sam2_gtbox/final_all8/weights.pt large_all8.pt`, `scp titanxp:~/grasp_yolo26/experiments/sam3/final_all8/weights.pt sam3_all8.pt`, then `scp tiny_all8.pt large_all8.pt sam3_all8.pt ab1340@sporcsubmit.rc.rit.edu:~/grasp_work/weights_ft/`
+   `scp -r titanxp:~/rc_bundle/subset3 .\rc_bundle`, then `scp -r .\rc_bundle <user>@<cluster-login-host>:~/grasp_work/bundle`
+   `scp titanxp:~/rc_dry/weights_extra/yolo26s_official_last.pt .`, then `scp yolo26s_official_last.pt <user>@<cluster-login-host>:~/grasp_work/weights_extra/`
+   `scp titanxp:~/grasp_yolo26/experiments/sam2_gtbox/tiny_all8/weights.pt tiny_all8.pt`, `scp titanxp:~/grasp_yolo26/experiments/sam2_gtbox/final_all8/weights.pt large_all8.pt`, `scp titanxp:~/grasp_yolo26/experiments/sam3/final_all8/weights.pt sam3_all8.pt`, then `scp tiny_all8.pt large_all8.pt sam3_all8.pt <user>@<cluster-login-host>:~/grasp_work/weights_ft/`
 4. SAM3 token (gated model). On the cluster, a read-only fine-grained token from huggingface.co/settings/tokens:
    `umask 077; read -rsp "token: " t; printf %s "$t" > ~/grasp_work/.hf_token; unset t`
    The setup job reads it once, downloads `facebook/sam3` into `~/grasp_work/hf_cache`, and deletes the file. Revoke the token on Hugging Face afterwards.
 5. `cd ~/grasp_work && sbatch code/slurm/rc_setup.sbatch` (CPU only, about 20 to 40 minutes). Slack pings at start and end. Then `tail logs/grasp-setup_*.out`: it must end with "setup done" and list `ok:` for every file. Anything `missing` or `DIFFERENT` is fixed before step 6.
 6. `cd ~/grasp_work && sbatch code/slurm/rc_latency.sbatch` (one A100, onboard partition). Slack pings. Results in `~/grasp_work/results/run_<jobid>/`, headline file `pipeline_latency.json`.
-7. Copy the results off the cluster (no backups there): `scp -r ab1340@sporcsubmit.rc.rit.edu:~/grasp_work/results/run_<jobid> docs\reports\latency_a100\`
+7. Copy the results off the cluster (no backups there): `scp -r <user>@<cluster-login-host>:~/grasp_work/results/run_<jobid> docs\reports\latency_a100\`
 
 ## Caveats stated in the paper
 A100-PCIE-40GB (not SXM), PyTorch 2.8.0 (CUDA 12.6 build, as on the Titan Xp), no custom CUDA extension for SAM2 (as on the Titan Xp), frame copying into the video-predictor folder excluded, bundle frames read from local disk. EdgeTAM's pipeline is assembled from two processes (its masks and gate come from `p1`).

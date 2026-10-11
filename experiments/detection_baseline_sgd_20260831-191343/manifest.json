@@ -50,7 +50,7 @@
   "trainable_params": 18902083,
   "total_params": 18960979,
   "wall_clock_seconds": 2747.914692401886,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/detection_baseline_sgd_20260831-191343/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/detection_baseline_sgd_20260831-191343/best.pt",
   "final_metrics": {
     "map50": 0.8229536134549456,
     "map50_95": 0.603520206079526,

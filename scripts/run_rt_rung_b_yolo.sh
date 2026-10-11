@@ -7,7 +7,7 @@ set -uo pipefail
 VARIANT=$1; GPU=${2:-0}
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 YPY=$HOME/yolo26_venv/bin/python
 W=experiments/yolo26_seg_official_20260930-131921/weights/last.pt
 D=experiments/gtbox_sam/$VARIANT

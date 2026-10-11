@@ -58,7 +58,7 @@
   "trainable_params": 1525031,
   "total_params": 1525031,
   "wall_clock_seconds": 2828.4819872379303,
-  "best_checkpoint": "/home/yzx/Desktop/Classification Surgurical Tools/experiments/region_letterbox_crop_320_20260902-225403/best.pt",
+  "best_checkpoint": "/home/<user>/Desktop/Classification Surgurical Tools/experiments/region_letterbox_crop_320_20260902-225403/best.pt",
   "final_metrics": {
     "accuracy": 0.858790632645928,
     "macro_f1": 0.8174563183415542,

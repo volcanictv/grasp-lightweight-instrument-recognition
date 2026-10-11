@@ -6,7 +6,7 @@ set -uo pipefail
 VARIANT=$1; GPU=${2:-0}
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
-PY=/home/yzx/miniconda3/envs/surgical/bin/python
+PY=$HOME/miniconda3/envs/surgical/bin/python
 D=experiments/gtbox_sam/$VARIANT
 T=$D/tracked_causal_sam2
 say() { echo "[$(date +%H:%M:%S)] $*"; }

@@ -7,7 +7,7 @@ set -uo pipefail
 cd ~/grasp_yolo26
 export GRASP_DATA_ROOT="$HOME/Desktop/Classification Surgurical Tools/GraSP"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-SURG=/home/yzx/miniconda3/envs/surgical/bin/python
+SURG=$HOME/miniconda3/envs/surgical/bin/python
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 
 $SURG -u scripts/finetune_sam2_gtbox.py --train-split train --dev-split fold1 --fixed-epochs 5 --unfreeze-blocks 4 \
