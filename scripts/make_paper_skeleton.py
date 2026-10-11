@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import matplotlib
@@ -47,6 +48,11 @@ def main() -> None:
     BHR, TTA, GB, BT = J("gtbox_sam/bootstrap_heldout_row.json"), J("gtbox_sam/tta_vs_tracking.json"), J("gtbox_sam/gate_baselines.json"), J("gtbox_sam/baselines_on_test.json")
     F3S, STAT, GF, RA = J("gtbox_sam/final_3seed.json"), J("gtbox_sam/final_static_noncausal_3seed.json"), J("paper_gflops.json"), J("refine_all_analysis.json")
     WIN = J("titanxp_extra/reviewer_check_window.json")
+    top_m = 100 * WIN["10"]["mIoU"]
+    CVD = E / "campaign_cv5"
+    CV = [json.loads((CVD / f"score_f{k}.json").read_text()) for k in range(5)]
+    CVW = {w: [json.loads((CVD / f"score_f{k}_w{w}.json").read_text()) for k in range(5)] for w in (2, 3, 5)}
+    CVS, CVF = J("campaign_cv5/cv_share_at_tau.json"), J("campaign_cv5/fold_cases.json")
     seeds = sorted(GB["seeds"])
     est = BHR["estimates"]
     CFG = {"single": "single pass", "tau": "gated (tau 1.7e-05)", "all": "gated (top 2861)"}
@@ -89,22 +95,25 @@ def main() -> None:
             put(f"num{tag}{m}Lo", f"{d['ci95_case'][0]:+.2f}")
             put(f"num{tag}{m}Hi", f"{d['ci95_case'][1]:+.2f}")
 
-    # ---- Table 2: compute ----
+    # ---- Table 2: compute and mIoU at each operating point ----
     av = GF["average"]
-    comp = [("Single pass", "0\\%", GF["single_pass_per_instrument"], None),
-            ("Selective refinement", "29\\%", av["29% refined"]["gflops"], None), ("Gated operating point", "45\\%", av["held-out threshold, 45% refined"]["gflops"], None),
-            ("Temporal refinement of every instrument", "100\\%", av["every instrument refined"]["gflops"], None)]
+    miou_of = {"single": est[CFG["single"]]["three_seed_mean"]["mIoU"]["point"], "tau": est[CFG["tau"]]["three_seed_mean"]["mIoU"]["point"], "all": est[CFG["all"]]["three_seed_mean"]["mIoU"]["point"]}
+    comp = [("Single pass", "0\\%", GF["single_pass_per_instrument"], miou_of["single"]),
+            ("$S_1$ top-ranked budget", "29\\%", av["29% refined"]["gflops"], top_m),
+            (r"Fixed-threshold gate, $\tau=1.7\times10^{-5}$", "45\\%", av["held-out threshold, 45% refined"]["gflops"], miou_of["tau"]),
+            ("Temporal refinement of every instrument", "100\\%", av["every instrument refined"]["gflops"], miou_of["all"])]
     full = comp[-1][2]
     rows2 = []
-    for i, (name, share, g, _x) in enumerate(comp):
+    for i, (name, share, g, mi) in enumerate(comp):
         sav = "--" if i == 0 else f"{100 * (1 - g / full):.1f}\\%"
-        rows2.append((HL if name.startswith("Gated") else "") + f"{name} & {share} & {g:,.1f} & {sav} \\\\".replace(",", "{,}"))
+        gflops = f"{g:,.1f}".replace(",", "{,}")
+        rows2.append((HL if i == 1 else "") + f"{name} & {share} & {mi:.2f} & {gflops} & {sav} \\\\")
         put(f"numGflops{['Single', 'ShareGate', 'Gated', 'All'][i]}", f"{g:,.1f}".replace(",", "{,}"), "GFLOPs per instrument, multiply-add convention")
         put(f"numSaving{['Single', 'ShareGate', 'Gated', 'All'][i]}", "0" if i == 0 else f"{100 * (1 - g / full):.1f}")
     put("numGpuFrameStage", f3(GF["a100_seconds"]["single_pass_per_frame"]), "seconds per frame on an A100 (job 21823404)")
     put("numGpuRefinement", f3(GF["a100_seconds"]["refinement_per_instrument"]), "seconds per refined instrument on an A100")
-    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Compute per instrument, averaged over all test instruments (GFLOPs, multiply-add counted as one FLOP).}}}}\n"
-            "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Policy & \\bfseries Refined share & \\bfseries GFLOPs/instrument & \\bfseries Saving vs.\\ refine-all\\\\\n  \\midrule\n  " + "\n  ".join(rows2)
+    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Test mIoU and compute at each operating point (GFLOPs per instrument, multiply-add counted as one FLOP).}}}}\n"
+            "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Policy & \\bfseries Refined & \\bfseries mIoU & \\bfseries GFLOPs & \\bfseries Saving vs.\\ all\\\\\n  \\midrule\n  " + "\n  ".join(rows2)
             + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n").replace("}}}}", "}}")
     (O / "tables" / "tab_compute.tex").write_text(tab2, encoding="utf-8")
 
@@ -118,9 +127,55 @@ def main() -> None:
     put("numTrackMinusTtaTauHi", f"{d13['ci95_case'][1]:+.2f}")
     put("numTtaGainAll", f"{P['TTA all']['mIoU'] - P['single']['mIoU']:+.2f}", "TTA minus single pass, mIoU")
     put("numTrackGainAll", f"{P['tracking all']['mIoU'] - P['single']['mIoU']:+.2f}")
+    put("numTtaGainTau", f"{P['TTA at tau']['mIoU'] - P['single']['mIoU']:+.2f}", "TTA at the gated instruments minus single pass, mIoU (matched to the gated tracking gain)")
+    put("numTrackGainTau", f"{P['tracking at tau']['mIoU'] - P['single']['mIoU']:+.2f}", "gated tracking minus single pass, mIoU")
     put("numTtaFractionG", f"{TTA['g']['on all instruments']['mIoU']['point']:.3f}", "g = TTA gain / tracking gain, all instruments")
+    put("numTopBudgetMiou", f2(top_m), "S1 top-833 budget (29.1% of 2,861 instruments), 3-seed mean mIoU, window +-10 (reviewer_check_window.json; the budget was chosen on test data)")
+    put("numTopBudgetShare", f"{100 * 833 / 2861:.1f}", "833 of 2,861 instruments")
     sn = STAT["configs"]["gated (tau 2.8e-04)"]["mIoU"]["mean"]
     put("numStaticMiou", f"{100 * sn:.3f}", "static non-causal control at its stored threshold tau = 2.8e-4 (a matched static result at tau 1.7e-5 does not exist)")
+
+    # ---- five-fold case-level cross-validation (the 23 h cluster campaign), fixed tau; folds are single runs, sd is over the 5 folds ----
+    TAUK = "gated (tau 1.7e-05)"
+    tops = lambda x: sorted([k for k in x if re.fullmatch(r"gated \(top \d+\)", k)], key=lambda k: int(re.findall(r"\d+", k)[0]))
+    cvv = lambda x, k, m: 100 * x[k][m]
+    cv_single = np.array([[cvv(x, "single pass", m) for m in M] + [cvv(x, "single pass", "instance_accuracy")] for x in CV])
+    cv_tau = np.array([[cvv(x, TAUK, m) for m in M] + [cvv(x, TAUK, "instance_accuracy")] for x in CV])
+    cv_gain = cv_tau - cv_single
+    sd = lambda a: float(np.std(a, ddof=1))
+    cv_n = [x["instruments"] for x in CV]
+    cv_share = [CVS["folds"][str(k)]["share"] for k in range(5)]
+    cv_budget = np.array([[100 * (x[tops(x)[j]]["mIoU"] - x["single pass"]["mIoU"]) for x in CV] for j in range(5)])  # 5 budgets x 5 folds
+    cv_budget_share = [10, 20, 29, 40, 50]
+    cv_win = {w: np.array([100 * (x[TAUK]["mIoU"] - x["single pass"]["mIoU"]) for x in CVW[w]]) for w in (2, 3, 5)}
+    cv_win[10] = cv_gain[:, 0]
+    cv_win_miou = {w: float(np.mean([100 * x[TAUK]["mIoU"] for x in CVW[w]])) for w in (2, 3, 5)}
+    cv_win_miou[10] = float(cv_tau[:, 0].mean())
+    src = "five-fold case-level CV, campaign_cv5 (single runs per fold; sd across folds, not an interval)"
+    put("numCvInstruments", f"{sum(cv_n):,}".replace(",", "{,}"), "instruments over the 13 cases")
+    put("numCvSingle", f2(cv_single[:, 0].mean()), src)
+    put("numCvSingleSd", f2(sd(cv_single[:, 0])))
+    put("numCvGated", f2(cv_tau[:, 0].mean()))
+    put("numCvGatedSd", f2(sd(cv_tau[:, 0])))
+    put("numCvGain", f"{cv_gain[:, 0].mean():+.2f}", "mean over folds of the per-fold gated-minus-single mIoU")
+    put("numCvGainSd", f2(sd(cv_gain[:, 0])), "sd of the five per-fold gains, not a confidence interval")
+    put("numCvGainMin", f"{cv_gain[:, 0].min():+.2f}")
+    put("numCvGainMax", f"{cv_gain[:, 0].max():+.2f}")
+    for k, nm in enumerate(("Zero", "One", "Two", "Three", "Four")):
+        put(f"numCvGainFold{nm}", f"{cv_gain[k, 0]:+.2f}", "per-fold mIoU gain, gated minus single pass")
+    put("numCvMcSingle", f2(cv_single[:, 2].mean()))
+    put("numCvMcGated", f2(cv_tau[:, 2].mean()))
+    put("numCvMcGain", f"{cv_gain[:, 2].mean():+.1f}")
+    put("numCvAccSingle", f2(cv_single[:, 3].mean()))
+    put("numCvAccGated", f2(cv_tau[:, 3].mean()))
+    put("numCvShareMin", f"{100 * min(cv_share):.1f}", "share of instruments with S1 >= tau, recomputed from the stored member logits (reproduces the 45% of the official test: 47.2, 45.2, 42.4 for the three seeds); not stored by the campaign")
+    put("numCvShareMax", f"{100 * max(cv_share):.1f}")
+    put("numCvShareMean", f"{100 * float(np.mean(cv_share)):.1f}")
+    for w, nm in ((2, "Two"), (3, "Three"), (5, "Five"), (10, "Ten")):
+        put(f"numCvWin{nm}Gain", f"{cv_win[w].mean():+.2f}", "mean mIoU gain over single pass at the fixed threshold")
+        put(f"numCvWin{nm}Miou", f2(cv_win_miou[w]))
+    for j, nm in enumerate(("Ten", "Twenty", "TwentyNine", "Forty", "Fifty")):
+        put(f"numCvBudget{nm}", f"{cv_budget[j].mean():+.2f}", "mean mIoU gain over single pass across the five folds, S1 ranking")
 
     # ---- Fig 1 budget curve numbers ----
     shares = [f"{int(round(100 * s))}%" for s in GB["shares"]]
@@ -145,23 +200,36 @@ def main() -> None:
             + "\\\\\n  \\midrule\n  " + "\n  ".join(rows3) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_budget_supp.tex").write_text(tab3, encoding="utf-8")
 
-    # ---- Fig 1 ----
-    fig, ax = plt.subplots(figsize=(5.2, 3.0))
+    # ---- Fig 1: (a) official-test effort curve, (b) cross-validation effort curve ----
+    fig, (ax, axb) = plt.subplots(1, 2, figsize=(6.6, 3.0), gridspec_kw={"width_ratios": [1.25, 1]})
     xs = [0] + [int(s.rstrip("%")) for s in shares]
     for name, label, color, ls, marker in lines:
         ax.plot(xs, [single_m] + cur(name), ls=ls, color=color, marker=marker, ms=3.5, lw=1.5 if name != "random" else 1.0, label=label)
     best = cur("best possible")
     ax.plot(xs[1:], best, ls="--", color=INK, lw=0.9, label="Best possible")
     ax.axhline(full_m, color=MUTED, lw=0.6)
-    ax.text(101, full_m, f"refine all {full_m:.1f}", fontsize=6.5, color=MUTED, va="center")
+    ax.text(2, full_m + 0.15, f"refine all {full_m:.1f}", fontsize=6, color=MUTED, va="bottom")
     ax.axhline(single_m, color=MUTED, lw=0.6)
-    ax.text(101, single_m, f"single pass {single_m:.1f}", fontsize=6.5, color=MUTED, va="center")
+    ax.text(98, single_m + 0.12, f"single pass {single_m:.1f}", fontsize=6, color=MUTED, va="bottom", ha="right")
     ax.set_xlim(0, 100)
-    ax.set_xlabel("fraction of instrument instances refined (%)")
+    ax.set_xlabel("instruments refined (%)")
     ax.set_ylabel("test mIoU")
+    ax.set_title("(a) Official test cases", fontsize=7.5, loc="left")
     ax.grid(color="#e1e5ea", lw=0.5)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), fontsize=6.5, frameon=False, ncol=3, columnspacing=1.2)
-    fig.subplots_adjust(left=0.1, right=0.80, top=0.97, bottom=0.27)
+    h, l = ax.get_legend_handles_labels()
+    xcv = [0] + cv_budget_share
+    for k in range(5):
+        axb.plot(xcv, [0] + cv_budget[:, k].tolist(), color="#b0b7c3", lw=0.8, marker="o", ms=2, zorder=2, label="single fold" if k == 0 else None)
+    axb.plot(xcv, [0] + cv_budget.mean(axis=1).tolist(), color=ACCENT, lw=1.8, marker="o", ms=3.5, zorder=3, label="mean of 5 folds ($S_1$)")
+    axb.axhline(0, color=MUTED, lw=0.6)
+    axb.set_xlim(0, 52)
+    axb.set_xlabel("instruments refined (%)")
+    axb.set_ylabel("mIoU gain over single pass (points)")
+    axb.set_title("(b) Five-fold CV, held-out folds", fontsize=7.5, loc="left")
+    axb.grid(color="#e1e5ea", lw=0.5)
+    hb, lb = axb.get_legend_handles_labels()
+    fig.legend(h + hb, l + lb, loc="lower center", fontsize=6.3, frameon=False, ncol=4, columnspacing=1.0, bbox_to_anchor=(0.5, 0.0))
+    fig.subplots_adjust(left=0.08, right=0.99, top=0.92, bottom=0.30, wspace=0.28)
     fig.savefig(O / "figures" / "fig1_budget.pdf")
     plt.close(fig)
 
@@ -264,6 +332,32 @@ def main() -> None:
             "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Case left out & \\bfseries Single pass & \\bfseries Gated $\\tau$ & \\bfseries Refine-all & \\bfseries Gated $-$ single\\\\\n  \\midrule\n  "
             + "\n  ".join(rows7) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_loco_supp.tex").write_text(tab7, encoding="utf-8")
+
+    # ---- Supplement: cross-validation tables ----
+    test_cases = set(CVF["official_test_cases"])
+    rows8 = []
+    for k in range(5):
+        cs = ", ".join(c.replace("CASE", "") + ("$^{T}$" if c in test_cases else "") for c in CVF["folds"][str(k)]["held_out"])
+        rows8.append(f"{k} & {cs} & {cv_n[k]:,} & {cv_single[k, 0]:.2f} & {cv_tau[k, 0]:.2f} & {cv_gain[k, 0]:+.2f} & {100 * cv_share[k]:.1f}\\% \\\\".replace(",", "{,}", 1) if False else
+                    f"{k} & {cs} & {cv_n[k]:,} & {cv_single[k, 0]:.2f} & {cv_tau[k, 0]:.2f} & {cv_gain[k, 0]:+.2f} & {100 * cv_share[k]:.1f}\\% \\\\")
+    rows8.append("\\midrule")
+    rows8.append(f"Mean $\\pm$ sd & & {sum(cv_n):,} & {cv_single[:, 0].mean():.2f} $\\pm$ {sd(cv_single[:, 0]):.2f} & {cv_tau[:, 0].mean():.2f} $\\pm$ {sd(cv_tau[:, 0]):.2f} & {cv_gain[:, 0].mean():+.2f} $\\pm$ {sd(cv_gain[:, 0]):.2f} & {100 * float(np.mean(cv_share)):.1f}\\% \\\\")
+    rows8 = [r.replace(f"{cv_n[0]:,}", f"{cv_n[0]:,}") for r in rows8]
+    tab8 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cv}\n  {\\caption{Five-fold case-level CV, fixed $\\tau$. $^{T}$: official test case. $\\pm$ is the sd across folds, not an interval. Refined share recomputed from stored logits.}}\n"
+            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{llrrrrr}\n  \\toprule\n  \\bfseries Fold & \\bfseries Held-out cases & \\bfseries Inst. & \\bfseries Single & \\bfseries Gated & \\bfseries Gain & \\bfseries Refined\\\\\n  \\midrule\n  "
+            + "\n  ".join(rows8) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    (O / "tables" / "tab_cv_supp.tex").write_text(tab8.replace("1{,}", "1,").replace(f"{cv_n[0]:,}".replace(",", "{,}"), f"{cv_n[0]:,}"), encoding="utf-8")
+    rows9 = [(HL if w == 10 else "") + f"$\\pm{w}$ & {cv_win_miou[w]:.2f} & {cv_win[w].mean():+.2f} & " + " & ".join(f"{g:+.2f}" for g in cv_win[w]) + " \\\\" for w in (2, 3, 5, 10)]
+    tab9 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvwindow}\n  {\\caption{Tracking window in the five-fold CV at the fixed threshold: mean gated mIoU and mIoU gain over single pass, then the gain in each fold.}}\n"
+            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrrrr}\n  \\toprule\n  \\bfseries Window & \\bfseries mIoU & \\bfseries Gain & \\bfseries F0 & \\bfseries F1 & \\bfseries F2 & \\bfseries F3 & \\bfseries F4\\\\\n  \\midrule\n  "
+            + "\n  ".join(rows9) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    (O / "tables" / "tab_cvwindow_supp.tex").write_text(tab9, encoding="utf-8")
+    rows10 = [f"{cv_budget_share[j]}\\% & " + " & ".join(f"{g:+.2f}" for g in cv_budget[j]) + f" & {cv_budget[j].mean():+.2f} \\\\" for j in range(5)]
+    rows10.append(f"$\\tau$ ({100 * float(np.mean(cv_share)):.0f}\\% on average) & " + " & ".join(f"{g:+.2f}" for g in cv_gain[:, 0]) + f" & {cv_gain[:, 0].mean():+.2f} \\\\")
+    tab10 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvbudget}\n  {\\caption{Five-fold CV effort curve: mIoU gain over single pass when the top share of each fold's instruments by $S_1$ is refined.}}\n"
+             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrrr}\n  \\toprule\n  \\bfseries Share & \\bfseries F0 & \\bfseries F1 & \\bfseries F2 & \\bfseries F3 & \\bfseries F4 & \\bfseries Mean\\\\\n  \\midrule\n  "
+             + "\n  ".join(rows10) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    (O / "tables" / "tab_cvbudget_supp.tex").write_text(tab10, encoding="utf-8")
 
     # ---- numbers.tex ----
     header = ("% Locked numbers, generated by scripts/make_paper_skeleton.py from the result files. Use these macros in the text so a number is never typed twice.\n"
