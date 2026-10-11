@@ -68,3 +68,36 @@ Refine-all: not available for these checkpoint sets (only the 50% highest-S1 ins
 - Evaluation fractions land 28.9 to 35.5% for a 30% target: the dev to evaluation shift in score distribution is visible.
 - Label flips are only known inside the tracked top-50%-by-S1 set; instruments outside it were never tracked. S1 is not better than the maximum-belief comparator here (identical outputs).
 - Recipe-level exposure remains: the ensemble weights were set on test cases, the segmenter schedule, ensemble and flip rule on fold1, and the 30% budget is motivated by earlier test-set work. This is a follow-up evaluation, not a prospective one.
+
+## Reporting pass (CPU only, thresholds unchanged; `scripts/gate_report.py`, `gate_report.json`, `gate_per_case.csv`)
+
+`evaluate` was re-run once to dump frame-level outputs; `gate_evaluation.json` came out byte-identical to the committed one.
+
+**Seeds.** Task 2 uses exactly one classifier seed (42) per fold, four independently trained fold checkpoint sets (cv5_f0 to cv5_f3) with the default segmenter seed. There is no seed averaging; the three-seed description belongs to Task 1 only.
+
+**Per evaluation case** (S1 gate; the max-belief gate has the same gains, its fractions are in `gate_per_case.csv`):
+
+| Fold | Eval case (n) | Calibration cases (n) | S1 threshold | Eval refined | Single mIoU | Gated mIoU | Gain |
+|---|---|---|---|---|---|---|---|
+| cv5_f0 | 050 (1,055) | 007 (567) | 3.54e-06 | 31.9% | 84.84 | 86.69 | +1.85 |
+| cv5_f1 | 047 (445) | 021 (958) | 1.05e-05 | 37.5% | 85.76 | 87.07 | +1.31 |
+| cv5_f1 | 053 (579) | 021 (958) | 1.05e-05 | 30.2% | 87.60 | 89.35 | +1.75 |
+| cv5_f2 | 041 (588) | 003 + 014 (1,436) | 1.97e-05 | 34.5% | 83.95 | 87.60 | +3.64 |
+| cv5_f3 | 051 (194) | 001 + 015 (1,602) | 3.23e-05 | 30.9% | 88.97 | 89.27 | +0.30 |
+
+Folds 0 and 1 calibrate on a single held-out case (567 and 958 instruments); per-case refinement fractions range 30.2 to 37.5%.
+
+**Why the gates agree.** Full-precision pooled metrics are bit-identical (mIoU 87.69301624652212, IoU 86.67685678335285, mcIoU 77.92778230621755; maximum absolute difference 0.0; 0 of 1,125 frames differ in any class IoU). The selections are not identical: of 975 instruments selected by either gate, 918 are selected by both, 23 only by S1, 34 only by max belief (Jaccard 0.92 to 0.95 per fold). Final labels differ for 0 instruments in every fold, so the differing refinements all leave the prediction unchanged; identical outputs are legitimate, not a bug.
+
+**Pooling.** The pooled numbers are computed from all 1,125 evaluation frames of the five cases in one pool (the repository's `aggregate`, reproduced by the vectorised bootstrap metrics to 1e-12), not by averaging fold values. An equal-weight mean of the four fold values would give different numbers (single 86.15, S1 87.99 mIoU) because small folds would count as much as large ones; the frame pool (85.67, 87.69) is the reported one.
+
+**Paired case bootstrap** (gated minus single pass, points; whole cases resampled with replacement, B = 10,000, baseline and gated on the same resample; only 126 distinct resamples exist with five cases, so the interval is coarse). S1 and max belief give the same values:
+
+| Metric | Gain | 95% interval |
+|---|---|---|
+| mIoU | +2.02 | 1.27 to 2.86 |
+| IoU | +2.79 | 1.74 to 3.79 |
+| mcIoU | +6.15 | 3.73 to 7.58 |
+| Instance accuracy | +2.83 | 1.94 to 3.66 |
+
+These intervals describe uncertainty across the five evaluated cases, conditional on the four fitted fold models and the frozen thresholds. They do not cover retraining, seed variance, or estimation of the thresholds.

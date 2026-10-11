@@ -125,6 +125,7 @@ def cmd_evaluate(args) -> None:
     summary: dict = {"folds": {}, "pooled": {}, "note": "refine-all was not run for these checkpoint sets (only the 50% highest-S1 instruments of each fold are tracked): null"}
     pooled_acc = defaultdict(lambda: [0, 0])
     pooled_sel = {n: [0, 0] for n in SCORES}
+    dump = {"frames": {c: [] for c in configs}, "folds": {}}   # frame-level outputs and selections, for scripts/gate_report.py
     for k in FOLDS:
         entry = frozen["folds"][str(k)]
         if not entry["evaluation_cases"]:
@@ -172,6 +173,9 @@ def cmd_evaluate(args) -> None:
             frame_case.append(f.split("/")[0])
             for c in configs:
                 res[c].append(frame_class_ious(paint(shape, [(sam[i], int(pred[c][i]) + 1, float(pconf[c][i])) for i in ix]), gt))
+        for c in configs:
+            dump["frames"][c] += [(f, *res[c][j]) for j, (f, _ix) in enumerate(frames)]
+        dump["folds"][k] = {"evaluation_mask": ev, "cases": cases, "y": y, "sel": sel, "pred": pred, "conf": pconf}
         fold_sum = {"evaluation_cases": entry["evaluation_cases"], "n_instruments": int(ev.sum()), "n_frames": len(frames), "configs": {}, "per_case": {}}
         for c in configs:
             a = aggregate(res[c])
@@ -208,6 +212,7 @@ def cmd_evaluate(args) -> None:
         rows.append({"fold": "pooled", "case": "all evaluation cases", "config": c, "scope": "pooled", "n_instruments": n_all, "calibration_fraction": "", "evaluation_fraction": f"{fr:.4f}",
                      "mIoU": f"{summary['pooled'][c]['mIoU']:.2f}", "IoU": f"{summary['pooled'][c]['IoU']:.2f}", "mcIoU": f"{summary['pooled'][c]['mcIoU']:.2f}", "instance_accuracy": f"{summary['pooled'][c]['instance_accuracy']:.4f}"})
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    (args.out_dir / "gate_outputs.pkl").write_bytes(pickle.dumps(dump))
     (args.out_dir / "gate_evaluation.json").write_text(json.dumps(summary, indent=1))
     with open(args.out_dir / "gate_evaluation.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
