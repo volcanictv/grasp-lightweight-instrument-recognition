@@ -1,0 +1,258 @@
+{
+ "design": {
+  "question": "can a threshold calibrated on development cases of the same checkpoint set be transferred to its evaluation cases",
+  "checkpoint_sets": "cross-validation folds cv5_f0..cv5_f4 of the campaign (job 21827306), classifier seed 42, one set per fold",
+  "roles": "calibration cases = held-out official-training cases of the fold; evaluation cases = held-out official-test cases of the fold; fold 4 holds out only official-training cases, so it is calibrated but not evaluated",
+  "target_refinement_fraction": 0.3,
+  "primary_score": "S1",
+  "comparator": "1 - largest belief, same evidential ensemble",
+  "cutoff_rule": "distinct calibration score whose fraction selected (score >= cutoff) is closest to the target, from scores only; exact ties in distance go to the larger cutoff",
+  "fixed": "same masks, preprocessing, ensemble weights, fusion rule and SAM2-large tracking window (+-10) as the stored fold runs; no refitting; the cutoffs are not adjusted on evaluation cases",
+  "ensemble_weights": {
+   "resnet50_320": 0.4,
+   "resnet50_224": 0.2,
+   "baseline": 0.2,
+   "letterbox_crop": 0.2
+  }
+ },
+ "folds": {
+  "0": {
+   "held_out_cases": [
+    "CASE007",
+    "CASE050"
+   ],
+   "calibration_cases": [
+    "CASE007"
+   ],
+   "evaluation_cases": [
+    "CASE050"
+   ],
+   "n_calibration": 567,
+   "n_evaluation": 1055,
+   "n_tracked_instruments": 811,
+   "inputs_sha256": {
+    "logits.npz": "b050b9aec1a4287c6167e2a1a32c3132f853a810d316659ebdae3ed2dc374836",
+    "masks.pkl": "dadbdc3f8e40ef5343f0a2b0fcc1eef840bff15a8638b525795389f2af9694bb"
+   },
+   "scores": {
+    "S1": {
+     "cutoff": 3.543440925568575e-06,
+     "cutoff_repr": "3.543440925568575e-06",
+     "calibration_fraction": 0.2998236331569665,
+     "calibration_selected": 170,
+     "calibration_fraction_per_case": {
+      "CASE007": 0.2998236331569665
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 336,
+      "selected_without_stored_track": 0
+     }
+    },
+    "maxbelief": {
+     "cutoff": 0.004194736480712891,
+     "cutoff_repr": "0.004194736480712891",
+     "calibration_fraction": 0.2998236331569665,
+     "calibration_selected": 170,
+     "calibration_fraction_per_case": {
+      "CASE007": 0.2998236331569665
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 336,
+      "selected_without_stored_track": 0
+     }
+    }
+   }
+  },
+  "1": {
+   "held_out_cases": [
+    "CASE021",
+    "CASE047",
+    "CASE053"
+   ],
+   "calibration_cases": [
+    "CASE021"
+   ],
+   "evaluation_cases": [
+    "CASE047",
+    "CASE053"
+   ],
+   "n_calibration": 958,
+   "n_evaluation": 1024,
+   "n_tracked_instruments": 991,
+   "inputs_sha256": {
+    "logits.npz": "551886d1291e39e08ac3f2d00ca65ee4d43b990f03a88bace59a6629130cde82",
+    "masks.pkl": "508da586f133be84f931f4db8daac65e75885f4f86910897f438c35b3ebee2ab"
+   },
+   "scores": {
+    "S1": {
+     "cutoff": 1.049801994668087e-05,
+     "cutoff_repr": "1.049801994668087e-05",
+     "calibration_fraction": 0.29958246346555323,
+     "calibration_selected": 287,
+     "calibration_fraction_per_case": {
+      "CASE021": 0.29958246346555323
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 342,
+      "selected_without_stored_track": 0
+     }
+    },
+    "maxbelief": {
+     "cutoff": 0.006708502769470215,
+     "cutoff_repr": "0.006708502769470215",
+     "calibration_fraction": 0.29958246346555323,
+     "calibration_selected": 287,
+     "calibration_fraction_per_case": {
+      "CASE021": 0.29958246346555323
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 351,
+      "selected_without_stored_track": 0
+     }
+    }
+   }
+  },
+  "2": {
+   "held_out_cases": [
+    "CASE003",
+    "CASE014",
+    "CASE041"
+   ],
+   "calibration_cases": [
+    "CASE003",
+    "CASE014"
+   ],
+   "evaluation_cases": [
+    "CASE041"
+   ],
+   "n_calibration": 1436,
+   "n_evaluation": 588,
+   "n_tracked_instruments": 1012,
+   "inputs_sha256": {
+    "logits.npz": "ecca53f5fbc99f66eeb52bae848e08e5e76842ed8e23b94f3469364fd6c535b6",
+    "masks.pkl": "08aefc9736e1c967e584afe6d7f9a5143d6ede4639e1619bf4c78fcbf951a783"
+   },
+   "scores": {
+    "S1": {
+     "cutoff": 1.9695207811309956e-05,
+     "cutoff_repr": "1.9695207811309956e-05",
+     "calibration_fraction": 0.30013927576601673,
+     "calibration_selected": 431,
+     "calibration_fraction_per_case": {
+      "CASE003": 0.26629422718808193,
+      "CASE014": 0.3203559510567297
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 203,
+      "selected_without_stored_track": 0
+     }
+    },
+    "maxbelief": {
+     "cutoff": 0.01057744026184082,
+     "cutoff_repr": "0.01057744026184082",
+     "calibration_fraction": 0.30013927576601673,
+     "calibration_selected": 431,
+     "calibration_fraction_per_case": {
+      "CASE003": 0.2737430167597765,
+      "CASE014": 0.31590656284760843
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 209,
+      "selected_without_stored_track": 0
+     }
+    }
+   }
+  },
+  "3": {
+   "held_out_cases": [
+    "CASE001",
+    "CASE015",
+    "CASE051"
+   ],
+   "calibration_cases": [
+    "CASE001",
+    "CASE015"
+   ],
+   "evaluation_cases": [
+    "CASE051"
+   ],
+   "n_calibration": 1602,
+   "n_evaluation": 194,
+   "n_tracked_instruments": 898,
+   "inputs_sha256": {
+    "logits.npz": "626c6729c0ad9b7cabc3435f7b9f40bb34686e9bd5e88489b0b890c7c9d11c7d",
+    "masks.pkl": "c7fe5f533c0b2b1c63a409ba1ef32f567975f88c9289fc69280e21877028ae8a"
+   },
+   "scores": {
+    "S1": {
+     "cutoff": 3.234061659895815e-05,
+     "cutoff_repr": "3.234061659895815e-05",
+     "calibration_fraction": 0.30024968789013734,
+     "calibration_selected": 481,
+     "calibration_fraction_per_case": {
+      "CASE001": 0.352,
+      "CASE015": 0.23796423658872076
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 60,
+      "selected_without_stored_track": 0
+     }
+    },
+    "maxbelief": {
+     "cutoff": 0.014550268650054932,
+     "cutoff_repr": "0.014550268650054932",
+     "calibration_fraction": 0.30024968789013734,
+     "calibration_selected": 481,
+     "calibration_fraction_per_case": {
+      "CASE001": 0.3462857142857143,
+      "CASE015": 0.24484181568088034
+     },
+     "evaluation_coverage_precheck": {
+      "would_select": 56,
+      "selected_without_stored_track": 0
+     }
+    }
+   }
+  },
+  "4": {
+   "held_out_cases": [
+    "CASE002",
+    "CASE004"
+   ],
+   "calibration_cases": [
+    "CASE002",
+    "CASE004"
+   ],
+   "evaluation_cases": [],
+   "n_calibration": 1607,
+   "n_evaluation": 0,
+   "n_tracked_instruments": 804,
+   "inputs_sha256": {
+    "logits.npz": "35fce4b51eeff29c398b993fa1750e18d9dc3f19b6716559a7304359d57c3db9",
+    "masks.pkl": "5e6be3c5322fad86c9477702fb9db00d9c6ec23fd9cba0695004e31b74588e9b"
+   },
+   "scores": {
+    "S1": {
+     "cutoff": 7.581165118608624e-05,
+     "cutoff_repr": "7.581165118608624e-05",
+     "calibration_fraction": 0.29993777224642193,
+     "calibration_selected": 482,
+     "calibration_fraction_per_case": {
+      "CASE002": 0.3413516609392898,
+      "CASE004": 0.2506811989100817
+     }
+    },
+    "maxbelief": {
+     "cutoff": 0.022913694381713867,
+     "cutoff_repr": "0.022913694381713867",
+     "calibration_fraction": 0.29993777224642193,
+     "calibration_selected": 482,
+     "calibration_fraction_per_case": {
+      "CASE002": 0.33791523482245134,
+      "CASE004": 0.2547683923705722
+     }
+    }
+   }
+  }
+ }
+}
