@@ -31,7 +31,7 @@ from evidential_analyze import LABELS, WEIGHTS
 from surgical_ai.evaluation.evidential import alpha_from_logits, variance_scores
 
 SEEDS = (42, 43, 44)
-D = REPO_ROOT / "experiments" / "gtbox_sam" / "final"
+D = REPO_ROOT / "experiments" / "gtbox_sam" / os.environ.get("BASELINES_VARIANT", "final")  # "gtmask" for the ground-truth-mask upper bound
 MC_PASSES = 20
 
 
