@@ -28,6 +28,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import numpy as np
+from sklearn.metrics import f1_score
 from pycocotools import mask as mask_codec
 from scipy.special import softmax
 
@@ -48,6 +49,7 @@ def main() -> None:
     ap.add_argument("--data-root", type=Path, default=Path(os.environ.get("GRASP_DATA_ROOT", REPO_ROOT / "GraSP")))
     ap.add_argument("--shares", type=float, nargs="+", default=[0.10, 0.20, 0.30, 0.45, 0.60, 1.00])
     ap.add_argument("--perms", type=int, default=3)
+    ap.add_argument("--accuracy-only", action="store_true", help="instance accuracy and macro-F1 of each setting instead of the painted mIoU/IoU/mcIoU (no painting, minutes instead of hours)")
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--save-frames", type=Path, default=None, help="directory for gate_frames_s<seed>.pkl: per-frame class IoUs of every (ordering, share) setting, for scripts/bootstrap_gate_curves.py")
@@ -71,6 +73,9 @@ def main() -> None:
     kept: dict = {}  # per-frame class IoUs of the last score() call, for --save-frames
 
     def score(pred: np.ndarray, conf: np.ndarray, done: np.ndarray) -> tuple[dict, dict]:
+        if args.accuracy_only:
+            kept["frames"] = []
+            return {"acc": 100 * float((pred[done] == y[done]).mean()), "F1": 100 * float(f1_score(y[done], pred[done], average="macro", labels=range(7)))}, {}
         res = []
         for f, ix in frames:
             shape = tuple(ds.instances[ix[0]][1]["size"])
@@ -143,7 +148,7 @@ def main() -> None:
                 flag[order[: int(round(sh * len(order)))]] = True
                 curves[name][f"{int(round(100 * sh))}%"] = score(*labels(flag), done)[0]
                 fl[f"{name}|{int(round(100 * sh))}%"] = kept["frames"]
-            print(f"seed {seed} {name:22s}" + " ".join(f"{int(round(100 * s))}%={curves[name][f'{int(round(100 * s))}%']['mIoU']:.2f}" for s in args.shares), flush=True)
+            print(f"seed {seed} {name:22s}" + " ".join(f"{int(round(100 * s))}%={next(iter(curves[name][f'{int(round(100 * s))}%'].values())):.2f}" for s in args.shares), flush=True)
         perms = [rng.permutation(pool) for _ in range(args.perms)]
         curves["random"] = {}
         for sh in args.shares:
@@ -153,7 +158,7 @@ def main() -> None:
                 flag[p[: int(round(sh * len(p)))]] = True
                 runs.append(score(*labels(flag), done)[0])
                 fl[f"random{pi}|{int(round(100 * sh))}%"] = kept["frames"]
-            curves["random"][f"{int(round(100 * sh))}%"] = {k: float(np.mean([r[k] for r in runs])) for k in ("mIoU", "IoU", "mcIoU")}
+            curves["random"][f"{int(round(100 * sh))}%"] = {k: float(np.mean([r[k] for r in runs])) for k in runs[0]}
         report["seeds"][str(seed)] = {"single": single, "refine_all": full, "curves": curves, "ce_signals_present": ce_path.exists()}
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(report, indent=1))

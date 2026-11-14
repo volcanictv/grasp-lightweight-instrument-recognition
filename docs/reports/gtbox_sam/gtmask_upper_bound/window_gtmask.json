@@ -1,0 +1,299 @@
+{
+ "none": {
+  "accuracy": 0.9197250378655482,
+  "macro_f1": 0.876028529876089,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9161132471163929,
+    "macro_f1": 0.867062004791609,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9231038098566935,
+    "macro_f1": 0.8739938636692995,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9199580566235582,
+    "macro_f1": 0.8870297211673585,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "sym1": {
+  "accuracy": 0.941978329255505,
+  "macro_f1": 0.9065561332962216,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.940580216707445,
+    "macro_f1": 0.9005688145995477,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9433764418035652,
+    "macro_f1": 0.903440618242123,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9419783292555051,
+    "macro_f1": 0.915658967046994,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "sym2": {
+  "accuracy": 0.950833042059886,
+  "macro_f1": 0.9218949308840848,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9496679482698357,
+    "macro_f1": 0.9179707446165698,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9517651170919259,
+    "macro_f1": 0.9175427086063784,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9510660608178958,
+    "macro_f1": 0.9301713394293059,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "sym3": {
+  "accuracy": 0.9533962483979961,
+  "macro_f1": 0.9275141374621679,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9514155889549109,
+    "macro_f1": 0.9268813016410394,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9556099265990913,
+    "macro_f1": 0.9196807853019787,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.953163229639986,
+    "macro_f1": 0.9359803254434856,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "sym5": {
+  "accuracy": 0.9599207736222767,
+  "macro_f1": 0.9335542660284929,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9587556798322265,
+    "macro_f1": 0.9341709440022627,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9601537923802866,
+    "macro_f1": 0.9281024780222117,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9608528486543166,
+    "macro_f1": 0.9383893760610043,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "sym10": {
+  "accuracy": 0.9630665268554118,
+  "macro_f1": 0.9392286160922084,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9605033205173017,
+    "macro_f1": 0.9349643264543098,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.964697658161482,
+    "macro_f1": 0.9369811731879398,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9639986018874519,
+    "macro_f1": 0.9457403486343757,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "causal1": {
+  "accuracy": 0.9339391821041594,
+  "macro_f1": 0.8948886141760797,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.930094372596994,
+    "macro_f1": 0.8880377310753987,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9363858790632646,
+    "macro_f1": 0.8921862275000516,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9353372946522195,
+    "macro_f1": 0.9044418839527888,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "causal2": {
+  "accuracy": 0.9391821041593849,
+  "macro_f1": 0.9013597814750364,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9367354072002796,
+    "macro_f1": 0.8981105419228009,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9423278573925201,
+    "macro_f1": 0.8936397920768429,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9384830478853547,
+    "macro_f1": 0.912329010425465,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "causal3": {
+  "accuracy": 0.941745310497495,
+  "macro_f1": 0.9056511753063896,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.940580216707445,
+    "macro_f1": 0.9028793888645069,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9451240824886403,
+    "macro_f1": 0.9012405375865887,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9395316322963999,
+    "macro_f1": 0.9128335994680733,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "causal5": {
+  "accuracy": 0.9465221950367004,
+  "macro_f1": 0.9080000997141248,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9437259699405802,
+    "macro_f1": 0.9033870116886961,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9482698357217756,
+    "macro_f1": 0.9021076189763335,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9475707794477456,
+    "macro_f1": 0.9185056684773448,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ },
+ "causal10": {
+  "accuracy": 0.9488523826168006,
+  "macro_f1": 0.9114308283991605,
+  "per_seed": [
+   {
+    "seed": 42,
+    "accuracy": 0.9454736106256554,
+    "macro_f1": 0.9059031852949815,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 43,
+    "accuracy": 0.9507165326808809,
+    "macro_f1": 0.9084403237311304,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   },
+   {
+    "seed": 44,
+    "accuracy": 0.9503670045438658,
+    "macro_f1": 0.9199489761713695,
+    "missing_tracks": 0,
+    "offset_mismatch": 0
+   }
+  ]
+ }
+}
