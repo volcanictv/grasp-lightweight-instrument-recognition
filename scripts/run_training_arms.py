@@ -37,6 +37,8 @@ def arm_stem(arm: str, member: str, fold: str, seed: int) -> str:
 
 def arm_config(arm: str, member: str, fold: str, seed: int, neighbour_dir: str | list | None, yolo_neighbour_dir: str | list | None = None) -> dict:
     cfg = mk.train_config("E", member, fold, seed, 0.01, 10)
+    if "L" in arm:  # last-epoch weights on a fold run: the held-out fold is the evaluation fold, so it must not choose the checkpoint
+        cfg["training"]["select_best"] = False
     if fold == "official":
         # fixed schedule: last-epoch weights, validated on a split inside the training data, so the test cases
         # are never touched while training
@@ -66,7 +68,7 @@ def finished(stem: str) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fold", choices=["fold1", "fold2", "official"], required=True)
-    ap.add_argument("--arms", nargs="+", required=True, choices=["P", "N", "PN", "Y", "NY"])
+    ap.add_argument("--arms", nargs="+", required=True, choices=["P", "N", "PN", "Y", "NY", "NL"])
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     ap.add_argument("--neighbour-dir", nargs="+", default=None, help="neighbour crops of the TRAINING cases (several dirs for official)")
     ap.add_argument("--yolo-neighbour-dir", nargs="+", default=None, help="YOLO-tracker neighbour crops of the training cases (arms Y, NY)")
