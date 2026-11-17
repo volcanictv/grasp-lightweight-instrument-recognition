@@ -11,7 +11,7 @@
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 set -uo pipefail
-W=$HOME/grasp_work/slowfast; G=/shared/rc/robot-surg/grasp30fps; PY=$HOME/grasp_work/tapis/venv/bin/python
+W=$HOME/grasp_work/slowfast; G=${GRASP30FPS_DIR:?set GRASP30FPS_DIR to the project-storage directory that holds the 30 fps archives}; PY=$HOME/grasp_work/tapis/venv/bin/python
 RUNS=${RUNS:-official,fold1,fold2}
 ANN=$W/data/release_annotations
 if [ ! -d "$ANN" ]; then

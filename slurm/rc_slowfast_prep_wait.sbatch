@@ -10,7 +10,7 @@
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 set -uo pipefail
-G=/shared/rc/robot-surg/grasp30fps
+G=${GRASP30FPS_DIR:?set GRASP30FPS_DIR to the project-storage directory that holds the 30 fps archives}
 NEED=(annotations.tar.gz)
 for c in 001 002 003 004 007 014 015 021 041 047 050 051 053; do NEED+=("frames/CASE$c.tar.gz"); done
 for i in $(seq 1 180); do

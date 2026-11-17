@@ -4,7 +4,7 @@
 # The cluster key needs its passphrase: the caller sets SSH_ASKPASS, SSH_ASKPASS_REQUIRE=force and DISPLAY. Refuses to run before the staging job has written the _ready marker or if titanxp lacks space.
 set -uo pipefail
 CL=/c/Windows/System32/OpenSSH/ssh.exe; TX=${TX:-titanxp}
-G=${G:-/shared/rc/robot-surg/grasp30fps/windows}; RUNS_ROOT=${RUNS_ROOT:-'~/grasp_work/slowfast/data'}; DEST=${DEST:-'~/sf30'}
+G=${G:-${GRASP30FPS_DIR:?set G or GRASP30FPS_DIR}/windows}; RUNS_ROOT=${RUNS_ROOT:-'~/grasp_work/slowfast/data'}; DEST=${DEST:-'~/sf30'}
 say() { echo "[$(date +%T)] $*"; }
 cs() { "$CL" -o PreferredAuthentications=publickey -o NumberOfPasswordPrompts=1 -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=8 sporc "$@"; }
 tx() { ssh -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=8 "$TX" "$@"; }

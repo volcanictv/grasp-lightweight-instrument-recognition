@@ -1,10 +1,10 @@
 #!/bin/bash
 # One SlowFast run on the 30 fps windows: train, test on the held-out part (own proposals and given boxes), score with the annotated masks.
-# usage: rc_slowfast_run.sh official|fold1|fold2|smoke     knobs by environment: EPOCHS WARMUP BS RATE WORKERS CK_EVERY FRAMES, and W PY CODE for another machine (see run_titanxp.sh)
+# usage: rc_slowfast_run.sh official|fold1|fold2|smoke     knobs by environment: EPOCHS WARMUP BS RATE WORKERS CK_EVERY FRAMES SKIP_GIVEN, and W PY CODE for another machine (see run_titanxp.sh)
 # Resumable: every stage leaves a .done marker, training resumes from its newest checkpoint, so the same command continues after any stop. Checkpoints are never selected on the held-out part: the last epoch is tested.
 set -uo pipefail
 RUN=${1:?run name (official|fold1|fold2|smoke)}
-W=${W:-$HOME/grasp_work/slowfast}; D=$W/data/run_$RUN; FR=${FRAMES:-/shared/rc/robot-surg/grasp30fps/windows}
+W=${W:-$HOME/grasp_work/slowfast}; D=$W/data/run_$RUN; FR=${FRAMES:-${GRASP30FPS_DIR:?set FRAMES or GRASP30FPS_DIR}/windows}
 CODE=${CODE:-$W/code/TAPIS_gtbox}; PY=${PY:-$HOME/grasp_work/tapis/venv/bin/python}; OUT=$W/runs/$RUN
 EPOCHS=${EPOCHS:-30}; WARMUP=${WARMUP:-5.0}; BS=${BS:-6}; RATE=${RATE:-15}; WORKERS=${WORKERS:-6}; CK_EVERY=${CK_EVERY:-5}
 say() { echo "[$(date +%F\ %T)] $RUN: $*"; }
@@ -37,12 +37,13 @@ testrun() {  # name, then config overrides
   touch "$OUT/$1.done"
 }
 testrun test_pred ENDOVIS_DATASET.USE_PREDS True ENDOVIS_DATASET.INCLUDE_GT False || exit 5
-testrun test_given ENDOVIS_DATASET.USE_PREDS False ENDOVIS_DATASET.INCLUDE_GT True || exit 6
+# given-box mode needs detector features for the annotated boxes; on some splits the loader cannot find them, so a failure here must not stop the own-proposal scoring
+if [ "${SKIP_GIVEN:-0}" != 1 ]; then testrun test_given ENDOVIS_DATASET.USE_PREDS False ENDOVIS_DATASET.INCLUDE_GT True || say "given-box test failed; continuing without it"; fi
 
 score() {  # name, match mode, output dir
   local P; P=$(ls "$OUT/$1"/*preds_instruments.json 2>/dev/null | head -n 1); [ -n "$P" ] || { say "no predictions file in $OUT/$1"; return 1; }
   "$PY" -B "$W/scripts/score_given_masks.py" --gt "$D/annotations/gt_test.json" --preds "$P" --out "$OUT/$3" --match "$2" --tapis-dir "$CODE" 2>&1 | tee "$OUT/$3.log"
 }
 score test_pred mask score_pred || exit 7
-score test_given box score_given || exit 8
-say "finished; metrics in $OUT/score_pred/metrics.json and $OUT/score_given/metrics.json"
+[ -f "$OUT/test_given.done" ] && { score test_given box score_given || exit 8; }
+say "finished; metrics in $OUT/score_pred/metrics.json (and $OUT/score_given/metrics.json when the given-box pass ran)"

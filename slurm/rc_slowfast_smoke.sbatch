@@ -12,6 +12,6 @@
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 set -uo pipefail
-W=$HOME/grasp_work/slowfast; G=/shared/rc/robot-surg/grasp30fps; PY=$HOME/grasp_work/tapis/venv/bin/python
+W=$HOME/grasp_work/slowfast; G=${GRASP30FPS_DIR:?set GRASP30FPS_DIR to the project-storage directory that holds the 30 fps archives}; PY=$HOME/grasp_work/tapis/venv/bin/python
 "$PY" -B "$W/scripts/rc_slowfast_prep.py" --archives "$G/frames" --release-annotations "$W/data/GraSP/annotations" --data "$W/data" --windows "$G/windows" --runs smoke --smoke-from test --jobs 3 || exit 2
 EPOCHS=1 WARMUP=0 BS=4 CK_EVERY=1 WORKERS=3 bash "$W/scripts/rc_slowfast_run.sh" smoke

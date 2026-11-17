@@ -2,3 +2,4 @@ SlowFast baseline (TAPIR recipe: SlowFast R50 initialised from Kinetics-400, det
 score_pred: model's own proposals, annotated instrument matched by mask IoU (validation-style rows). score_given: annotated boxes given to the model, box matching (official-test-style row). Fold runs train on the other fold with the released fold predictions and features.
 fold1 has no score_given: the loader found no detector features for some fold-1 boxes in given-box mode.
 Run with scripts/slowfast_tapis/ (relay_windows_to_titanxp.sh, run_titanxp.sh, rc_slowfast_run.sh); fold1 and the scoring were finished with the fixed runner after the given-box pass crashed.
+The scripts read the directory that holds the 30 fps archives and the extracted windows from GRASP30FPS_DIR (set it to the project-storage path); on titanxp the runner takes W, PY, CODE and FRAMES instead.
