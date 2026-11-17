@@ -8,8 +8,6 @@ import argparse, json, os, sys
 from pathlib import Path
 import numpy as np
 
-CL = ["Bipolar Forceps", "Prograsp Forceps", "Large Needle Driver", "Monopolar Curved Scissors", "Suction Instrument", "Clip Applier", "Laparoscopic Grasper"]
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -29,7 +27,7 @@ def main():
 
     g = json.load(open(a.gt)); preds = json.load(open(a.preds)); res = {}; covered = 0; hits = []
     for an in g["annotations"]:
-        gr = fix(an["segmentation"]); x0, y0, w, h = [float(v) for v in an["bbox"]]; box = [x0, y0, x0 + w, y0 + h]
+        gr = fix(an["rle"] if isinstance(an.get("rle"), dict) else an["segmentation"]); x0, y0, w, h = [float(v) for v in an["bbox"]]; box = [x0, y0, x0 + w, y0 + h]
         gm = dec(gr) if a.match == "mask" else None; best, bi = None, 0.0
         for c in preds.get(an["image_name"], {"instances": []})["instances"]:
             if a.match == "mask":
@@ -45,10 +43,10 @@ def main():
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True); pj = out / "annotated_masks_matched.json"; json.dump(res, open(pj, "w"))
     n = len(g["annotations"]); r = ev.main_per_task(a.gt, str(pj), "instruments", "mIoU", masks_path=None); m = r[0] if isinstance(r, tuple) else r
     summary = {"instruments": n, "matched_to_a_prediction": covered, "class_accuracy_of_matched_prediction": float(np.mean(hits)),
-               "mIoU": m["mIoU"], "IoU": m["IoU"], "mcIoU": m["mcIoU"], "per_class_IoU": {c: m[c + "-IoU"] for c in CL}, "match": a.match}
+               "mIoU": m["mIoU"], "IoU": m["IoU"], "mcIoU": m["mcIoU"], "per_class_IoU": {k[:-4]: v for k, v in m.items() if k.endswith("-IoU") and k != "IoU"}, "match": a.match}
     json.dump({"summary": summary, "full": m}, open(out / "metrics.json", "w"), indent=1)
     print(f"{a.match}-matched: instruments {n}, with a prediction {covered}, class accuracy {np.mean(hits):.4f}")
-    print({k: round(100 * summary[k], 2) for k in ("mIoU", "IoU", "mcIoU")}); print("per class IoU:", [round(100 * summary["per_class_IoU"][c], 1) for c in CL])
+    print({k: round(100 * summary[k], 2) for k in ("mIoU", "IoU", "mcIoU")}); print("per class IoU:", {k: round(100 * v, 1) for k, v in summary["per_class_IoU"].items()})
 
 
 if __name__ == "__main__":
