@@ -1,0 +1,829 @@
+{
+ "n_instances": 1441,
+ "gated_budget": 474,
+ "seeds": [
+  42
+ ],
+ "configs": {
+  "ens: oracle classes": {
+   "all": {
+    "mIoU": 1.0,
+    "mIoU_sd": 0.0,
+    "IoU": 1.0,
+    "IoU_sd": 0.0,
+    "mcIoU": 1.0,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 1.0,
+     "Prograsp Forceps": 1.0,
+     "Large Needle Driver": 1.0,
+     "Monopolar Curved Scissors": 1.0,
+     "Ultrasound Probe": 1.0,
+     "Suction Instrument": 1.0,
+     "Clip Applier": 1.0
+    },
+    "instance_accuracy": 1.0,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 1.0,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 1.0,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 1.0,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 1.0,
+    "mIoU_sd": 0.0,
+    "IoU": 1.0,
+    "IoU_sd": 0.0,
+    "mcIoU": 1.0,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 1.0,
+     "Prograsp Forceps": 1.0,
+     "Monopolar Curved Scissors": 1.0,
+     "Ultrasound Probe": 1.0,
+     "Suction Instrument": 1.0
+    },
+    "instance_accuracy": 1.0,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 1.0,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 1.0,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 1.0,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 1.0,
+      "IoU": 1.0,
+      "mcIoU": 1.0,
+      "per_class_iou": {
+       "Bipolar Forceps": 1.0,
+       "Prograsp Forceps": 1.0,
+       "Large Needle Driver": 1.0,
+       "Monopolar Curved Scissors": 1.0,
+       "Ultrasound Probe": 1.0,
+       "Suction Instrument": 1.0,
+       "Clip Applier": 1.0
+      },
+      "instance_accuracy": 1.0,
+      "instance_macro_f1": 1.0,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 1.0,
+      "mAP@0.5 segm": 1.0
+     },
+     "seq5_9_15": {
+      "mIoU": 1.0,
+      "IoU": 1.0,
+      "mcIoU": 1.0,
+      "per_class_iou": {
+       "Bipolar Forceps": 1.0,
+       "Prograsp Forceps": 1.0,
+       "Monopolar Curved Scissors": 1.0,
+       "Ultrasound Probe": 1.0,
+       "Suction Instrument": 1.0
+      },
+      "instance_accuracy": 1.0,
+      "instance_macro_f1": 1.0,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 1.0,
+      "mAP@0.5 segm": 1.0
+     },
+     "extra": {}
+    }
+   ]
+  },
+  "ens: oracle classes +box clip": {
+   "all": {
+    "mIoU": 1.0,
+    "mIoU_sd": 0.0,
+    "IoU": 1.0,
+    "IoU_sd": 0.0,
+    "mcIoU": 1.0,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 1.0,
+     "Prograsp Forceps": 1.0,
+     "Large Needle Driver": 1.0,
+     "Monopolar Curved Scissors": 1.0,
+     "Ultrasound Probe": 1.0,
+     "Suction Instrument": 1.0,
+     "Clip Applier": 1.0
+    },
+    "instance_accuracy": 1.0,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 1.0,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 1.0,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 1.0,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 1.0,
+    "mIoU_sd": 0.0,
+    "IoU": 1.0,
+    "IoU_sd": 0.0,
+    "mcIoU": 1.0,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 1.0,
+     "Prograsp Forceps": 1.0,
+     "Monopolar Curved Scissors": 1.0,
+     "Ultrasound Probe": 1.0,
+     "Suction Instrument": 1.0
+    },
+    "instance_accuracy": 1.0,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 1.0,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 1.0,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 1.0,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 1.0,
+      "IoU": 1.0,
+      "mcIoU": 1.0,
+      "per_class_iou": {
+       "Bipolar Forceps": 1.0,
+       "Prograsp Forceps": 1.0,
+       "Large Needle Driver": 1.0,
+       "Monopolar Curved Scissors": 1.0,
+       "Ultrasound Probe": 1.0,
+       "Suction Instrument": 1.0,
+       "Clip Applier": 1.0
+      },
+      "instance_accuracy": 1.0,
+      "instance_macro_f1": 1.0,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 1.0,
+      "mAP@0.5 segm": 1.0
+     },
+     "seq5_9_15": {
+      "mIoU": 1.0,
+      "IoU": 1.0,
+      "mcIoU": 1.0,
+      "per_class_iou": {
+       "Bipolar Forceps": 1.0,
+       "Prograsp Forceps": 1.0,
+       "Monopolar Curved Scissors": 1.0,
+       "Ultrasound Probe": 1.0,
+       "Suction Instrument": 1.0
+      },
+      "instance_accuracy": 1.0,
+      "instance_macro_f1": 1.0,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 1.0,
+      "mAP@0.5 segm": 1.0
+     },
+     "extra": {}
+    }
+   ]
+  },
+  "ens: single pass": {
+   "all": {
+    "mIoU": 0.844653678745013,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8101759858813777,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.4638734684597449,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9302569114937289,
+     "Prograsp Forceps": 0.3530113411963078,
+     "Large Needle Driver": 0.1350584001319694,
+     "Monopolar Curved Scissors": 0.9472952107158734,
+     "Ultrasound Probe": 0.06170977947042185,
+     "Suction Instrument": 0.5294600555647517,
+     "Clip Applier": 0.2903225806451613
+    },
+    "instance_accuracy": 0.7820957668285913,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5313439685119425,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6154805405089752,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6154805405089752,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9304155800793248,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9205333600723995,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6464121208022945,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9505400350024146,
+     "Prograsp Forceps": 0.5953913282988115,
+     "Monopolar Curved Scissors": 0.9608280844625386,
+     "Ultrasound Probe": 0.13517380264949547,
+     "Suction Instrument": 0.5901273535982129
+    },
+    "instance_accuracy": 0.9169082125603865,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7303633846186833,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.797778549172958,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.797778549172958,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.844653678745013,
+      "IoU": 0.8101759858813777,
+      "mcIoU": 0.4638734684597449,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9302569114937289,
+       "Prograsp Forceps": 0.3530113411963078,
+       "Large Needle Driver": 0.1350584001319694,
+       "Monopolar Curved Scissors": 0.9472952107158734,
+       "Ultrasound Probe": 0.06170977947042185,
+       "Suction Instrument": 0.5294600555647517,
+       "Clip Applier": 0.2903225806451613
+      },
+      "instance_accuracy": 0.7820957668285913,
+      "instance_macro_f1": 0.5313439685119425,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6154805405089752,
+      "mAP@0.5 segm": 0.6154805405089752
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9304155800793248,
+      "IoU": 0.9205333600723995,
+      "mcIoU": 0.6464121208022945,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9505400350024146,
+       "Prograsp Forceps": 0.5953913282988115,
+       "Monopolar Curved Scissors": 0.9608280844625386,
+       "Ultrasound Probe": 0.13517380264949547,
+       "Suction Instrument": 0.5901273535982129
+      },
+      "instance_accuracy": 0.9169082125603865,
+      "instance_macro_f1": 0.7303633846186833,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.797778549172958,
+      "mAP@0.5 segm": 0.797778549172958
+     },
+     "extra": {}
+    }
+   ]
+  },
+  "ens: single pass +box clip": {
+   "all": {
+    "mIoU": 0.844653678745013,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8101759858813777,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.4638734684597449,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9302569114937289,
+     "Prograsp Forceps": 0.3530113411963078,
+     "Large Needle Driver": 0.1350584001319694,
+     "Monopolar Curved Scissors": 0.9472952107158734,
+     "Ultrasound Probe": 0.06170977947042185,
+     "Suction Instrument": 0.5294600555647517,
+     "Clip Applier": 0.2903225806451613
+    },
+    "instance_accuracy": 0.7820957668285913,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5313439685119425,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6154805405089752,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6154805405089752,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9304155800793248,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9205333600723995,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6464121208022945,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9505400350024146,
+     "Prograsp Forceps": 0.5953913282988115,
+     "Monopolar Curved Scissors": 0.9608280844625386,
+     "Ultrasound Probe": 0.13517380264949547,
+     "Suction Instrument": 0.5901273535982129
+    },
+    "instance_accuracy": 0.9169082125603865,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7303633846186833,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.797778549172958,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.797778549172958,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.844653678745013,
+      "IoU": 0.8101759858813777,
+      "mcIoU": 0.4638734684597449,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9302569114937289,
+       "Prograsp Forceps": 0.3530113411963078,
+       "Large Needle Driver": 0.1350584001319694,
+       "Monopolar Curved Scissors": 0.9472952107158734,
+       "Ultrasound Probe": 0.06170977947042185,
+       "Suction Instrument": 0.5294600555647517,
+       "Clip Applier": 0.2903225806451613
+      },
+      "instance_accuracy": 0.7820957668285913,
+      "instance_macro_f1": 0.5313439685119425,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6154805405089752,
+      "mAP@0.5 segm": 0.6154805405089752
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9304155800793248,
+      "IoU": 0.9205333600723995,
+      "mcIoU": 0.6464121208022945,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9505400350024146,
+       "Prograsp Forceps": 0.5953913282988115,
+       "Monopolar Curved Scissors": 0.9608280844625386,
+       "Ultrasound Probe": 0.13517380264949547,
+       "Suction Instrument": 0.5901273535982129
+      },
+      "instance_accuracy": 0.9169082125603865,
+      "instance_macro_f1": 0.7303633846186833,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.797778549172958,
+      "mAP@0.5 segm": 0.797778549172958
+     },
+     "extra": {}
+    }
+   ]
+  },
+  "ens: gated (top 32.9%)": {
+   "all": {
+    "mIoU": 0.8666103070301067,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8343042584565772,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.5034502426402772,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9859714817624154,
+     "Prograsp Forceps": 0.3638002057399966,
+     "Large Needle Driver": 0.06104455314701018,
+     "Monopolar Curved Scissors": 0.9527034630991408,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6122448979591837,
+     "Clip Applier": 0.5483870967741935
+    },
+    "instance_accuracy": 0.8043025676613463,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5426766051116607,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6894421375668826,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6894421375668826,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9504912108395537,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9470420012899712,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6770608457049783,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9929577464788732,
+     "Prograsp Forceps": 0.7782008010727527,
+     "Monopolar Curved Scissors": 0.9619717679297868,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6521739130434783
+    },
+    "instance_accuracy": 0.9439613526570049,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7112946548873037,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.9197512404112104,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.9197512404112104,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.8666103070301067,
+      "IoU": 0.8343042584565772,
+      "mcIoU": 0.5034502426402772,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9859714817624154,
+       "Prograsp Forceps": 0.3638002057399966,
+       "Large Needle Driver": 0.06104455314701018,
+       "Monopolar Curved Scissors": 0.9527034630991408,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6122448979591837,
+       "Clip Applier": 0.5483870967741935
+      },
+      "instance_accuracy": 0.8043025676613463,
+      "instance_macro_f1": 0.5426766051116607,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6894421375668826,
+      "mAP@0.5 segm": 0.6894421375668826
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9504912108395537,
+      "IoU": 0.9470420012899712,
+      "mcIoU": 0.6770608457049783,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9929577464788732,
+       "Prograsp Forceps": 0.7782008010727527,
+       "Monopolar Curved Scissors": 0.9619717679297868,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6521739130434783
+      },
+      "instance_accuracy": 0.9439613526570049,
+      "instance_macro_f1": 0.7112946548873037,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.9197512404112104,
+      "mAP@0.5 segm": 0.9197512404112104
+     },
+     "extra": {
+      "tracked": 474,
+      "tracks_missing": 0
+     }
+    }
+   ]
+  },
+  "ens: gated (top 32.9%) +box clip": {
+   "all": {
+    "mIoU": 0.8666103070301067,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8343042584565772,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.5034502426402772,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9859714817624154,
+     "Prograsp Forceps": 0.3638002057399966,
+     "Large Needle Driver": 0.06104455314701018,
+     "Monopolar Curved Scissors": 0.9527034630991408,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6122448979591837,
+     "Clip Applier": 0.5483870967741935
+    },
+    "instance_accuracy": 0.8043025676613463,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5426766051116607,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6894421375668826,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6894421375668826,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9504912108395537,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9470420012899712,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6770608457049783,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9929577464788732,
+     "Prograsp Forceps": 0.7782008010727527,
+     "Monopolar Curved Scissors": 0.9619717679297868,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6521739130434783
+    },
+    "instance_accuracy": 0.9439613526570049,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7112946548873037,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.9197512404112104,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.9197512404112104,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.8666103070301067,
+      "IoU": 0.8343042584565772,
+      "mcIoU": 0.5034502426402772,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9859714817624154,
+       "Prograsp Forceps": 0.3638002057399966,
+       "Large Needle Driver": 0.06104455314701018,
+       "Monopolar Curved Scissors": 0.9527034630991408,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6122448979591837,
+       "Clip Applier": 0.5483870967741935
+      },
+      "instance_accuracy": 0.8043025676613463,
+      "instance_macro_f1": 0.5426766051116607,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6894421375668826,
+      "mAP@0.5 segm": 0.6894421375668826
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9504912108395537,
+      "IoU": 0.9470420012899712,
+      "mcIoU": 0.6770608457049783,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9929577464788732,
+       "Prograsp Forceps": 0.7782008010727527,
+       "Monopolar Curved Scissors": 0.9619717679297868,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6521739130434783
+      },
+      "instance_accuracy": 0.9439613526570049,
+      "instance_macro_f1": 0.7112946548873037,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.9197512404112104,
+      "mAP@0.5 segm": 0.9197512404112104
+     },
+     "extra": {
+      "tracked": 474,
+      "tracks_missing": 0
+     }
+    }
+   ]
+  },
+  "ens: refine all tracked": {
+   "all": {
+    "mIoU": 0.8666103070301067,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8343042584565772,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.5034502426402772,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9859714817624154,
+     "Prograsp Forceps": 0.3638002057399966,
+     "Large Needle Driver": 0.06104455314701018,
+     "Monopolar Curved Scissors": 0.9527034630991408,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6122448979591837,
+     "Clip Applier": 0.5483870967741935
+    },
+    "instance_accuracy": 0.8043025676613463,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5426766051116607,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6894421375668826,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6894421375668826,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9504912108395537,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9470420012899712,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6770608457049783,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9929577464788732,
+     "Prograsp Forceps": 0.7782008010727527,
+     "Monopolar Curved Scissors": 0.9619717679297868,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6521739130434783
+    },
+    "instance_accuracy": 0.9439613526570049,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7112946548873037,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.9197512404112104,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.9197512404112104,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.8666103070301067,
+      "IoU": 0.8343042584565772,
+      "mcIoU": 0.5034502426402772,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9859714817624154,
+       "Prograsp Forceps": 0.3638002057399966,
+       "Large Needle Driver": 0.06104455314701018,
+       "Monopolar Curved Scissors": 0.9527034630991408,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6122448979591837,
+       "Clip Applier": 0.5483870967741935
+      },
+      "instance_accuracy": 0.8043025676613463,
+      "instance_macro_f1": 0.5426766051116607,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6894421375668826,
+      "mAP@0.5 segm": 0.6894421375668826
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9504912108395537,
+      "IoU": 0.9470420012899712,
+      "mcIoU": 0.6770608457049783,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9929577464788732,
+       "Prograsp Forceps": 0.7782008010727527,
+       "Monopolar Curved Scissors": 0.9619717679297868,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6521739130434783
+      },
+      "instance_accuracy": 0.9439613526570049,
+      "instance_macro_f1": 0.7112946548873037,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.9197512404112104,
+      "mAP@0.5 segm": 0.9197512404112104
+     },
+     "extra": {
+      "tracked": 474,
+      "tracks_missing": 0
+     }
+    }
+   ]
+  },
+  "ens: refine all tracked +box clip": {
+   "all": {
+    "mIoU": 0.8666103070301067,
+    "mIoU_sd": 0.0,
+    "IoU": 0.8343042584565772,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.5034502426402772,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9859714817624154,
+     "Prograsp Forceps": 0.3638002057399966,
+     "Large Needle Driver": 0.06104455314701018,
+     "Monopolar Curved Scissors": 0.9527034630991408,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6122448979591837,
+     "Clip Applier": 0.5483870967741935
+    },
+    "instance_accuracy": 0.8043025676613463,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.5426766051116607,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 574.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1441.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.6894421375668826,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.6894421375668826,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "seq5_9_15": {
+    "mIoU": 0.9504912108395537,
+    "mIoU_sd": 0.0,
+    "IoU": 0.9470420012899712,
+    "IoU_sd": 0.0,
+    "mcIoU": 0.6770608457049783,
+    "mcIoU_sd": 0.0,
+    "per_class_iou": {
+     "Bipolar Forceps": 0.9929577464788732,
+     "Prograsp Forceps": 0.7782008010727527,
+     "Monopolar Curved Scissors": 0.9619717679297868,
+     "Ultrasound Probe": 0.0,
+     "Suction Instrument": 0.6521739130434783
+    },
+    "instance_accuracy": 0.9439613526570049,
+    "instance_accuracy_sd": 0.0,
+    "instance_macro_f1": 0.7112946548873037,
+    "instance_macro_f1_sd": 0.0,
+    "n_frames": 437.0,
+    "n_frames_sd": 0.0,
+    "n_instances": 1035.0,
+    "n_instances_sd": 0.0,
+    "mAP@0.5 box": 0.9197512404112104,
+    "mAP@0.5 box_sd": 0.0,
+    "mAP@0.5 segm": 0.9197512404112104,
+    "mAP@0.5 segm_sd": 0.0
+   },
+   "per_seed": [
+    {
+     "all": {
+      "mIoU": 0.8666103070301067,
+      "IoU": 0.8343042584565772,
+      "mcIoU": 0.5034502426402772,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9859714817624154,
+       "Prograsp Forceps": 0.3638002057399966,
+       "Large Needle Driver": 0.06104455314701018,
+       "Monopolar Curved Scissors": 0.9527034630991408,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6122448979591837,
+       "Clip Applier": 0.5483870967741935
+      },
+      "instance_accuracy": 0.8043025676613463,
+      "instance_macro_f1": 0.5426766051116607,
+      "n_frames": 574,
+      "n_instances": 1441,
+      "mAP@0.5 box": 0.6894421375668826,
+      "mAP@0.5 segm": 0.6894421375668826
+     },
+     "seq5_9_15": {
+      "mIoU": 0.9504912108395537,
+      "IoU": 0.9470420012899712,
+      "mcIoU": 0.6770608457049783,
+      "per_class_iou": {
+       "Bipolar Forceps": 0.9929577464788732,
+       "Prograsp Forceps": 0.7782008010727527,
+       "Monopolar Curved Scissors": 0.9619717679297868,
+       "Ultrasound Probe": 0.0,
+       "Suction Instrument": 0.6521739130434783
+      },
+      "instance_accuracy": 0.9439613526570049,
+      "instance_macro_f1": 0.7112946548873037,
+      "n_frames": 437,
+      "n_instances": 1035,
+      "mAP@0.5 box": 0.9197512404112104,
+      "mAP@0.5 segm": 0.9197512404112104
+     },
+     "extra": {
+      "tracked": 474,
+      "tracks_missing": 0
+     }
+    }
+   ]
+  }
+ }
+}

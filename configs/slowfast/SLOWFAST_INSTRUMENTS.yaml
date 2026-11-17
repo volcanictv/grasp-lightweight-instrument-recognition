@@ -1,0 +1,95 @@
+# SlowFast baseline for GraSP instrument recognition, in the TAPIS code base (TAPIR recipe, Valderrama et al. 2022, Section 4.1): SlowFast video features of 16 consecutive frames centred on the
+# annotated keyframe (alpha 8, beta 1/8), region features of the detector fused with the pooled video features by the region head, linear classification; SGD 0.0125, cosine, 30 epochs, 5 warm-up.
+# Kinetics-400 SlowFast 4x16 R50 initialisation (the CaDIS-pretrained weights of the original baseline are not available).
+TRAIN:
+  ENABLE: True
+  DATASET: grasp
+  BATCH_SIZE: 6
+  EVAL_PERIOD: 1
+  CHECKPOINT_PERIOD: 1
+  AUTO_RESUME: True
+  CHECKPOINT_TYPE: caffe2
+TEST:
+  ENABLE: False
+  DATASET: grasp
+  BATCH_SIZE: 6
+DATA:
+  NUM_FRAMES: 16
+  SAMPLING_RATE: 1
+  TRAIN_JITTER_SCALES: [256, 320]
+  TRAIN_CROP_SIZE: 224
+  TRAIN_CROP_SIZE_LARGE: 224
+  TEST_CROP_SIZE: 224
+  TEST_CROP_SIZE_LARGE: 224
+  INPUT_CHANNEL_NUM: [3, 3]
+  MAX_BBOXES: 5
+  JUST_CENTER: False
+ENDOVIS_DATASET:
+  DETECTION_SCORE_THRESH: 0.0
+  TRAIN_USE_COLOR_AUGMENTATION: True
+  INCLUDE_GT: False
+  USE_PREDS: True
+SLOWFAST:
+  ALPHA: 8
+  BETA_INV: 8
+  FUSION_CONV_CHANNEL_RATIO: 2
+  FUSION_KERNEL_SZ: 7
+RESNET:
+  ZERO_INIT_FINAL_BN: True
+  WIDTH_PER_GROUP: 64
+  NUM_GROUPS: 1
+  DEPTH: 50
+  TRANS_FUNC: bottleneck_transform
+  STRIDE_1X1: False
+  NUM_BLOCK_TEMP_KERNEL: [[3, 3], [4, 4], [6, 6], [3, 3]]
+  SPATIAL_STRIDES: [[1, 1], [2, 2], [2, 2], [2, 2]]
+  SPATIAL_DILATIONS: [[1, 1], [1, 1], [1, 1], [1, 1]]
+NONLOCAL:
+  LOCATION: [[[], []], [[], []], [[], []], [[], []]]
+  GROUP: [[1, 1], [1, 1], [1, 1], [1, 1]]
+  INSTANTIATION: dot_product
+REGIONS:
+  ENABLE: True
+  ALIGNED: True
+  ROI_XFORM_RESOLUTION: 7
+  LEVEL: segmentation
+AUG:
+  ENABLE: False
+SOLVER:
+  BASE_LR_SCALE_NUM_SHARDS: True
+  BASE_LR: 0.0125
+  CLIP_GRAD_L2NORM: 1.0
+  LR_POLICY: cosine
+  COSINE_AFTER_WARMUP: True
+  COSINE_END_LR: 1e-4
+  MAX_EPOCH: 30
+  WARMUP_EPOCHS: 5.0
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 1e-4
+  ZERO_WD_1D_PARAM: True
+  WARMUP_START_LR: 0.0125
+  OPTIMIZING_METHOD: sgd
+MODEL:
+  ARCH: slowfast
+  MODEL_NAME: SlowFast
+  LOSS_FUNC: soft_cross_entropy
+  DROPOUT_RATE: 0.5
+TASKS:
+  TASKS: ["instruments"]
+  NUM_CLASSES: [7]
+  LOSS_FUNC: ["cross_entropy"]
+  HEAD_ACT: ["softmax"]
+  LOSS_WEIGHTS: [1.0]
+  METRICS: ["mIoU"]
+DATA_LOADER:
+  NUM_WORKERS: 4
+  PIN_MEMORY: True
+FEATURES:
+  ENABLE: True
+  DIM_FEATURES: 256
+  PRECALCULATE_TEST: True
+NUM_GPUS: 1
+NUM_SHARDS: 1
+RNG_SEED: 0
+LOG_PERIOD: 10
+OUTPUT_DIR: .

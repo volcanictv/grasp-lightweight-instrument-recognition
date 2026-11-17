@@ -1,0 +1,7 @@
+fold 0: single mIoU 84.84 (refined 0.0%), S1 mIoU 86.69 (refined 31.8%), maxbelief mIoU 86.69 (refined 31.8%)
+fold 1: single mIoU 86.83 (refined 0.0%), S1 mIoU 88.40 (refined 33.4%), maxbelief mIoU 88.40 (refined 34.3%)
+fold 2: single mIoU 83.95 (refined 0.0%), S1 mIoU 87.60 (refined 34.5%), maxbelief mIoU 87.60 (refined 35.5%)
+fold 3: single mIoU 88.97 (refined 0.0%), S1 mIoU 89.27 (refined 30.9%), maxbelief mIoU 89.27 (refined 28.9%)
+pooled: single mIoU 85.67 IoU 83.88 mcIoU 71.78 refined 0.0%, S1 mIoU 87.69 IoU 86.68 mcIoU 77.93 refined 32.9%, maxbelief mIoU 87.69 IoU 86.68 mcIoU 77.93 refined 33.3%
+wrote /home/yzx/gate_cal
+elapsed 112 s, exit 0

@@ -1,0 +1,359 @@
+{
+ "folds": {
+  "0": {
+   "evaluation_cases": [
+    "CASE050"
+   ],
+   "n_instruments": 1055,
+   "n_frames": 390,
+   "configs": {
+    "single": {
+     "mIoU": 84.84302483621242,
+     "IoU": 82.84973930243412,
+     "mcIoU": 68.4582885086076,
+     "instance_accuracy": 0.9298578199052133,
+     "calibration_fraction": null,
+     "evaluation_fraction": 0.0,
+     "gflops_per_instrument": 2945.6967225776275,
+     "a100_s_per_instrument": 0.48094147973928475,
+     "saving_vs_refine_all_gflops": 0.896750021433431,
+     "refine_all": null
+    },
+    "S1": {
+     "mIoU": 86.69432764053487,
+     "IoU": 85.61628285186988,
+     "mcIoU": 76.61051916970415,
+     "instance_accuracy": 0.957345971563981,
+     "calibration_fraction": 0.2998236331569665,
+     "evaluation_fraction": 0.3184834123222749,
+     "gflops_per_instrument": 11093.79530580059,
+     "a100_s_per_instrument": 2.419498086556978,
+     "saving_vs_refine_all_gflops": 0.6111500146072387,
+     "refine_all": null
+    },
+    "maxbelief": {
+     "mIoU": 86.69432764053487,
+     "IoU": 85.61628285186988,
+     "mcIoU": 76.61051916970415,
+     "instance_accuracy": 0.957345971563981,
+     "calibration_fraction": 0.2998236331569665,
+     "evaluation_fraction": 0.3184834123222749,
+     "gflops_per_instrument": 11093.79530580059,
+     "a100_s_per_instrument": 2.419498086556978,
+     "saving_vs_refine_all_gflops": 0.6111500146072387,
+     "refine_all": null
+    }
+   },
+   "per_case": {
+    "CASE050": {
+     "single": {
+      "mIoU": 84.84302483621242,
+      "IoU": 82.84973930243412,
+      "mcIoU": 68.4582885086076,
+      "instance_accuracy": 0.9298578199052133,
+      "n_instruments": 1055,
+      "evaluation_fraction": null
+     },
+     "S1": {
+      "mIoU": 86.69432764053487,
+      "IoU": 85.61628285186988,
+      "mcIoU": 76.61051916970415,
+      "instance_accuracy": 0.957345971563981,
+      "n_instruments": 1055,
+      "evaluation_fraction": 0.3184834123222749
+     },
+     "maxbelief": {
+      "mIoU": 86.69432764053487,
+      "IoU": 85.61628285186988,
+      "mcIoU": 76.61051916970415,
+      "instance_accuracy": 0.957345971563981,
+      "n_instruments": 1055,
+      "evaluation_fraction": 0.3184834123222749
+     }
+    }
+   }
+  },
+  "1": {
+   "evaluation_cases": [
+    "CASE047",
+    "CASE053"
+   ],
+   "n_instruments": 1024,
+   "n_frames": 430,
+   "configs": {
+    "single": {
+     "mIoU": 86.82838749039261,
+     "IoU": 85.53307097056586,
+     "mcIoU": 71.28055553254825,
+     "instance_accuracy": 0.939453125,
+     "calibration_fraction": null,
+     "evaluation_fraction": 0.0,
+     "gflops_per_instrument": 2945.6967225776275,
+     "a100_s_per_instrument": 0.48094147973928475,
+     "saving_vs_refine_all_gflops": 0.896750021433431,
+     "refine_all": null
+    },
+    "S1": {
+     "mIoU": 88.39514826162004,
+     "IoU": 87.70960357273661,
+     "mcIoU": 76.61249598203817,
+     "instance_accuracy": 0.962890625,
+     "calibration_fraction": 0.29958246346555323,
+     "evaluation_fraction": 0.333984375,
+     "gflops_per_instrument": 11490.372857868379,
+     "a100_s_per_instrument": 2.513849919174657,
+     "saving_vs_refine_all_gflops": 0.5972495259937499,
+     "refine_all": null
+    },
+    "maxbelief": {
+     "mIoU": 88.39514826162004,
+     "IoU": 87.70960357273661,
+     "mcIoU": 76.61249598203817,
+     "instance_accuracy": 0.962890625,
+     "calibration_fraction": 0.29958246346555323,
+     "evaluation_fraction": 0.3427734375,
+     "gflops_per_instrument": 11715.232756165504,
+     "a100_s_per_instrument": 2.567347509686114,
+     "saving_vs_refine_all_gflops": 0.5893679340084952,
+     "refine_all": null
+    }
+   },
+   "per_case": {
+    "CASE047": {
+     "single": {
+      "mIoU": 85.75754921781848,
+      "IoU": 84.56045489123795,
+      "mcIoU": 71.57793355649767,
+      "instance_accuracy": 0.9393258426966292,
+      "n_instruments": 445,
+      "evaluation_fraction": null
+     },
+     "S1": {
+      "mIoU": 87.06471731798773,
+      "IoU": 86.31842031422465,
+      "mcIoU": 74.51935977562671,
+      "instance_accuracy": 0.9573033707865168,
+      "n_instruments": 445,
+      "evaluation_fraction": 0.3752808988764045
+     },
+     "maxbelief": {
+      "mIoU": 87.06471731798773,
+      "IoU": 86.31842031422465,
+      "mcIoU": 74.51935977562671,
+      "instance_accuracy": 0.9573033707865168,
+      "n_instruments": 445,
+      "evaluation_fraction": 0.3842696629213483
+     }
+    },
+    "CASE053": {
+     "single": {
+      "mIoU": 87.59939104664596,
+      "IoU": 86.23335454768194,
+      "mcIoU": 71.03702164050357,
+      "instance_accuracy": 0.9395509499136442,
+      "n_instruments": 579,
+      "evaluation_fraction": null
+     },
+     "S1": {
+      "mIoU": 89.35305854103531,
+      "IoU": 88.7112555188652,
+      "mcIoU": 78.02389767897563,
+      "instance_accuracy": 0.9671848013816926,
+      "n_instruments": 579,
+      "evaluation_fraction": 0.3022452504317789
+     },
+     "maxbelief": {
+      "mIoU": 89.35305854103531,
+      "IoU": 88.7112555188652,
+      "mcIoU": 78.02389767897563,
+      "instance_accuracy": 0.9671848013816926,
+      "n_instruments": 579,
+      "evaluation_fraction": 0.31088082901554404
+     }
+    }
+   }
+  },
+  "2": {
+   "evaluation_cases": [
+    "CASE041"
+   ],
+   "n_instruments": 588,
+   "n_frames": 235,
+   "configs": {
+    "single": {
+     "mIoU": 83.95147282600627,
+     "IoU": 81.31368880055464,
+     "mcIoU": 68.55675867922837,
+     "instance_accuracy": 0.9030612244897959,
+     "calibration_fraction": null,
+     "evaluation_fraction": 0.0,
+     "gflops_per_instrument": 2945.6967225776275,
+     "a100_s_per_instrument": 0.48094147973928475,
+     "saving_vs_refine_all_gflops": 0.896750021433431,
+     "refine_all": null
+    },
+    "S1": {
+     "mIoU": 87.5953165710319,
+     "IoU": 86.00840587549477,
+     "mcIoU": 75.41624431965867,
+     "instance_accuracy": 0.9472789115646258,
+     "calibration_fraction": 0.30013927576601673,
+     "evaluation_fraction": 0.34523809523809523,
+     "gflops_per_instrument": 11778.28870648163,
+     "a100_s_per_instrument": 2.5823494795120783,
+     "saving_vs_refine_all_gflops": 0.5871577521290321,
+     "refine_all": null
+    },
+    "maxbelief": {
+     "mIoU": 87.5953165710319,
+     "IoU": 86.00840587549477,
+     "mcIoU": 75.41624431965867,
+     "instance_accuracy": 0.9472789115646258,
+     "calibration_fraction": 0.30013927576601673,
+     "evaluation_fraction": 0.3554421768707483,
+     "gflops_per_instrument": 12039.3505385182,
+     "a100_s_per_instrument": 2.644460060786151,
+     "saving_vs_refine_all_gflops": 0.5780072417062421,
+     "refine_all": null
+    }
+   },
+   "per_case": {
+    "CASE041": {
+     "single": {
+      "mIoU": 83.95147282600627,
+      "IoU": 81.31368880055464,
+      "mcIoU": 68.55675867922837,
+      "instance_accuracy": 0.9030612244897959,
+      "n_instruments": 588,
+      "evaluation_fraction": null
+     },
+     "S1": {
+      "mIoU": 87.5953165710319,
+      "IoU": 86.00840587549477,
+      "mcIoU": 75.41624431965867,
+      "instance_accuracy": 0.9472789115646258,
+      "n_instruments": 588,
+      "evaluation_fraction": 0.34523809523809523
+     },
+     "maxbelief": {
+      "mIoU": 87.5953165710319,
+      "IoU": 86.00840587549477,
+      "mcIoU": 75.41624431965867,
+      "instance_accuracy": 0.9472789115646258,
+      "n_instruments": 588,
+      "evaluation_fraction": 0.3554421768707483
+     }
+    }
+   }
+  },
+  "3": {
+   "evaluation_cases": [
+    "CASE051"
+   ],
+   "n_instruments": 194,
+   "n_frames": 70,
+   "configs": {
+    "single": {
+     "mIoU": 88.96931837140562,
+     "IoU": 88.13573376212645,
+     "mcIoU": 81.46583866172953,
+     "instance_accuracy": 0.9587628865979382,
+     "calibration_fraction": null,
+     "evaluation_fraction": 0.0,
+     "gflops_per_instrument": 2945.6967225776275,
+     "a100_s_per_instrument": 0.48094147973928475,
+     "saving_vs_refine_all_gflops": 0.896750021433431,
+     "refine_all": null
+    },
+    "S1": {
+     "mIoU": 89.27203358342399,
+     "IoU": 88.48583788606705,
+     "mcIoU": 82.37213578828619,
+     "instance_accuracy": 0.9690721649484536,
+     "calibration_fraction": 0.30024968789013734,
+     "evaluation_fraction": 0.30927835051546393,
+     "gflops_per_instrument": 10858.292456469588,
+     "a100_s_per_instrument": 2.363468376087468,
+     "saving_vs_refine_all_gflops": 0.6194046539797925,
+     "refine_all": null
+    },
+    "maxbelief": {
+     "mIoU": 89.27203358342399,
+     "IoU": 88.48583788606705,
+     "mcIoU": 82.37213578828619,
+     "instance_accuracy": 0.9690721649484536,
+     "calibration_fraction": 0.30024968789013734,
+     "evaluation_fraction": 0.28865979381443296,
+     "gflops_per_instrument": 10330.786074210122,
+     "a100_s_per_instrument": 2.237966582997589,
+     "saving_vs_refine_all_gflops": 0.6378943451433685,
+     "refine_all": null
+    }
+   },
+   "per_case": {
+    "CASE051": {
+     "single": {
+      "mIoU": 88.96931837140562,
+      "IoU": 88.13573376212645,
+      "mcIoU": 81.46583866172953,
+      "instance_accuracy": 0.9587628865979382,
+      "n_instruments": 194,
+      "evaluation_fraction": null
+     },
+     "S1": {
+      "mIoU": 89.27203358342399,
+      "IoU": 88.48583788606705,
+      "mcIoU": 82.37213578828619,
+      "instance_accuracy": 0.9690721649484536,
+      "n_instruments": 194,
+      "evaluation_fraction": 0.30927835051546393
+     },
+     "maxbelief": {
+      "mIoU": 89.27203358342399,
+      "IoU": 88.48583788606705,
+      "mcIoU": 82.37213578828619,
+      "instance_accuracy": 0.9690721649484536,
+      "n_instruments": 194,
+      "evaluation_fraction": 0.28865979381443296
+     }
+    }
+   }
+  }
+ },
+ "pooled": {
+  "single": {
+   "mIoU": 85.67238640631247,
+   "IoU": 83.88341073490828,
+   "mcIoU": 71.777356354042,
+   "instance_accuracy": 0.9297448444599791,
+   "evaluation_fraction": 0.0,
+   "gflops_per_instrument": 2945.6967225776275,
+   "saving_vs_refine_all_gflops": 0.896750021433431,
+   "n_instruments": 2861,
+   "refine_all": null
+  },
+  "S1": {
+   "mIoU": 87.69301624652212,
+   "IoU": 86.67685678335285,
+   "mcIoU": 77.92778230621755,
+   "instance_accuracy": 0.9580566235581964,
+   "evaluation_fraction": 0.32890597693114293,
+   "gflops_per_instrument": 11360.44681930903,
+   "saving_vs_refine_all_gflops": 0.601803579570845,
+   "n_instruments": 2861,
+   "refine_all": null
+  },
+  "maxbelief": {
+   "mIoU": 87.69301624652212,
+   "IoU": 86.67685678335285,
+   "mcIoU": 77.92778230621755,
+   "instance_accuracy": 0.9580566235581964,
+   "evaluation_fraction": 0.3327507864383083,
+   "gflops_per_instrument": 11458.812654658708,
+   "saving_vs_refine_all_gflops": 0.598355746562887,
+   "n_instruments": 2861,
+   "refine_all": null
+  }
+ },
+ "note": "refine-all was not run for these checkpoint sets (only the 50% highest-S1 instruments of each fold are tracked): null"
+}

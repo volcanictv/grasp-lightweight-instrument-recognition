@@ -1,0 +1,173 @@
+{
+ "classes": [
+  "Bipolar Forceps",
+  "Prograsp Forceps",
+  "Large Needle Driver",
+  "Monopolar Curved Scissors",
+  "Suction Instrument",
+  "Clip Applier",
+  "Laparoscopic Grasper"
+ ],
+ "recall_single": [
+  0.8866913885455295,
+  0.8787878787878788,
+  0.9109131403118041,
+  0.9668246445497631,
+  0.967741935483871,
+  0.912280701754386,
+  0.794238683127572
+ ],
+ "recall_revisit": [
+  0.9451998351874743,
+  0.901010101010101,
+  0.9836674090571641,
+  0.9928909952606636,
+  0.9978494623655915,
+  0.9824561403508772,
+  0.831275720164609
+ ],
+ "support": [
+  809,
+  330,
+  449,
+  844,
+  310,
+  38,
+  81
+ ],
+ "revisited": 1083.3333333333333,
+ "fixed": 152.66666666666666,
+ "broken": 28.333333333333332,
+ "still_wrong": 105.33333333333333,
+ "per_seed": [
+  {
+   "seed": 42,
+   "support": [
+    809,
+    330,
+    449,
+    844,
+    310,
+    38,
+    81
+   ],
+   "recall_single": [
+    0.8875154511742892,
+    0.8606060606060606,
+    0.9042316258351893,
+    0.9609004739336493,
+    0.9741935483870968,
+    0.9210526315789473,
+    0.8024691358024691
+   ],
+   "recall_revisit": [
+    0.9406674907292955,
+    0.9,
+    0.9821826280623608,
+    0.9917061611374408,
+    1.0,
+    0.9736842105263158,
+    0.8271604938271605
+   ],
+   "revisited": 1127,
+   "fixed": 160,
+   "broken": 31,
+   "still_wrong": 111,
+   "confusions_after": {
+    "Bipolar Forceps -> Prograsp Forceps": 20,
+    "Bipolar Forceps -> Large Needle Driver": 12,
+    "Bipolar Forceps -> Suction Instrument": 8,
+    "Prograsp Forceps -> Bipolar Forceps": 12,
+    "Prograsp Forceps -> Suction Instrument": 13,
+    "Laparoscopic Grasper -> Suction Instrument": 8
+   }
+  },
+  {
+   "seed": 43,
+   "support": [
+    809,
+    330,
+    449,
+    844,
+    310,
+    38,
+    81
+   ],
+   "recall_single": [
+    0.8974042027194067,
+    0.8757575757575757,
+    0.9287305122494433,
+    0.9632701421800948,
+    0.964516129032258,
+    0.9210526315789473,
+    0.7654320987654321
+   ],
+   "recall_revisit": [
+    0.9493201483312732,
+    0.8878787878787879,
+    0.9910913140311804,
+    0.9928909952606635,
+    0.9967741935483871,
+    1.0,
+    0.8271604938271605
+   ],
+   "revisited": 1123,
+   "fixed": 146,
+   "broken": 29,
+   "still_wrong": 103,
+   "confusions_after": {
+    "Bipolar Forceps -> Prograsp Forceps": 14,
+    "Bipolar Forceps -> Large Needle Driver": 16,
+    "Bipolar Forceps -> Suction Instrument": 6,
+    "Prograsp Forceps -> Bipolar Forceps": 15,
+    "Prograsp Forceps -> Suction Instrument": 8,
+    "Prograsp Forceps -> Laparoscopic Grasper": 9,
+    "Laparoscopic Grasper -> Suction Instrument": 7
+   }
+  },
+  {
+   "seed": 44,
+   "support": [
+    809,
+    330,
+    449,
+    844,
+    310,
+    38,
+    81
+   ],
+   "recall_single": [
+    0.8751545117428925,
+    0.9,
+    0.8997772828507795,
+    0.976303317535545,
+    0.964516129032258,
+    0.8947368421052632,
+    0.8148148148148148
+   ],
+   "recall_revisit": [
+    0.9456118665018541,
+    0.9151515151515152,
+    0.977728285077951,
+    0.9940758293838863,
+    0.9967741935483871,
+    0.9736842105263158,
+    0.8395061728395061
+   ],
+   "revisited": 1000,
+   "fixed": 152,
+   "broken": 25,
+   "still_wrong": 102,
+   "confusions_after": {
+    "Bipolar Forceps -> Prograsp Forceps": 23,
+    "Bipolar Forceps -> Large Needle Driver": 7,
+    "Bipolar Forceps -> Monopolar Curved Scissors": 7,
+    "Bipolar Forceps -> Suction Instrument": 5,
+    "Prograsp Forceps -> Bipolar Forceps": 16,
+    "Prograsp Forceps -> Suction Instrument": 7,
+    "Large Needle Driver -> Prograsp Forceps": 5,
+    "Laparoscopic Grasper -> Suction Instrument": 7
+   }
+  }
+ ]
+}

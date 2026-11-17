@@ -1,0 +1,12 @@
+{
+ "mIoU": 0.89282011,
+ "IoU": 0.84419842,
+ "mcIoU": 0.52699577,
+ "Bipolar Forceps-IoU": 0.96034917,
+ "Prograsp Forceps-IoU": 0.54239679,
+ "Large Needle Driver-IoU": 0.72352112,
+ "Monopolar Curved Scissors-IoU": 0.98060989,
+ "Ultrasound Probe-IoU": 0.0,
+ "Suction Instrument-IoU": 0.01136364,
+ "Clip Applier-IoU": 0.47072976
+}

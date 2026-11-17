@@ -1,0 +1,32 @@
+{
+ "summary": {
+  "instruments": 2935,
+  "matched_to_a_prediction": 2894,
+  "class_accuracy_of_matched_prediction": 0.9035775127768313,
+  "mIoU": 0.89664997,
+  "IoU": 0.88529461,
+  "mcIoU": 0.82899808,
+  "per_class_IoU": {
+   "Bipolar Forceps": 0.86383986,
+   "Prograsp Forceps": 0.65918551,
+   "Large Needle Driver": 0.96059167,
+   "Monopolar Curved Scissors": 0.9495459,
+   "Suction Instrument": 0.79809506,
+   "Clip Applier": 0.75288993,
+   "Laparoscopic Grasper": 0.81883866
+  },
+  "match": "mask"
+ },
+ "full": {
+  "mIoU": 0.89664997,
+  "IoU": 0.88529461,
+  "mcIoU": 0.82899808,
+  "Bipolar Forceps-IoU": 0.86383986,
+  "Prograsp Forceps-IoU": 0.65918551,
+  "Large Needle Driver-IoU": 0.96059167,
+  "Monopolar Curved Scissors-IoU": 0.9495459,
+  "Suction Instrument-IoU": 0.79809506,
+  "Clip Applier-IoU": 0.75288993,
+  "Laparoscopic Grasper-IoU": 0.81883866
+ }
+}

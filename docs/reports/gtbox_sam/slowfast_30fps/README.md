@@ -1,0 +1,6 @@
+SlowFast baseline (TAPIR recipe: SlowFast R50 initialised from Kinetics-400, detector region features fused in the region head, 16 frames at a step of 15 = 8 s at 30 fps, batch 6, SGD 0.0125 cosine, 30 epochs, last checkpoint tested), trained on titanxp on real 30 fps frames, scored with the annotated masks through TAPIS's own evaluator.
+score_pred: model's own proposals, annotated instrument matched by mask IoU (validation-style rows). score_given: annotated boxes given to the model, box matching (official-test-style row). Fold runs train on the other fold with the released fold predictions and features.
+fold1 has no score_given: the loader found no detector features for some fold-1 boxes in given-box mode.
+Run with scripts/slowfast_tapis/ (relay_windows_to_titanxp.sh, run_titanxp.sh, rc_slowfast_run.sh); fold1 and the scoring were finished with the fixed runner after the given-box pass crashed.
+The scripts read the directory that holds the 30 fps archives and the extracted windows from GRASP30FPS_DIR (set it to the project-storage path); on titanxp the runner takes W, PY, CODE and FRAMES instead.
+endovis_isinet_score_pred.json: SlowFast on EndoVis 2018 (ISINet split), same recipe, own proposals of the retrained TAPIS Mask2Former stage, mask-matched annotated masks, 16 frames at step 1, last epoch (run_endovis_slowfast.sh).

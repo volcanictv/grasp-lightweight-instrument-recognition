@@ -31,8 +31,11 @@ def rbox(ax, x, y, w, h, fc, ec, lw=0.8, r=1.0, z=2):
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fc, ec=ec, lw=lw, zorder=z))
 
 
+FONT_SCALE = 1.1  # the figure is shown at text width, where the original sizes were too small to read
+
+
 def label(ax, x, y, s, size=6, color=INK, weight="normal", ha="center", va="center", z=4, **kw):
-    ax.text(x, y, s, fontsize=size, color=color, fontweight=weight, ha=ha, va=va, zorder=z, linespacing=1.25, **kw)
+    ax.text(x, y, s, fontsize=size * FONT_SCALE, color=color, fontweight=weight, ha=ha, va=va, zorder=z, linespacing=1.25, **kw)
 
 
 def container(ax, x0, y0, x1, y1, caption, align="c"):
@@ -133,7 +136,7 @@ def main() -> None:
         thumb(ax, f2, 104 + dx, 27 + dy, 8.5, z=3 + k)
     label(ax, 108.3, 33.4, r"frames $t\pm10$", size=5.2)
     rbox(ax, 104.5, 14.5, 13.5, 6, PURP_T, PURP)
-    label(ax, 111.25, 17.5, "SAM2-large tracker", size=5.2)
+    label(ax, 111.25, 17.5, "SAM2.1-large" + chr(10) + "tracker", size=4.9)
     arrow(ax, (109.5, 23.6), (109.5, 20.5), color=PURP)
     rbox(ax, 118.5, 21, 8.5, 15, "white", INK, lw=0.7, r=1.2)
     label(ax, 122.75, 23.2, "Fusion", size=5.4)
@@ -162,8 +165,8 @@ def main() -> None:
     label(ax, 112, 45.6, "keep the one-pass label", size=4.8, color=GREEN)
 
     fig.subplots_adjust(0.003, 0.003, 0.997, 0.997)
-    fig.savefig(args.out / "fig_pipeline.pdf", dpi=600)  # vector backends resample thumbnails at this dpi
-    fig.savefig(args.out / "fig_pipeline.png", dpi=300)
+    fig.savefig(args.out / "fig_pipeline.pdf", dpi=600, bbox_inches="tight", pad_inches=0.03)  # vector backends resample thumbnails at this dpi
+    fig.savefig(args.out / "fig_pipeline.png", dpi=300, bbox_inches="tight", pad_inches=0.03)
     print("wrote", args.out / "fig_pipeline.pdf")
 
 
