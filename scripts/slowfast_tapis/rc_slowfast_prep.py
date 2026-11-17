@@ -8,7 +8,7 @@ Run directories (data/run_<name>/{annotations,features,frame_lists}) use the sam
   annotations/gt_{train,test}.json   features/{train,test}.pth   frame_lists/{train,test}.csv   annotations/preds_{train,test}.json
 usage: rc_slowfast_prep.py --archives DIR --release-annotations DIR --data DIR --windows DIR --runs official,fold1,fold2[,smoke]
 """
-import argparse, csv, json, os, subprocess, sys
+import argparse, csv, hashlib, json, os, subprocess, sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -130,6 +130,13 @@ def main():
     json.dump({"problems": problems, "missing_frames": {v: len(m) for v, m in miss.items()}}, open(win / "_prep_report.json", "w"), indent=1)
     if miss: sys.exit("frames missing after extraction: " + json.dumps({v: m[:3] + [f"... {len(m)} total"] for v, m in miss.items()}))
     print("all needed frames present", flush=True)
+    if {"official", "fold1", "fold2"} <= set(runs):  # marker for the transfer to titanxp: only written for the complete set, never for the smoke subset
+        rel = sorted(n for s in need_all.values() for n in s)
+        nl = chr(10)
+        (win / "_files.txt").write_text(nl.join(rel) + nl)
+        with ThreadPoolExecutor(a.jobs) as ex: sums = list(ex.map(lambda n: hashlib.sha256((win / n).read_bytes()).hexdigest(), rel))
+        (win / "_manifest.sha256").write_text("".join(f"{h}  {n}{nl}" for h, n in zip(sums, rel)))
+        (win / "_ready").write_text(f"{len(rel)} files{nl}"); print(f"manifest of {len(rel)} files written; windows ready", flush=True)
 
 
 if __name__ == "__main__":

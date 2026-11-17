@@ -1,11 +1,11 @@
 #!/bin/bash
 # One SlowFast run on the 30 fps windows: train, test on the held-out part (own proposals and given boxes), score with the annotated masks.
-# usage: rc_slowfast_run.sh official|fold1|fold2|smoke     knobs by environment: EPOCHS WARMUP BS RATE WORKERS CK_EVERY FRAMES
+# usage: rc_slowfast_run.sh official|fold1|fold2|smoke     knobs by environment: EPOCHS WARMUP BS RATE WORKERS CK_EVERY FRAMES, and W PY CODE for another machine (see run_titanxp.sh)
 # Resumable: every stage leaves a .done marker, training resumes from its newest checkpoint, so the same command continues after any stop. Checkpoints are never selected on the held-out part: the last epoch is tested.
 set -uo pipefail
 RUN=${1:?run name (official|fold1|fold2|smoke)}
-W=$HOME/grasp_work/slowfast; D=$W/data/run_$RUN; FR=${FRAMES:-/shared/rc/robot-surg/grasp30fps/windows}
-CODE=$W/code/TAPIS_gtbox; PY=$HOME/grasp_work/tapis/venv/bin/python; OUT=$W/runs/$RUN
+W=${W:-$HOME/grasp_work/slowfast}; D=$W/data/run_$RUN; FR=${FRAMES:-/shared/rc/robot-surg/grasp30fps/windows}
+CODE=${CODE:-$W/code/TAPIS_gtbox}; PY=${PY:-$HOME/grasp_work/tapis/venv/bin/python}; OUT=$W/runs/$RUN
 EPOCHS=${EPOCHS:-30}; WARMUP=${WARMUP:-5.0}; BS=${BS:-6}; RATE=${RATE:-15}; WORKERS=${WORKERS:-6}; CK_EVERY=${CK_EVERY:-5}
 say() { echo "[$(date +%F\ %T)] $RUN: $*"; }
 for p in "$D/annotations/gt_train.json" "$D/features/train.pth" "$D/frame_lists/train.csv" "$W/weights/SLOWFAST_4x16_R50.pkl" "$CODE/tools/run_net.py" "$PY"; do [ -e "$p" ] || { say "missing $p"; exit 2; }; done
