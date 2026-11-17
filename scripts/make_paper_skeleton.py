@@ -45,9 +45,9 @@ def main() -> None:
     (O / "tables").mkdir(parents=True, exist_ok=True)
     (O / "figures").mkdir(parents=True, exist_ok=True)
     J = lambda rel: json.loads((E / rel).read_text(encoding="utf-8"))
-    BHR, TTA, GB, BT = J("gtbox_sam/bootstrap_heldout_row.json"), J("gtbox_sam/tta_vs_tracking.json"), J("gtbox_sam/gate_baselines.json"), J("gtbox_sam/baselines_on_test.json")
+    BHR, TTA, GB, BT = J("gtbox_sam/bootstrap_heldout_row.json"), J("budget941/tta_vs_tracking_941.json"), J("gtbox_sam/gate_baselines.json"), J("gtbox_sam/baselines_on_test.json")
     F3S, STAT, GF, RA = J("gtbox_sam/final_3seed.json"), J("gtbox_sam/final_static_noncausal_3seed.json"), J("paper_gflops.json"), J("refine_all_analysis.json")
-    WIN = J("titanxp_extra/reviewer_check_window.json")
+    WIN = J("budget941/window941.json")
     top_m = 100 * WIN["10"]["mIoU"]
     CVD = E / "campaign_cv5"
     CV = [json.loads((CVD / f"score_f{k}.json").read_text()) for k in range(5)]
@@ -98,24 +98,52 @@ def main() -> None:
     # ---- Table 2: compute and mIoU at each operating point ----
     av = GF["average"]
     miou_of = {"single": est[CFG["single"]]["three_seed_mean"]["mIoU"]["point"], "tau": est[CFG["tau"]]["three_seed_mean"]["mIoU"]["point"], "all": est[CFG["all"]]["three_seed_mean"]["mIoU"]["point"]}
-    comp = [("Single pass", "0\\%", GF["single_pass_per_instrument"], miou_of["single"]),
-            ("$S_1$ top-ranked budget", "29\\%", av["29% refined"]["gflops"], top_m),
-            (r"Fixed-threshold gate, $\tau=1.7\times10^{-5}$", "45\\%", av["held-out threshold, 45% refined"]["gflops"], miou_of["tau"]),
-            ("Temporal refinement of every instrument", "100\\%", av["every instrument refined"]["gflops"], miou_of["all"])]
+    B941 = [json.loads((E / "budget941" / f"score941_s{sd}.json").read_text()) for sd in (42, 43, 44)]
+    m941 = 100 * float(np.mean([b["gated (top 941)"]["mIoU"] for b in B941]))
+    g941 = GF["single_pass_per_instrument"] + (941 / 2861) * (av["every instrument refined"]["gflops"] - GF["single_pass_per_instrument"])
+    put("numTopCalibMiou", f2(m941), "S1 top-941 (32.9% of 2,861, the refined fraction of the calibrated gate), 3-seed mean mIoU, budget941/score941_s*.json")
+    comp = [("Single pass", "0.0", GF["single_pass_per_instrument"], miou_of["single"]),
+            ("Budget-matched gate", "32.9", g941, m941),
+            ("Fixed-threshold gate", "44.9", GF["single_pass_per_instrument"] + 0.44914 * (av["every instrument refined"]["gflops"] - GF["single_pass_per_instrument"]), miou_of["tau"]),
+            ("Refine-all", "100.0", av["every instrument refined"]["gflops"], miou_of["all"])]
     full = comp[-1][2]
     rows2 = []
     for i, (name, share, g, mi) in enumerate(comp):
-        sav = "--" if i == 0 else f"{100 * (1 - g / full):.1f}\\%"
+        sav = "--" if i == 0 else f"{100 * (1 - g / full):.1f}"
         gflops = f"{g:,.1f}".replace(",", "{,}")
         rows2.append((HL if i == 1 else "") + f"{name} & {share} & {mi:.2f} & {gflops} & {sav} \\\\")
-        put(f"numGflops{['Single', 'ShareGate', 'Gated', 'All'][i]}", f"{g:,.1f}".replace(",", "{,}"), "GFLOPs per instrument, multiply-add convention")
-        put(f"numSaving{['Single', 'ShareGate', 'Gated', 'All'][i]}", "0" if i == 0 else f"{100 * (1 - g / full):.1f}")
+        put(f"numGflops{['Single', 'Calib', 'Gated', 'All'][i]}", f"{g:,.1f}".replace(",", "{,}"), "GFLOPs per instrument, multiply-add convention")
+        put(f"numSaving{['Single', 'Calib', 'Gated', 'All'][i]}", "0" if i == 0 else f"{100 * (1 - g / full):.1f}")
     put("numGpuFrameStage", f3(GF["a100_seconds"]["single_pass_per_frame"]), "seconds per frame on an A100 (job 21823404)")
     put("numGpuRefinement", f3(GF["a100_seconds"]["refinement_per_instrument"]), "seconds per refined instrument on an A100")
-    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Test mIoU and compute at each operating point (GFLOPs per instrument, multiply-add counted as one FLOP).}}}}\n"
-            "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Policy & \\bfseries Refined & \\bfseries mIoU & \\bfseries GFLOPs & \\bfseries Saving vs.\\ all\\\\\n  \\midrule\n  " + "\n  ".join(rows2)
+    tab2 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:compute}\n  {\\caption{Official-split accuracy and estimated inference cost. Accuracy is averaged over three classifier seeds; savings are relative to refine-all. The budget-matched gate refines the 941 highest-$S_1$ instances, the refined fraction of the calibrated gate.}}}}\n"
+            "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Policy & \\bfseries Refined (\\%) & \\bfseries mIoU & \\bfseries GFLOPs per instrument & \\bfseries Saving (\\%)\\\\\n  \\midrule\n  " + "\n  ".join(rows2)
             + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n").replace("}}}}", "}}")
     (O / "tables" / "tab_compute.tex").write_text(tab2, encoding="utf-8")
+    _P = TTA["point"]
+    TR = json.loads((E / "budget941" / "transitions_top941_summary.json").read_text())["mean_over_seeds"]
+    ex = lambda k, m: 100 * float(np.mean([b[k][m] for b in B941]))
+    est_all = lambda m: est[CFG["all"]]["three_seed_mean"][m]["point"]
+    g_tau = comp[2][2]
+    sav_of = lambda g: f"{100 * (1 - g / full):.1f}"
+    def row(name, share, vals, sav, key, hl=False):
+        t = TR.get(key)
+        cd = ["--", "--", "--"] if t is None else [f"{t['net_corrections']:.1f}", f"{100 * t['recoverable_errors_captured']:.1f}", f"{100 * (1 - t['harmful_refinements_avoided']):.1f}"]
+        return (HL if hl else "") + f"{name} & {share} & " + " & ".join(vals) + f" & {sav} & " + " & ".join(cd) + " \\\\"
+    fm = lambda v: f"{v:.2f}"
+    rows_main = [
+        row("Single pass", "0.0", [fm(est[CFG["single"]]["three_seed_mean"][m]["point"]) for m in M], "--", None),
+        row("Budget-matched gate", "32.9", [fm(ex("gated (top 941)", m)) for m in M], sav_of(g941), "s1_top833", True),
+        row("Maximum-belief, same budget", "32.9", ["--", "--", "--"], sav_of(g941), "maxbelief_n_top833"),
+        row("Budget-matched, 21-view augmentation", "32.9", [fm(_P["TTA at tau"][m]) for m in M], "--", None),
+        row("Fixed-threshold gate", "44.9", [fm(est[CFG["tau"]]["three_seed_mean"][m]["point"]) for m in M], sav_of(g_tau), "tau_1.7e-5"),
+        row("Refine-all", "100.0", [fm(est_all(m)) for m in M], "0.0", "refine_all"),
+    ]
+    tab_main = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:main}\n  {\\caption{MAIN}}\n"
+                "  {\\footnotesize\\setlength{\\tabcolsep}{2.6pt}\\begin{tabular}{lrrrrrrrrr}\n  \\toprule\n"
+                "  \\bfseries Policy & \\bfseries Refined (\\%) & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU & \\bfseries Saving (\\%) & \\bfseries Net & \\bfseries $C/C_{\\mathrm{all}}$ (\\%) & \\bfseries $D/D_{\\mathrm{all}}$ (\\%)\\\\\n  \\midrule\n  "
+                + "\n  ".join(rows_main) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    (O / "tables" / "tab_main.tex").write_text(tab_main, encoding="utf-8")
 
     # ---- TTA, static control ----
     P = TTA["point"]
@@ -130,8 +158,8 @@ def main() -> None:
     put("numTtaGainTau", f"{P['TTA at tau']['mIoU'] - P['single']['mIoU']:+.2f}", "TTA at the gated instruments minus single pass, mIoU (matched to the gated tracking gain)")
     put("numTrackGainTau", f"{P['tracking at tau']['mIoU'] - P['single']['mIoU']:+.2f}", "gated tracking minus single pass, mIoU")
     put("numTtaFractionG", f"{TTA['g']['on all instruments']['mIoU']['point']:.3f}", "g = TTA gain / tracking gain, all instruments")
-    put("numTopBudgetMiou", f2(top_m), "S1 top-833 budget (29.1% of 2,861 instruments), 3-seed mean mIoU, window +-10 (reviewer_check_window.json; the budget was chosen on test data)")
-    put("numTopBudgetShare", f"{100 * 833 / 2861:.1f}", "833 of 2,861 instruments")
+    put("numTopBudgetMiou", f2(top_m), "S1 top-941 budget (32.9% of 2,861 instruments, the refined fraction of the calibrated gate), 3-seed mean mIoU, window +-10 (budget941/window941.json)")
+    put("numTopBudgetShare", f"{100 * 941 / 2861:.1f}", "941 of 2,861 instruments")
     sn = STAT["configs"]["gated (tau 2.8e-04)"]["mIoU"]["mean"]
     put("numStaticMiou", f"{100 * sn:.3f}", "static non-causal control at its stored threshold tau = 2.8e-4 (a matched static result at tau 1.7e-5 does not exist)")
 
@@ -187,26 +215,27 @@ def main() -> None:
     names_all = ["S", "largest belief", "belief entropy", "softmax max-prob", "softmax entropy", "MC vote disagreement", "MC mutual information", "class prior", "small box", "border box", "random", "best possible"]
     label_all = {"S": "Evidential $S_1$", "largest belief": "Evidential max-belief", "belief entropy": "Evidential belief entropy", "softmax max-prob": "CE max-softmax", "softmax entropy": "CE softmax entropy",
                  "MC vote disagreement": "MC-dropout vote", "MC mutual information": "MC-dropout mutual information", "class prior": "Class prior (weak classes first)", "small box": "Small box first",
-                 "border box": "Border box first", "random": "Random", "best possible": "Best possible ordering"}
-    rows3 = [f"Single pass (0\\%) & \\multicolumn{{{len(shares)}}}{{c}}{{{f2(single_m)}}} \\\\", "\\midrule"]
+                 "border box": "Border box first", "random": "Random", "best possible": "Oracle correction-first ordering"}
+    counts = [int(round(float(sh) * 2777)) for sh in GB["shares"]]
+    rows3 = ["Instruments refined & " + " & ".join(f"{c:,}".replace(",", "{,}") for c in counts) + " \\\\", "\\midrule", f"Single pass (0\\%) & \\multicolumn{{{len(shares)}}}{{c}}{{{f2(single_m)}}} \\\\", "\\midrule"]
     for n in names_all:
         v = cur(n)
         rows3.append((HL if n == "S" else "") + f"{label_all[n]} & " + " & ".join(f2(x) for x in v) + " \\\\")
     for nm, key in (("S", "numBudgetS"), ("largest belief", "numBudgetBelief"), ("softmax max-prob", "numBudgetSoftmax"), ("random", "numBudgetRandom"), ("best possible", "numBudgetBest")):
         for sh, x in zip(shares, cur(nm)):
             put(f"{key}{SHARE_WORD[int(sh.rstrip('%'))]}", f"{x:.3f}", "mIoU at that share of instruments refined, 3-seed mean, gate_baselines.json")
-    tab3 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:budget}\n  {\\caption{Test mIoU when the given share of instruments is refined in the order of each score; 3-seed mean. Best possible is an oracle.}}\n"
+    tab3 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:budget}\n  {\\caption{Official-test ranking comparison over three classifier seeds. Oracle correction-first prioritizes corrected classifications and defers harmful updates; it is a reference ordering, not a demonstrated mIoU upper bound. Columns give the share of the 2,777 instruments with a usable track that are refined; the second row gives the number of instruments, the same for every ranking.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{l" + "r" * len(shares) + "}\n  \\toprule\n  \\bfseries Ordering & " + " & ".join(f"\\bfseries {s.replace('%', chr(92) + '%')}" for s in shares)
             + "\\\\\n  \\midrule\n  " + "\n  ".join(rows3) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_budget_supp.tex").write_text(tab3, encoding="utf-8")
 
     # ---- Fig 1: (a) official-test effort curve, (b) cross-validation effort curve ----
-    fig, (ax, axb) = plt.subplots(1, 2, figsize=(6.6, 3.0), gridspec_kw={"width_ratios": [1.25, 1]})
+    fig, (ax, axb) = plt.subplots(1, 2, figsize=(6.6, 2.6), gridspec_kw={"width_ratios": [1.25, 1]})
     xs = [0] + [int(s.rstrip("%")) for s in shares]
     for name, label, color, ls, marker in lines:
         ax.plot(xs, [single_m] + cur(name), ls=ls, color=color, marker=marker, ms=3.5, lw=1.5 if name != "random" else 1.0, label=label)
     best = cur("best possible")
-    ax.plot(xs[1:], best, ls="--", color=INK, lw=0.9, label="Best possible")
+    ax.plot(xs[1:], best, ls="--", color=INK, lw=0.9, label="Oracle correction-first")
     ax.axhline(full_m, color=MUTED, lw=0.6)
     ax.text(2, full_m + 0.15, f"refine all {full_m:.1f}", fontsize=6, color=MUTED, va="bottom")
     ax.axhline(single_m, color=MUTED, lw=0.6)
@@ -229,28 +258,30 @@ def main() -> None:
     axb.grid(color="#e1e5ea", lw=0.5)
     hb, lb = axb.get_legend_handles_labels()
     fig.legend(h + hb, l + lb, loc="lower center", fontsize=6.3, frameon=False, ncol=4, columnspacing=1.0, bbox_to_anchor=(0.5, 0.0))
-    fig.subplots_adjust(left=0.08, right=0.99, top=0.92, bottom=0.30, wspace=0.28)
+    fig.subplots_adjust(left=0.08, right=0.99, top=0.91, bottom=0.33, wspace=0.28)
     fig.savefig(O / "figures" / "fig1_budget.pdf")
     plt.close(fig)
 
     # ---- Fig 2 ----
     fig, ax = plt.subplots(figsize=(4.6, 2.9))
-    bars = [("Single pass", P["single"]["mIoU"], GREY), ("TTA, 21 views\nof the keyframe", P["TTA at tau"]["mIoU"], AMBER), ("Temporal tracking,\nall instruments", P["tracking all"]["mIoU"], ACCENT), (r"Temporal tracking,"+"\n"+r"gated $\tau$", P["tracking at tau"]["mIoU"], TEAL)]
+    bars = [("Single pass", P["single"]["mIoU"], GREY), ("TTA, 21 views\nof the keyframe\n(top 941)", P["TTA at tau"]["mIoU"], AMBER), ("Temporal tracking,\nall instruments", P["tracking all"]["mIoU"], ACCENT), (r"Temporal tracking,"+"\n"+r"top 941 by $S_1$", P["tracking at tau"]["mIoU"], TEAL)]
     for i, (lab, v, c) in enumerate(bars):
         ax.bar(i, v, color=c, width=0.62)
         ax.text(i, v + 0.25, f"{v:.2f}", ha="center", fontsize=7, color=INK)
-    ax.bar(4.3, 100 * sn, color="#d9dde3", width=0.42, hatch="///", edgecolor=GREY)
-    ax.text(4.3, 100 * sn + 0.25, f"{100 * sn:.2f}$^\\dagger$", ha="center", fontsize=7, color=INK)
-    ax.set_xticks(list(range(4)) + [4.3])
-    ax.set_xticklabels([b[0] for b in bars] + ["Static non-causal\ncontrol"], fontsize=6.3)
+    ax.set_xticks(list(range(4)))
+    ax.set_xticklabels([b[0] for b in bars], fontsize=6.3)
     ax.set_ylim(70, 90)
     ax.set_ylabel("test mIoU")
     ax.grid(axis="y", color="#e1e5ea", lw=0.5)
     ax.text(-0.35, 89.0, f"gated tracking minus TTA: +{d13['point']:.2f} mIoU, 95% CI [{d13['ci95_case'][0]:+.2f}, {d13['ci95_case'][1]:+.2f}]", fontsize=6.5, color=INK, va="center")
-    fig.text(0.01, 0.01, r"$^\dagger$ static control at its stored threshold $\tau=2.8\times10^{-4}$; a matched result at $\tau=1.7\times10^{-5}$ is not available", fontsize=5.8, color=MUTED)
-    fig.subplots_adjust(left=0.11, right=0.99, top=0.97, bottom=0.25)
+    fig.subplots_adjust(left=0.11, right=0.99, top=0.97, bottom=0.16)
     fig.savefig(O / "figures" / "fig2_temporal.pdf")
     plt.close(fig)
+    tab_static = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:static}\n  {\\caption{Static-region control on the official test cases, averaged over three classifier seeds. Thresholds differ between configurations; no matched static result exists.}}\n"
+                  "  {\\footnotesize\\begin{tabular}{lrr}\n  \\toprule\n  \\bfseries Configuration & \\bfseries $\\tau$ & \\bfseries mIoU\\\\\n  \\midrule\n"
+                  f"  Single pass & -- & {P['single']['mIoU']:.2f} \\\\\n  Static non-causal control & $2.8\\times10^{{-4}}$ & {100 * sn:.2f} \\\\\n  Gated temporal tracking & $1.7\\times10^{{-5}}$ & {P['tracking at tau']['mIoU']:.2f} \\\\\n"
+                  "  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    (O / "tables" / "tab_static_supp.tex").write_text(tab_static, encoding="utf-8")
 
     # ---- per-class ----
     pc_s, pc_g = F3S["configs"]["single pass"]["per_class_iou"], F3S["configs"]["gated (tau 1.7e-05)"]["per_class_iou"]
@@ -266,8 +297,8 @@ def main() -> None:
         rows4.append(f"{c} & {f2(s)} & {f2(g)} & {g - s:+.2f} \\\\")
     top3 = set(np.argsort(gains)[-3:].tolist())
     rows4 = [(HL if i in top3 else "") + r for i, r in enumerate(rows4)]
-    tab4 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:perclass}\n  {\\caption{Per-class IoU on the test cases, single pass and gated temporal refinement at $\\tau=1.7\\times10^{-5}$ (3-seed mean); gain in points.}}\n"
-            "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Class & \\bfseries Single & \\bfseries Gated $\\tau$ & \\bfseries Gain\\\\\n  \\midrule\n  " + "\n  ".join(rows4) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    tab4 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:perclass}\n  {\\caption{Official-test class IoUs at the fixed threshold; three-seed means.}}\n"
+            "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Class & \\bfseries Single & \\bfseries Fixed-threshold gate & \\bfseries Gain\\\\\n  \\midrule\n  " + "\n  ".join(rows4) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_perclass_supp.tex").write_text(tab4, encoding="utf-8")
     order = np.argsort([get(pc_s, i) for i in range(1, 8)])
     fig, ax = plt.subplots(figsize=(4.8, 2.9))
@@ -306,9 +337,11 @@ def main() -> None:
         put(f"numPaired{lab}Auroc", f"{a['point']:+.3f}")
         put(f"numPaired{lab}AurocLo", f"{a['ci95_cases'][0]:+.3f}")
         put(f"numPaired{lab}AurocHi", f"{a['ci95_cases'][1]:+.3f}")
-    tab5 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:uncertainty}\n  {\\caption{Error detection on the test crops. Found@20: share of errors among the 20\\% highest-scoring instruments. CE: cross-entropy members.}}\n"
-            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrr}\n  \\toprule\n  \\bfseries Method: score & \\bfseries Nets & \\bfseries Acc. & \\bfseries ECE & \\bfseries AUROC & \\bfseries Found@20\\\\\n  \\midrule\n  "
+    tab5 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:uncertainty}\n  {\\caption{Error detection on official-test crops. Found@20 is the percentage of all classification errors within the highest-scoring 20\\% of instances. CE denotes cross-entropy training.}}\n"
+            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrr}\n  \\toprule\n  \\bfseries Configuration and score & \\bfseries Passes & \\bfseries Accuracy & \\bfseries ECE & \\bfseries Error AUROC & \\bfseries Found@20\\\\\n  \\midrule\n  "
             + "\n  ".join(rows5) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
+    for old, new in (("Softmax ensemble:", "CE:"), ("MC dropout (80 passes):", "MC dropout:"), ("Evidential (1 pass):", "Evidential:"), ("Deep ensemble (3 seeds, 12 nets):", "Deep ensemble:"), ("Evidential, 3 seeds (12 nets):", "Evidential, three seeds:")):
+        tab5 = tab5.replace(old, new)
     (O / "tables" / "tab_uncertainty_supp.tex").write_text(tab5, encoding="utf-8")
 
     # ---- Supplement: window sweep ----
@@ -316,7 +349,7 @@ def main() -> None:
     for k in sorted(WIN, key=lambda x: int(x)):
         w = WIN[k]
         rows6.append((HL if str(k) == "10" else "") + f"$\\pm{k}$ & {100 * w['mIoU']:.2f} & {100 * w['IoU']:.2f} & {100 * w['mcIoU']:.2f} \\\\")
-    tab6 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:window}\n  {\\caption{Tracking window $\\pm k$ frames for the 833 highest-$S_1$ instruments; 3-seed mean, $k=0$ is the single pass.}}\n"
+    tab6 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:window}\n  {\\caption{Official-test window sweep for the top 941 $S_1$ instances; three-seed means.}}\n"
             "  {\\footnotesize\\begin{tabular}{lrrr}\n  \\toprule\n  \\bfseries Window & \\bfseries mIoU & \\bfseries IoU & \\bfseries mcIoU\\\\\n  \\midrule\n  " + "\n  ".join(rows6) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_window_supp.tex").write_text(tab6, encoding="utf-8")
 
@@ -328,8 +361,8 @@ def main() -> None:
         rows7.append(f"{case.replace('CASE', 'Case ')} & {sg:.2f} & {tu:.2f} & {al:.2f} & {tu - sg:+.2f} \\\\")
     put("numLocoGainMin", f"{min(gains7):+.2f}", "smallest gated-minus-single mIoU when one test case is left out")
     put("numLocoGainMax", f"{max(gains7):+.2f}", "largest gated-minus-single mIoU when one test case is left out")
-    tab7 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:loco}\n  {\\caption{Leave-one-case-out mIoU: the named test case is dropped and the other four are scored; 3-seed mean.}}\n"
-            "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Case left out & \\bfseries Single pass & \\bfseries Gated $\\tau$ & \\bfseries Refine-all & \\bfseries Gated $-$ single\\\\\n  \\midrule\n  "
+    tab7 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:loco}\n  {\\caption{Leave-one-case-out evaluation sensitivity; three-seed means.}}\n"
+            "  {\\footnotesize\\begin{tabular}{lrrrr}\n  \\toprule\n  \\bfseries Case left out & \\bfseries Single pass & \\bfseries Fixed-threshold gate & \\bfseries Refine-all & \\bfseries Gain\\\\\n  \\midrule\n  "
             + "\n  ".join(rows7) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_loco_supp.tex").write_text(tab7, encoding="utf-8")
 
@@ -343,21 +376,47 @@ def main() -> None:
     rows8.append("\\midrule")
     rows8.append(f"Mean $\\pm$ sd & & {sum(cv_n):,} & {cv_single[:, 0].mean():.2f} $\\pm$ {sd(cv_single[:, 0]):.2f} & {cv_tau[:, 0].mean():.2f} $\\pm$ {sd(cv_tau[:, 0]):.2f} & {cv_gain[:, 0].mean():+.2f} $\\pm$ {sd(cv_gain[:, 0]):.2f} & {100 * float(np.mean(cv_share)):.1f}\\% \\\\")
     rows8 = [r.replace(f"{cv_n[0]:,}", f"{cv_n[0]:,}") for r in rows8]
-    tab8 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cv}\n  {\\caption{Five-fold case-level CV, fixed $\\tau$. $^{T}$: official test case. $\\pm$ is the sd across folds, not an interval. Refined share recomputed from stored logits.}}\n"
-            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{llrrrrr}\n  \\toprule\n  \\bfseries Fold & \\bfseries Held-out cases & \\bfseries Inst. & \\bfseries Single & \\bfseries Gated & \\bfseries Gain & \\bfseries Refined\\\\\n  \\midrule\n  "
+    tab8 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cv}\n  {\\caption{Five-fold evaluation at the fixed threshold. $^{T}$ marks an official-test case; $\\pm$ is the standard deviation across folds.}}\n"
+            "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{llrrrrr}\n  \\toprule\n  \\bfseries Fold & \\bfseries Held-out cases & \\bfseries Inst. & \\bfseries Single & \\bfseries Fixed-thr. gate & \\bfseries Gain & \\bfseries Refined\\\\\n  \\midrule\n  "
             + "\n  ".join(rows8) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_cv_supp.tex").write_text(tab8.replace("1{,}", "1,").replace(f"{cv_n[0]:,}".replace(",", "{,}"), f"{cv_n[0]:,}"), encoding="utf-8")
     rows9 = [(HL if w == 10 else "") + f"$\\pm{w}$ & {cv_win_miou[w]:.2f} & {cv_win[w].mean():+.2f} & " + " & ".join(f"{g:+.2f}" for g in cv_win[w]) + " \\\\" for w in (2, 3, 5, 10)]
-    tab9 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvwindow}\n  {\\caption{Tracking window in the five-fold CV at the fixed threshold: mean gated mIoU and mIoU gain over single pass, then the gain in each fold.}}\n"
+    tab9 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvwindow}\n  {\\caption{Cross-validation window sweep at the fixed threshold.}}\n"
             "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrrrr}\n  \\toprule\n  \\bfseries Window & \\bfseries mIoU & \\bfseries Gain & \\bfseries F0 & \\bfseries F1 & \\bfseries F2 & \\bfseries F3 & \\bfseries F4\\\\\n  \\midrule\n  "
             + "\n  ".join(rows9) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_cvwindow_supp.tex").write_text(tab9, encoding="utf-8")
     rows10 = [f"{cv_budget_share[j]}\\% & " + " & ".join(f"{g:+.2f}" for g in cv_budget[j]) + f" & {cv_budget[j].mean():+.2f} \\\\" for j in range(5)]
-    rows10.append(f"$\\tau$ ({100 * float(np.mean(cv_share)):.0f}\\% on average) & " + " & ".join(f"{g:+.2f}" for g in cv_gain[:, 0]) + f" & {cv_gain[:, 0].mean():+.2f} \\\\")
-    tab10 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvbudget}\n  {\\caption{Five-fold CV effort curve: mIoU gain over single pass when the top share of each fold's instruments by $S_1$ is refined.}}\n"
+    rows10.append("Fixed threshold & " + " & ".join(f"{g:+.2f}" for g in cv_gain[:, 0]) + f" & {cv_gain[:, 0].mean():+.2f} \\\\")
+    tab10 = ("\\begin{table}[tbp]\n\\floatconts\n  {tab:cvbudget}\n  {\\caption{Cross-validation mIoU gains at alternative refinement budgets. Instruments are ranked within each fold. The threshold selects 31.5\\% on average across folds.}}\n"
              "  {\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}{lrrrrrr}\n  \\toprule\n  \\bfseries Share & \\bfseries F0 & \\bfseries F1 & \\bfseries F2 & \\bfseries F3 & \\bfseries F4 & \\bfseries Mean\\\\\n  \\midrule\n  "
              + "\n  ".join(rows10) + "\n  \\bottomrule\n  \\end{tabular}}\n\\end{table}\n")
     (O / "tables" / "tab_cvbudget_supp.tex").write_text(tab10, encoding="utf-8")
+
+    short = {
+        "tab_main.tex": r"Official-test results, three-seed means. Saving is estimated cost relative to refine-all. Net is corrections minus introduced errors; $C/C_{\mathrm{all}}$ and $D/D_{\mathrm{all}}$ are shares of refine-all's corrections and introduced errors.",
+        "tab_compute.tex": r"Estimated GFLOPs per instrument by policy (three-seed means): single-pass cost plus refined fraction times the per-instrument refinement cost.",
+        "tab_budget_supp.tex": r"Official-test mIoU by ranking and share of the 2,777 usable-track instruments refined (three-seed means). Oracle correction-first is a reference ordering, not an upper bound.",
+        "tab_uncertainty_supp.tex": r"Error detection on official-test crops. Found@20: share of errors among the 20\% highest-scoring instances. CE: cross-entropy.",
+        "tab_cv_supp.tex": r"Five-fold cross-validation at the fixed threshold. $^{T}$: official-test case.",
+        "tab_cvbudget_supp.tex": r"Cross-validation mIoU gain by refinement budget.",
+        "tab_cvwindow_supp.tex": r"Cross-validation window sweep at the fixed threshold.",
+        "tab_window_supp.tex": r"Official-test window sweep for the top 941 $S_1$ instances.",
+        "tab_perclass_supp.tex": r"Official-test class IoUs at the fixed threshold.",
+        "tab_loco_supp.tex": r"Leave-one-case-out mIoU (three-seed means).",
+    }
+    mp = O / "tables" / "tab_main.tex"
+    mt = mp.read_text(encoding="utf-8")
+    mt = mt.replace("  {\\footnotesize\\setlength{\\tabcolsep}{2.6pt}\\begin{tabular}", "  {\\resizebox{\\linewidth}{!}{\\footnotesize\\setlength{\\tabcolsep}{3pt}\\begin{tabular}")
+    mt = mt.replace("\\end{tabular}}", "\\end{tabular}}}")
+    mt = mt.replace("Maximum-belief, same budget", "Max-belief gate, same budget").replace("Budget-matched, 21-view augmentation", "Augmentation, same instances")
+    mp.write_text(mt, encoding="utf-8")
+    for fname, cap in short.items():
+        fp = O / "tables" / fname
+        lines = fp.read_text(encoding="utf-8").split("\n")
+        for i, ln in enumerate(lines):
+            if ln.startswith("  {\\caption{"):
+                lines[i] = "  {\\caption{" + cap + "}}"
+        fp.write_text("\n".join(lines), encoding="utf-8")
 
     # ---- numbers.tex ----
     header = ("% Locked numbers, generated by scripts/make_paper_skeleton.py from the result files. Use these macros in the text so a number is never typed twice.\n"
@@ -366,6 +425,8 @@ def main() -> None:
     seg = {"numSegSamTwo": "0.908575", "numSegSamThree": "0.907581", "numSegEnsemble": "0.913068", "numSegBar": "0.9136"}
     for k, v in seg.items():
         put(k, v, "segmenter selection record, sam3_fold1.json / gtbox_sam_protocol.md")
+    for f in (O / "tables").glob("*_supp.tex"):
+        f.write_text(f.read_text(encoding="utf-8").replace("\\begin{table}[tbp]", "\\begin{table}[H]"), encoding="utf-8")
     (O / "numbers.tex").write_text(header + "\n".join(num.values()) + "\n", encoding="utf-8")
     print("wrote", len(num), "macros,", len(list((O / 'tables').glob('*.tex'))), "tables,", len(list((O / 'figures').glob('*.pdf'))), "figures to", O)
 
