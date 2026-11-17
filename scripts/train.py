@@ -222,6 +222,7 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
         crop_mode=crop_mode, tip_crop_frac=tip_crop_frac,
         context_expand=context_expand, context_area_threshold=context_area_threshold,
         context_expand_factor=context_expand_factor,
+        soft_bg=config["data"].get("soft_bg"), soft_margin=config["data"].get("soft_margin", 1.5),
     )
     neighbour_dir = config["data"].get("neighbour_dir")
     if neighbour_dir:

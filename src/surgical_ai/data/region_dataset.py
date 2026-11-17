@@ -106,6 +106,8 @@ class GraspRegionDataset(Dataset):
         mask_perturb_prob: float = 0.0,
         neighbour_dir: str | Path | list | None = None,
         neighbour_prob: float = 0.0,
+        soft_bg: float | None = None,
+        soft_margin: float = 1.5,
     ):
         """`letterbox=True` pads the mask-cropped instance to a square (zeros,
         matching the mask-zeroed background already used) before any resize
@@ -167,6 +169,8 @@ class GraspRegionDataset(Dataset):
         self.context_area_threshold = context_area_threshold
         self.context_expand_factor = context_expand_factor
         self.mask_perturb_prob = mask_perturb_prob
+        self.soft_bg = soft_bg
+        self.soft_margin = soft_margin
         self.neighbour_prob = neighbour_prob
         self._neighbours = load_neighbour_meta(neighbour_dir) if neighbour_dir else {}
 
@@ -246,7 +250,11 @@ class GraspRegionDataset(Dataset):
             ys, xs = np.nonzero(mask)
             x, y, w, h = int(xs.min()), int(ys.min()), int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)
 
-        if self.crop_mode == "tip":
+        if self.soft_bg is not None:
+            crop = self._soft_crop(frame, mask, x, y, w, h, height, width)
+            if self.letterbox:
+                crop = _pad_to_square(crop)
+        elif self.crop_mode == "tip":
             crop = self._tip_crop(frame, mask, x, y, w, h, height, width)
         else:
             area_frac = mask.sum() / (height * width)
@@ -328,6 +336,18 @@ class GraspRegionDataset(Dataset):
         # non-square -- pad rather than let the downstream resize distort it,
         # same reasoning as the letterbox option above.
         return _pad_to_square(crop)
+
+    def _soft_crop(
+        self, frame: np.ndarray, mask: np.ndarray, x: int, y: int, w: int, h: int, height: int, width: int,
+    ) -> np.ndarray:
+        """Box expanded by `soft_margin`, pixels outside the instance mask scaled by `soft_bg` instead of zeroed: keeps the
+        surrounding arms and tissue as context while the target stays the brightest thing in the crop."""
+        cx, cy = x + w / 2.0, y + h / 2.0
+        hw, hh = w * self.soft_margin / 2.0, h * self.soft_margin / 2.0
+        x0, y0 = max(0, int(round(cx - hw))), max(0, int(round(cy - hh)))
+        x1, y1 = min(width, int(round(cx + hw))), min(height, int(round(cy + hh)))
+        gain = np.where(mask[y0:y1, x0:x1, None] > 0, 1.0, self.soft_bg)
+        return (frame[y0:y1, x0:x1] * gain).astype(np.uint8)
 
     def _context_crop(
         self, frame: np.ndarray, x: int, y: int, w: int, h: int, height: int, width: int,
