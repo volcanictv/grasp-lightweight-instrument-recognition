@@ -25,6 +25,7 @@ segmentation's recorded size and fails loudly instead.
 from __future__ import annotations
 
 import json
+import pickle
 import random
 from pathlib import Path
 from typing import Callable
@@ -108,6 +109,7 @@ class GraspRegionDataset(Dataset):
         neighbour_prob: float = 0.0,
         soft_bg: float | None = None,
         soft_margin: float = 1.5,
+        extra_crops_path: str | Path | None = None,
     ):
         """`letterbox=True` pads the mask-cropped instance to a square (zeros,
         matching the mask-zeroed background already used) before any resize
@@ -173,6 +175,13 @@ class GraspRegionDataset(Dataset):
         self.soft_margin = soft_margin
         self.neighbour_prob = neighbour_prob
         self._neighbours = load_neighbour_meta(neighbour_dir) if neighbour_dir else {}
+        # extra training crops from another dataset: already mask-multiplied, unpadded, labelled with this dataset's class indices
+        self.extra_crops: list[np.ndarray] = []
+        self.extra_labels: list[int] = []
+        if extra_crops_path:
+            with open(extra_crops_path, "rb") as f:
+                pack = pickle.load(f)
+            self.extra_crops, self.extra_labels = list(pack["crops"]), [int(v) for v in pack["y"]]
 
         self.category_ids = sorted(c["id"] for c in doc["categories"])
         self.category_names = statistics.category_names(doc)
@@ -204,7 +213,7 @@ class GraspRegionDataset(Dataset):
         return [self.category_names[cid] for cid in self.category_ids]
 
     def __len__(self) -> int:
-        return len(self.instances)
+        return len(self.instances) + len(self.extra_crops)
 
     def _neighbour_item(self, idx: int) -> tuple[torch.Tensor, torch.Tensor] | None:
         """Tracker-style crop of the same physical instrument at a nearby frame, same label by construction."""
@@ -222,6 +231,15 @@ class GraspRegionDataset(Dataset):
         return (self.transform(image) if self.transform is not None else image), torch.tensor(label_idx, dtype=torch.long)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        n_real = len(self.instances)
+        if idx >= n_real:
+            crop = self.extra_crops[idx - n_real]
+            if self.letterbox:
+                crop = _pad_to_square(crop)
+            image = Image.fromarray(crop)
+            if self.transform is not None:
+                image = self.transform(image)
+            return image, torch.tensor(self.extra_labels[idx - n_real], dtype=torch.long)
         if self._neighbours and random.random() < self.neighbour_prob:
             item = self._neighbour_item(idx)
             if item is not None:
