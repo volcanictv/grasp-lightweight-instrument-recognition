@@ -222,6 +222,7 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
         crop_mode=crop_mode, tip_crop_frac=tip_crop_frac,
         context_expand=context_expand, context_area_threshold=context_area_threshold,
         context_expand_factor=context_expand_factor,
+        soft_bg=config["data"].get("soft_bg"), soft_margin=config["data"].get("soft_margin", 1.5),
     )
     neighbour_dir = config["data"].get("neighbour_dir")
     if neighbour_dir:
@@ -229,6 +230,7 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
     train_only = dict(
         mask_perturb_prob=config["data"].get("mask_perturb_prob", 0.0),
         neighbour_dir=neighbour_dir, neighbour_prob=config["data"].get("neighbour_prob", 0.0),
+        extra_crops_path=config["data"].get("extra_crops"),
     )
     train_ds = GraspRegionDataset(
         args.data_root, train_split,
@@ -297,6 +299,8 @@ def _setup_region_task(config: dict, args: argparse.Namespace, device: torch.dev
 
     label_counts = torch.zeros(len(class_names))
     for _, _, _, label_idx in train_ds.instances:
+        label_counts[label_idx] += 1
+    for label_idx in train_ds.extra_labels:
         label_counts[label_idx] += 1
 
     class_weight = None
