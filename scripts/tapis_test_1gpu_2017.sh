@@ -1,0 +1,19 @@
+# usage: tapis_test_1gpu_2017.sh WORKDIR FRAMEDIR CKPT OUTNAME [DATASET]  -- single-GPU test of a saved TAPIS checkpoint; DATASET is endovis_2018 (default) or endovis_2017
+W=$1; FR=$2; CK=$3; OUTN=$4; DS=${5:-endovis_2018}
+cd ~/baselines/GraSP/TAPIS
+source ~/tapis_venv/bin/activate
+D=$W/tapis_data
+export PYTHONPATH=$HOME/baselines/GraSP/TAPIS/tapis:${PYTHONPATH:-}
+mkdir -p $W/$OUTN
+python -u tools/run_net.py --cfg configs/GraSP/TAPIS/TAPIS_INSTRUMENTS.yaml \
+ NUM_GPUS 1 TRAIN.ENABLE False TEST.ENABLE True TRAIN.DATASET $DS TEST.DATASET $DS \
+ TEST.CHECKPOINT_FILE_PATH $CK TRAIN.CHECKPOINT_FILE_PATH $CK TRAIN.CHECKPOINT_EPOCH_RESET True \
+ DATA.NUM_FRAMES 16 DATA.SAMPLING_RATE 1 DATA.MAX_BBOXES 6 \
+ ENDOVIS_DATASET.FRAME_DIR $FR ENDOVIS_DATASET.FRAME_LIST_DIR $D/frame_lists \
+ ENDOVIS_DATASET.TRAIN_LISTS train.csv ENDOVIS_DATASET.TEST_LISTS val.csv ENDOVIS_DATASET.ANNOTATION_DIR $D/annotations/ \
+ ENDOVIS_DATASET.TEST_COCO_ANNS $D/annotations/val_anns_rle.json \
+ ENDOVIS_DATASET.TRAIN_GT_BOX_JSON train_anns.json ENDOVIS_DATASET.TRAIN_PREDICT_BOX_JSON train_preds.json \
+ ENDOVIS_DATASET.TEST_GT_BOX_JSON val_anns.json ENDOVIS_DATASET.TEST_PREDICT_BOX_JSON val_preds.json \
+ FEATURES.TRAIN_FEATURES_PATH $D/features/train_region_features.pth FEATURES.TEST_FEATURES_PATH $D/features/val_region_features.pth \
+ FEATURES.USE_RPN False TRAIN.BATCH_SIZE 4 TEST.BATCH_SIZE 4 OUTPUT_DIR $W/$OUTN
+echo "elapsed $SECONDS s"
