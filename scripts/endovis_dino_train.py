@@ -32,7 +32,7 @@ from torchvision import transforms as T
 import endovis_gtbox_classifiers_grasp_e17 as E
 import endovis_gtbox_common as C
 from surgical_ai.data.transforms import build_transforms
-from surgical_ai.training.losses import compute_class_weights
+from surgical_ai.training.losses import EvidentialLoss, compute_class_weights
 
 MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
@@ -98,6 +98,7 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--zip2017", type=Path, required=True)
     ap.add_argument("--masks", type=Path, required=True, help="annotation masks of the validation instruments (masks_ens.pkl)")
+    ap.add_argument("--loss", choices=["ce", "evidential"], default="ce", help="evidential: the Dirichlet loss of the paper's members (lambda 0.01 annealed over 10 epochs), weights are saved")
     ap.add_argument("--epochs", type=int, default=15)
     ap.add_argument("--bs", type=int, default=16)
     ap.add_argument("--accum", type=int, default=2)
@@ -154,15 +155,20 @@ def main() -> None:
     print(f"optimizer groups {len(groups)}, steps/epoch {steps_per_epoch}", flush=True)
     step, log = 0, []
     t0 = time.time()
+    loss_fn = EvidentialLoss(0.01, 10, class_weight=cw) if args.loss == "evidential" else None
+    tag = "" if args.loss == "ce" else "_evidential"
     for ep in range(args.epochs):
         net.train()
+        if loss_fn is not None:
+            loss_fn.set_epoch(ep + 1)
         te, run, nb = time.time(), 0.0, 0
         for b, (xb, yb) in enumerate(dl):
             if b % args.accum == 0 and step < total:
                 f = (step + 1) / warm if step < warm else 0.5 * (1 + math.cos(math.pi * (step - warm) / max(1, total - warm)))
                 for g in opt.param_groups:
                     g["lr"] = g["base_lr"] * f
-            loss = F.cross_entropy(net(xb.to(dev, non_blocking=True)), yb.to(dev), weight=cw)
+            out = net(xb.to(dev, non_blocking=True))
+            loss = loss_fn(out, yb.to(dev)) if loss_fn is not None else F.cross_entropy(out, yb.to(dev), weight=cw)
             (loss / args.accum).backward()
             run += float(loss)
             nb += 1
@@ -184,10 +190,12 @@ def main() -> None:
             xb = torch.stack([evaltf(Image.fromarray(c)) for c in vcrops[i:i + 64]]).to(dev)
             outs.append(net(xb).float().cpu().numpy())
     logits = np.concatenate(outs)
-    np.save(args.out_dir / f"val_logits_{args.backbone}_s{args.seed}.npy", logits)
+    np.save(args.out_dir / f"val_logits_{args.backbone}{tag}_s{args.seed}.npy", logits)
+    if args.loss == "evidential":
+        torch.save(net.state_dict(), args.out_dir / f"model_{args.backbone}{tag}_s{args.seed}.pt")
     pred = logits.argmax(1)
-    res = {"backbone": args.backbone, "seed": args.seed, "val_accuracy": float((pred == yv).mean()), "wall_seconds": time.time() - t0, "epoch_log": log}
-    (args.out_dir / f"result_{args.backbone}_s{args.seed}.json").write_text(json.dumps(res, indent=1))
+    res = {"backbone": args.backbone, "loss": args.loss, "seed": args.seed, "val_accuracy": float((pred == yv).mean()), "wall_seconds": time.time() - t0, "epoch_log": log}
+    (args.out_dir / f"result_{args.backbone}{tag}_s{args.seed}.json").write_text(json.dumps(res, indent=1))
     print(f"validation accuracy {100 * res['val_accuracy']:.2f}  wall {res['wall_seconds'] / 60:.1f} min", flush=True)
 
 
