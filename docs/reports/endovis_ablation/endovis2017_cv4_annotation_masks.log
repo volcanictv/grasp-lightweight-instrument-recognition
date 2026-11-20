@@ -1,0 +1,34 @@
+fold 0 CNN ensemble, single pass          argmax: 81.98 68.09 36.76 67.80 | decode: 80.08 65.30 34.96 64.89
+fold 0 CNN ensemble + revisit             argmax: 87.66 76.19 41.14 75.22 | decode: 84.16 71.35 38.88 70.21
+fold 0 Evidential DINOv2, single pass     argmax: 84.46 74.47 38.59 76.14 | decode: 83.98 72.85 37.15 73.86
+/home/yzx/miniconda3/envs/surgical/lib/python3.11/site-packages/sklearn/metrics/_classification.py:1879: UndefinedMetricWarning: F-score is ill-defined and being set to 0.0 in labels with no true nor predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+fold 0 Evidential DINOv2 + revisit        argmax: 89.53 80.61 43.19 82.63 | decode: 86.75 76.99 40.19 77.32
+fold 1 CNN ensemble, single pass          argmax: 80.95 76.14 44.61 77.71 | decode: 80.76 75.06 44.52 77.05
+fold 1 CNN ensemble + revisit             argmax: 84.84 81.05 47.44 80.36 | decode: 85.72 80.25 47.92 80.78
+fold 1 Evidential DINOv2, single pass     argmax: 85.73 82.50 50.29 82.77 | decode: 86.37 82.42 50.40 82.60
+/home/yzx/miniconda3/envs/surgical/lib/python3.11/site-packages/sklearn/metrics/_classification.py:1879: UndefinedMetricWarning: F-score is ill-defined and being set to 0.0 in labels with no true nor predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+/home/yzx/miniconda3/envs/surgical/lib/python3.11/site-packages/sklearn/metrics/_classification.py:1879: UndefinedMetricWarning: F-score is ill-defined and being set to 0.0 in labels with no true nor predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+fold 1 Evidential DINOv2 + revisit        argmax: 90.58 87.19 53.16 85.50 | decode: 91.79 87.13 55.04 85.83
+fold 2 CNN ensemble, single pass          argmax: 57.79 45.76 30.07 64.64 | decode: 61.92 46.84 31.77 65.32
+fold 2 CNN ensemble + revisit             argmax: 64.40 51.79 34.37 69.92 | decode: 67.64 52.25 35.48 69.80
+fold 2 Evidential DINOv2, single pass     argmax: 70.79 59.72 36.98 76.06 | decode: 73.74 59.80 38.58 75.75
+/home/yzx/miniconda3/envs/surgical/lib/python3.11/site-packages/sklearn/metrics/_classification.py:1879: UndefinedMetricWarning: F-score is ill-defined and being set to 0.0 in labels with no true nor predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+fold 2 Evidential DINOv2 + revisit        argmax: 76.06 67.14 40.26 81.34 | decode: 77.97 66.05 40.92 80.23
+fold 3 CNN ensemble, single pass          argmax: 73.49 65.13 42.93 76.19 | decode: 72.79 62.88 41.24 74.24
+fold 3 CNN ensemble + revisit             argmax: 78.79 71.63 46.57 81.44 | decode: 78.07 69.07 44.80 79.44
+fold 3 Evidential DINOv2, single pass     argmax: 89.18 83.16 57.68 85.44 | decode: 89.40 82.00 56.39 84.58
+fold 3 Evidential DINOv2 + revisit        argmax: 94.51 90.43 63.23 89.39 | decode: 93.88 88.99 62.13 88.47
+
+mean over folds [0, 1, 2, 3]                 readout   mIoU    IoU  mcIoU    acc     F1
+CNN ensemble, single pass              argmax   73.55  63.78  38.59  71.59  46.39
+CNN ensemble, single pass              decode   73.89  62.52  38.12  70.38  45.94
+CNN ensemble + revisit                 argmax   78.92  70.17  42.38  76.74  49.27
+CNN ensemble + revisit                 decode   78.90  68.23  41.77  75.06  48.74
+Evidential DINOv2, single pass         argmax   82.54  74.96  45.89  80.10  51.39
+Evidential DINOv2, single pass         decode   83.37  74.27  45.63  79.20  51.02
+Evidential DINOv2 + revisit            argmax   87.67  81.34  49.96  84.72  53.73
+Evidential DINOv2 + revisit            decode   87.60  79.79  49.57  82.96  53.19

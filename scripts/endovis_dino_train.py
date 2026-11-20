@@ -96,9 +96,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--backbone", required=True, choices=["dinov2-base", "dinov3-base"])
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--zip2017", type=Path, required=True)
+    ap.add_argument("--zip2017", type=Path, default=None, help="EndoVis 2017 release to add as extra training data (the 2018 setting); omit when the cache already holds all training data (the 2017 folds)")
     ap.add_argument("--masks", type=Path, required=True, help="annotation masks of the validation instruments (masks_ens.pkl)")
     ap.add_argument("--loss", choices=["ce", "evidential"], default="ce", help="evidential: the Dirichlet loss of the paper's members (lambda 0.01 annealed over 10 epochs), weights are saved")
+    ap.add_argument("--save-weights", action="store_true", help="also save the weights of a cross-entropy run (always saved for the evidential loss), e.g. to apply the revisit to the plain fine-tuned model")
     ap.add_argument("--epochs", type=int, default=15)
     ap.add_argument("--bs", type=int, default=16)
     ap.add_argument("--accum", type=int, default=2)
@@ -119,9 +120,11 @@ def main() -> None:
             cache.clear()
             cache[key] = C.load_frame(*key)
         crops.append(C.masked_crop(cache[key], C.decode(inst["rle"]), inst["box"], True))
-    c17, y17 = E.crops_2017(args.zip2017)
-    crops += c17[True]
-    y = np.concatenate([np.array([i["cls"] for i in insts]), y17])
+    y = np.array([i["cls"] for i in insts])
+    if args.zip2017 is not None:
+        c17, y17 = E.crops_2017(args.zip2017)
+        crops += c17[True]
+        y = np.concatenate([y, y17])
     cw = compute_class_weights(torch.bincount(torch.from_numpy(y), minlength=7).float()).to(dev)
     print(f"train {len(y)} crops, per class {np.bincount(y, minlength=7).tolist()}, class weights {[round(float(v), 3) for v in cw]}", flush=True)
 
@@ -191,7 +194,7 @@ def main() -> None:
             outs.append(net(xb).float().cpu().numpy())
     logits = np.concatenate(outs)
     np.save(args.out_dir / f"val_logits_{args.backbone}{tag}_s{args.seed}.npy", logits)
-    if args.loss == "evidential":
+    if args.loss == "evidential" or args.save_weights:
         torch.save(net.state_dict(), args.out_dir / f"model_{args.backbone}{tag}_s{args.seed}.pt")
     pred = logits.argmax(1)
     res = {"backbone": args.backbone, "loss": args.loss, "seed": args.seed, "val_accuracy": float((pred == yv).mean()), "wall_seconds": time.time() - t0, "epoch_log": log}
